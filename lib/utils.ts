@@ -39,10 +39,7 @@ export function getTimeOfDay(): "morning" | "afternoon" | "evening" {
 export function getUserDisplayName(user: User | null): string {
   if (!user) return "there";
   return (
-    user.user_metadata?.full_name ||
-    user.user_metadata?.name ||
-    user.email?.split("@")[0] ||
-    "there"
+    user.user_metadata?.display_name || user.email?.split("@")[0] || "there"
   );
 }
 
