@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { format, formatDistanceToNow as fnsFormatDistanceToNow } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -7,12 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(d);
+  return format(d, 'MMM d, h:mm a');
 }
 
 export function truncate(str: string, length: number): string {
@@ -21,13 +17,12 @@ export function truncate(str: string, length: number): string {
 }
 
 export function formatDistanceToNow(date: Date): string {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  return fnsFormatDistanceToNow(date, { addSuffix: true });
+}
 
-  if (diffInSeconds < 60) return 'just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
-  return `${Math.floor(diffInSeconds / 31536000)}y ago`;
+export function getTimeOfDay(): 'morning' | 'afternoon' | 'evening' {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  return 'evening';
 }

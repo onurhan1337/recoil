@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { generateEmbedding } from '@/lib/embeddings';
 import { noteSchema } from '@/lib/validations';
+import { config } from '@/lib/config';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,9 +35,15 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single();
 
-    if (usageError || !usage || usage.credits < 1) {
+    const noteCost = config.credits.costs.createNote;
+
+    if (usageError || !usage || usage.credits < noteCost) {
       return NextResponse.json(
-        { error: 'Insufficient credits' },
+        {
+          error: 'Insufficient credits',
+          required: noteCost,
+          available: usage?.credits || 0,
+        },
         { status: 403 }
       );
     }
@@ -62,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     const { error: creditError } = await supabase
       .from('usage')
-      .update({ credits: usage.credits - 1 })
+      .update({ credits: usage.credits - noteCost })
       .eq('user_id', user.id);
 
     if (creditError) {
@@ -71,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       note,
-      credits_remaining: usage.credits - 1,
+      credits_remaining: usage.credits - noteCost,
     });
   } catch (error) {
     console.error('Error creating note:', error);
