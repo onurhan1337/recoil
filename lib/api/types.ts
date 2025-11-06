@@ -1,6 +1,10 @@
 export interface Note {
   id: string;
   content: string;
+  label?: string | null;
+  category?: string | null;
+  tags?: string[] | null;
+  related_notes?: string[] | null;
   created_at: string;
   user_id: string;
 }
@@ -24,6 +28,8 @@ export interface Message {
 export interface Usage {
   user_id: string;
   credits: number;
+  plan: "free" | "pro";
+  monthly_credits_limit: number;
   last_reset: string;
 }
 
@@ -46,6 +52,8 @@ export interface SearchNotesResponse {
 
 export interface UsageResponse {
   credits: number;
+  plan: "free" | "pro";
+  monthly_credits_limit: number;
 }
 
 export interface ConversationsResponse {
@@ -54,4 +62,29 @@ export interface ConversationsResponse {
 
 export interface ConversationMessagesResponse {
   messages: Message[];
+}
+
+export interface NoteCostEstimate {
+  estimated_cost: number;
+  base_cost: number;
+  embedding_cost: number;
+  content_length: number;
+  estimated_chunks: number;
+}
+
+export interface Feedback {
+  id: string;
+  user_id: string;
+  rating: number;
+  comment?: string | null;
+  created_at: string;
+}
+
+export interface CreateFeedbackResponse {
+  feedback: Feedback;
+  message: string;
+}
+
+export interface FeedbackListResponse {
+  feedback: Feedback[];
 }

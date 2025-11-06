@@ -25,18 +25,23 @@ export async function authenticateUser(supabase: SupabaseClient) {
 export async function ensureUserUsage(
   supabase: SupabaseClient,
   userId: string,
-  defaultCredits: number = 100
+  defaultCredits: number = 500
 ) {
   const { data: usage, error } = await supabase
     .from("usage")
-    .select("credits, last_reset")
+    .select("credits, plan, monthly_credits_limit, last_reset")
     .eq("user_id", userId)
     .single();
 
   if (error?.code === "PGRST116") {
     const { data: newUsage, error: insertError } = await supabase
       .from("usage")
-      .insert({ user_id: userId, credits: defaultCredits })
+      .insert({
+        user_id: userId,
+        credits: defaultCredits,
+        plan: "free",
+        monthly_credits_limit: 500
+      })
       .select()
       .single();
 

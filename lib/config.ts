@@ -3,6 +3,26 @@ export const config = {
     name: "Recoil",
     description: "Personal memory app with semantic search",
   },
+  plans: {
+    free: {
+      name: "Free",
+      monthlyCredits: 500,
+      costs: {
+        createNote: 2,
+        chatMessage: 5,
+        embedding: 1,
+      },
+    },
+    pro: {
+      name: "Pro",
+      monthlyCredits: 10000,
+      costs: {
+        createNote: 1,
+        chatMessage: 3,
+        embedding: 0,
+      },
+    },
+  },
   credits: {
     initial: 500,
     costs: {
