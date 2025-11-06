@@ -17,7 +17,7 @@ export const searchSchema = z.object({
 });
 
 export const emailSchema = z.object({
-  email: z.string().email({ error: "Invalid email address" }).toLowerCase(),
+  email: z.email({ error: "Invalid email address" }).toLowerCase(),
 });
 
 export const passwordSchema = z.object({
