@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
+import { generateNoteMetadata } from "@/lib/ai";
 import { noteSchema } from "@/lib/validations";
 import { config } from "@/lib/config";
 import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
@@ -25,17 +26,21 @@ export async function POST(request: NextRequest) {
 
     const { data: usage, error: usageError } = await supabase
       .from("usage")
-      .select("credits")
+      .select("credits, plan")
       .eq("user_id", user.id)
       .single();
 
-    const noteCost = config.credits.costs.createNote;
+    const userPlan = (usage?.plan || "free") as "free" | "pro";
+    const noteCost = config.plans[userPlan].costs.createNote;
 
     if (usageError || !usage || usage.credits < noteCost) {
       return errorResponse("Insufficient credits", 403);
     }
 
-    const embedding = await generateEmbedding(content);
+    const [embedding, metadata] = await Promise.all([
+      generateEmbedding(content),
+      generateNoteMetadata(content),
+    ]);
 
     const { data: note, error: noteError } = await supabase
       .from("notes")
@@ -43,6 +48,8 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         content,
         embedding: JSON.stringify(embedding),
+        label: metadata.label,
+        category: metadata.category,
       })
       .select()
       .single();
@@ -85,7 +92,7 @@ export async function GET(request: NextRequest) {
 
     const { data: notes, error } = await supabase
       .from("notes")
-      .select("id, content, created_at")
+      .select("id, content, label, category, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
