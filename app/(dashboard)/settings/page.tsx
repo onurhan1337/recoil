@@ -1,34 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useUser, useUsage } from "@/lib/api/hooks";
 
 export default function SettingsPage() {
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [credits, setCredits] = useState<number>(0);
-  const supabase = createClient();
-
-  useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        setUserEmail(user.email || "");
-      }
-    };
-
-    const getCredits = async () => {
-      const response = await fetch("/api/usage");
-      if (response.ok) {
-        const data = await response.json();
-        setCredits(data.credits);
-      }
-    };
-
-    getUser();
-    getCredits();
-  }, [supabase.auth]);
+  const { data: user } = useUser();
+  const { data: usage } = useUsage();
 
   return (
     <div className="space-y-12">
@@ -40,7 +16,7 @@ export default function SettingsPage() {
           <div className="rounded-lg border border-border p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Email</span>
-              <span className="text-sm">{userEmail || "Loading..."}</span>
+              <span className="text-sm">{user?.email || "Loading..."}</span>
             </div>
           </div>
         </div>
@@ -50,7 +26,7 @@ export default function SettingsPage() {
           <div className="rounded-lg border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Credits</span>
-              <span className="text-sm font-medium">{credits}</span>
+              <span className="text-sm font-medium">{usage?.credits ?? 0}</span>
             </div>
             <p className="text-xs text-muted-foreground pt-2 border-t border-border">
               Each search uses 1 credit. Search uses GPT-4o-mini for summaries.

@@ -1,52 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
-
-interface Note {
-  id: string;
-  content: string;
-  created_at: string;
-}
+import { useNotes } from "@/lib/api/hooks";
+import { formatShortDate } from "@/lib/utils";
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
-
-  useEffect(() => {
-    const fetchNotes = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("notes")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setNotes(data);
-      }
-      setIsLoading(false);
-    };
-
-    fetchNotes();
-  }, [supabase]);
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  const { data: notes = [], isLoading } = useNotes();
 
   return (
     <div className="space-y-8">
@@ -99,7 +60,7 @@ export default function NotesPage() {
                 </div>
                 <div className="pt-2 border-t">
                   <span className="text-xs text-muted-foreground">
-                    {formatDate(note.created_at)}
+                    {formatShortDate(note.created_at)}
                   </span>
                 </div>
               </div>

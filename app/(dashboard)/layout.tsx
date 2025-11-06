@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -8,6 +8,7 @@ import { Home, BookOpen, Plus, Settings, Brain, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { config } from "@/lib/config";
 import { NewNoteDialog } from "@/components/new-note-dialog";
+import { useUser, useUsage } from "@/lib/api/hooks";
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
@@ -20,38 +21,20 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [credits, setCredits] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [isNewNoteDialogOpen, setIsNewNoteDialogOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  const { data: user, isLoading: userLoading } = useUser();
+  const { data: usage, isLoading: usageLoading } = useUsage();
 
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+  const isLoading = userLoading || usageLoading;
 
-      setUserEmail(user.email || "");
-
-      const response = await fetch("/api/usage");
-      if (response.ok) {
-        const data = await response.json();
-        setCredits(data.credits);
-      }
-
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, [supabase.auth, router]);
+  if (!userLoading && !user) {
+    router.push("/login");
+    return null;
+  }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -120,7 +103,7 @@ export default function DashboardLayout({
               <span className="text-xs text-muted-foreground font-medium">Credits</span>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-semibold tabular-nums">{credits}</span>
+              <span className="text-xl font-semibold tabular-nums">{usage?.credits ?? 0}</span>
               <span className="text-xs text-muted-foreground">/ {config.credits.initial}</span>
             </div>
           </div>
