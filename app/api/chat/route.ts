@@ -58,11 +58,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get the latest user message
     const lastMessage = messages[messages.length - 1];
     const query = lastMessage.parts.find((p: any) => p.type === "text")?.text || "";
 
-    // Check credits
     const { data: usage, error: usageError } = await supabase
       .from("usage")
       .select("credits")
@@ -85,10 +83,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate embedding for semantic search
     const queryEmbedding = await generateEmbedding(query);
 
-    // Search notes
     const { data: results, error: searchError } = await supabase.rpc(
       "search_notes",
       {
@@ -102,7 +98,6 @@ export async function POST(request: NextRequest) {
       console.error("Search error:", searchError);
     }
 
-    // Debug logging
     console.log("\n=== SEARCH DEBUG ===");
     console.log("Query:", query);
     console.log("Search results count:", results?.length || 0);
@@ -117,13 +112,11 @@ export async function POST(request: NextRequest) {
     }
     console.log("===================\n");
 
-    // Decrement credits
     await supabase
       .from("usage")
       .update({ credits: usage.credits - chatCost })
       .eq("user_id", user.id);
 
-    // Prepare context from search results
     const notesContext =
       results && results.length > 0
         ? results
@@ -134,10 +127,7 @@ export async function POST(request: NextRequest) {
             .join("\n\n---\n\n")
         : "No relevant notes found in the collection.";
 
-    // Convert UI messages to model messages and add search context
     const modelMessages = convertToModelMessages(messages.slice(0, -1));
-
-    // Stream response
     const result = streamText({
       model: google(config.ai.model),
       temperature: config.ai.temperature,
@@ -171,25 +161,21 @@ Only say "no notes found" if the search results section explicitly says "No rele
         },
       ],
       async onFinish({ text }) {
-        // Save messages after streaming completes (non-blocking)
         if (conversationId) {
           const supabase = await createClient();
 
-          // Save user message
           await supabase.from("messages").insert({
             conversation_id: conversationId,
             role: "user",
             content: query,
           });
 
-          // Save assistant message
           await supabase.from("messages").insert({
             conversation_id: conversationId,
             role: "assistant",
             content: text,
           });
 
-          // Update conversation timestamp
           await supabase
             .from("conversations")
             .update({ updated_at: new Date().toISOString() })

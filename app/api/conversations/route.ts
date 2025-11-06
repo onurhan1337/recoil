@@ -1,17 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      return errorResponse("Unauthorized", 401);
     }
 
     const { data: conversations, error } = await supabase
@@ -21,33 +18,23 @@ export async function GET(request: NextRequest) {
       .order("updated_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch conversations", details: error.message },
-        { status: 500 }
-      );
+      throw error;
     }
 
-    return NextResponse.json({ conversations });
+    return successResponse({ conversations });
   } catch (error) {
     console.error("Error fetching conversations:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return errorResponse("Internal server error");
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      return errorResponse("Unauthorized", 401);
     }
 
     const { title } = await request.json();
@@ -62,18 +49,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to create conversation", details: error.message },
-        { status: 500 }
-      );
+      throw error;
     }
 
-    return NextResponse.json({ conversation });
+    return successResponse({ conversation });
   } catch (error) {
     console.error("Error creating conversation:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return errorResponse("Internal server error");
   }
 }

@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
 
 export async function GET(
   request: NextRequest,
@@ -7,16 +8,13 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient();
-    const { id } = await params;
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      return errorResponse("Unauthorized", 401);
     }
+
+    const { id } = await params;
 
     const { data: messages, error } = await supabase
       .from("messages")
@@ -25,19 +23,13 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch messages", details: error.message },
-        { status: 500 }
-      );
+      throw error;
     }
 
-    return NextResponse.json({ messages });
+    return successResponse({ messages });
   } catch (error) {
     console.error("Error fetching messages:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return errorResponse("Internal server error");
   }
 }
 
@@ -47,16 +39,13 @@ export async function DELETE(
 ) {
   try {
     const supabase = await createClient();
-    const { id } = await params;
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      return errorResponse("Unauthorized", 401);
     }
+
+    const { id } = await params;
 
     const { error } = await supabase
       .from("conversations")
@@ -65,19 +54,13 @@ export async function DELETE(
       .eq("user_id", user.id);
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to delete conversation", details: error.message },
-        { status: 500 }
-      );
+      throw error;
     }
 
-    return NextResponse.json({ success: true });
+    return successResponse({ success: true });
   } catch (error) {
     console.error("Error deleting conversation:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return errorResponse("Internal server error");
   }
 }
 
@@ -87,17 +70,13 @@ export async function PATCH(
 ) {
   try {
     const supabase = await createClient();
-    const { id } = await params;
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      return errorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const { title } = await request.json();
 
     const { data: conversation, error } = await supabase
@@ -109,18 +88,12 @@ export async function PATCH(
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to update conversation", details: error.message },
-        { status: 500 }
-      );
+      throw error;
     }
 
-    return NextResponse.json({ conversation });
+    return successResponse({ conversation });
   } catch (error) {
     console.error("Error updating conversation:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return errorResponse("Internal server error");
   }
 }
