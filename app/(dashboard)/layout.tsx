@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Home, BookOpen, Plus, Settings, Brain, Coins } from "lucide-react";
+import { Home, BookOpen, Plus, Settings, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { config } from "@/lib/config";
 import { NewNoteDialog } from "@/components/new-note-dialog";
+import { CreditDisplay } from "@/components/credit-display";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 import { useUser, useUsage } from "@/lib/api/hooks";
 
 const navigation = [
@@ -51,12 +52,18 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-background">
-      <NewNoteDialog open={isNewNoteDialogOpen} onOpenChange={setIsNewNoteDialogOpen} />
+      <NewNoteDialog
+        open={isNewNoteDialogOpen}
+        onOpenChange={setIsNewNoteDialogOpen}
+      />
 
       {/* Sidebar */}
       <aside className="flex w-64 flex-col border-r">
         <div className="flex h-14 items-center px-4 border-b">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-sm">
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-semibold text-sm"
+          >
             <Brain className="h-5 w-5" />
             Recoil
           </Link>
@@ -98,14 +105,15 @@ export default function DashboardLayout({
 
         <div className="border-t p-3 space-y-3">
           <div className="rounded-md bg-muted/50 p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <Coins className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground font-medium">Credits</span>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-semibold tabular-nums">{usage?.credits ?? 0}</span>
-              <span className="text-xs text-muted-foreground">/ {config.credits.initial}</span>
-            </div>
+            <CreditDisplay
+              credits={usage?.credits ?? 0}
+              plan={usage?.plan ?? "free"}
+              monthlyLimit={usage?.monthly_credits_limit ?? 500}
+              showUpgrade={true}
+            />
+          </div>
+          <div className="pt-2">
+            <FeedbackDialog />
           </div>
           <button
             onClick={handleSignOut}
@@ -116,11 +124,17 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-auto bg-background">
-        <div className="mx-auto max-w-4xl h-full p-8 lg:p-12">
-          {children}
-        </div>
+      <main
+        className="flex-1 overflow-auto bg-background"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: "24px 24px",
+        }}
+      >
+        <div className="mx-auto max-w-4xl h-full p-8 lg:p-12">{children}</div>
       </main>
     </div>
   );

@@ -6,18 +6,17 @@ import { getTimeBasedGreeting } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data: user } = useUser();
-  const { text, Icon } = getTimeBasedGreeting(user || null);
+  const { text } = getTimeBasedGreeting(user || null);
 
   return (
     <div className="h-full flex flex-col">
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Icon className="h-7 w-7" />
-          <h1 className="font-lora text-3xl font-semibold tracking-tight">
+        <div className="mb-2">
+          <h1 className="text-3xl font-lora font-semibold tracking-tight">
             {text}
           </h1>
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground tracking-wide font-lora text-sm">
           Ask questions and explore your thoughts using AI-powered search
         </p>
       </div>

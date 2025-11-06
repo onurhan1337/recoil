@@ -30,7 +30,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${lora.variable} antialiased`}>
         <Providers>
           {children}
-          <Toaster />
+          <Toaster richColors />
         </Providers>
       </body>
     </html>
