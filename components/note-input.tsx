@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { TiptapEditor } from "@/components/tiptap-editor";
 import { toast } from "sonner";
 
 interface NoteInputProps {
@@ -51,27 +50,23 @@ export function NoteInput({ onNoteCreated }: NoteInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="relative">
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Write a note to remember..."
-          className="min-h-[120px] resize-none bg-background/50 border-border/50 focus:border-border transition-colors"
-          disabled={isLoading}
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <TiptapEditor
+        content={content}
+        onChange={setContent}
+        placeholder="Write your note..."
+      />
 
       <div className="flex justify-end">
-        <Button
+        <button
           type="submit"
           disabled={isLoading || !content.trim()}
-          className="gap-2"
+          className="inline-flex items-center justify-center gap-2 px-4 h-9 text-sm font-medium rounded-md bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Saving
+              Saving...
             </>
           ) : (
             <>
@@ -79,7 +74,7 @@ export function NoteInput({ onNoteCreated }: NoteInputProps) {
               Save Note
             </>
           )}
-        </Button>
+        </button>
       </div>
     </form>
   );
