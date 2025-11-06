@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/onurhan1337/recoil#readme",
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.63",
     "@radix-ui/react-slot": "^1.2.4",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.79.0",
