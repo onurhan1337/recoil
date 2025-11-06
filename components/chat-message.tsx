@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 
 interface NoteCard {
   id: string;
+  category: string;
+  label: string;
   content: string;
   similarity: number;
 }
@@ -25,21 +27,34 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
   }
 
   const parseNotesFromContent = (text: string) => {
-    const notePattern = /\[NOTE:([^\]]+)\]/g;
-    const notes: NoteCard[] = [];
-    let match;
+    const metadataMatch = text.match(/<!--NOTES_METADATA:(.*?)-->/);
+    let notesData: NoteCard[] = [];
 
-    while ((match = notePattern.exec(text)) !== null) {
-      const [id, similarity, ...contentParts] = match[1].split(":");
-      notes.push({
-        id,
-        similarity: parseFloat(similarity),
-        content: contentParts.join(":"),
-      });
+    if (metadataMatch) {
+      try {
+        notesData = JSON.parse(metadataMatch[1]);
+      } catch (e) {
+        console.error("Failed to parse notes metadata:", e);
+      }
     }
 
-    const cleanText = text.replace(notePattern, "");
-    return { cleanText, notes };
+    const cleanText = text.replace(/<!--NOTES_METADATA:.*?-->/g, "").trim();
+
+    const noteRefPattern = /\[NOTE_REF:([^\]]+)\]/g;
+    const noteRefs: string[] = [];
+    let match;
+
+    while ((match = noteRefPattern.exec(cleanText)) !== null) {
+      noteRefs.push(match[1]);
+    }
+
+    const textWithoutRefs = cleanText.replace(noteRefPattern, "").trim();
+
+    const notes = noteRefs
+      .map(id => notesData.find(note => note.id === id))
+      .filter((note): note is NoteCard => note !== undefined);
+
+    return { cleanText: textWithoutRefs, notes };
   };
 
   const { cleanText, notes } = parseNotesFromContent(content);
@@ -93,20 +108,30 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
 
       {notes.length > 0 && (
         <div className="space-y-2 mt-3">
-          {notes.map((note, idx) => (
+          {notes.map((note) => (
             <div
-              key={note.id || idx}
+              key={note.id}
               className="rounded-lg border bg-card p-3 text-card-foreground shadow-sm"
             >
               <div className="flex items-start justify-between gap-2 mb-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Note {idx + 1}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-foreground">
+                    {note.category}
+                  </span>
+                  {note.label && (
+                    <>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="text-xs text-muted-foreground">
+                        {note.label}
+                      </span>
+                    </>
+                  )}
+                </div>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                   {(note.similarity * 100).toFixed(0)}% match
                 </span>
               </div>
-              <p className="text-sm whitespace-pre-wrap text-foreground">
+              <p className="text-sm whitespace-pre-wrap text-foreground leading-relaxed">
                 {note.content}
               </p>
             </div>

@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState, useRef, useEffect } from "react";
-import { ArrowUp, History, Plus } from "lucide-react";
+import { ArrowUp, Search, FileText, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatHistorySidebar } from "./chat-history-sidebar";
 import { ChatMessage } from "./chat-message";
@@ -64,30 +64,71 @@ export function ChatBox() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between gap-2 px-6 py-4 border-b">
-        <div className="flex items-center gap-2">
-          <ChatHistorySidebar
-            onSelectConversation={loadConversation}
-            onNewConversation={handleNewConversation}
-            currentConversationId={conversationId}
-          />
-          <button
-            onClick={handleNewConversation}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-muted transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">New Chat</span>
-          </button>
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto px-6 py-8">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-muted-foreground max-w-md text-center">
-              Ask me anything about your notes. I can help you find, summarize,
-              and explore your thoughts.
-            </p>
+            <div className="max-w-2xl w-full space-y-8">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-lora font-semibold tracking-tight">
+                    Ask me anything about your notes
+                  </h2>
+                  <p className="text-sm text-muted-foreground font-lora max-w-md mx-auto leading-relaxed">
+                    I can help you find, summarize, and explore your thoughts
+                    with natural language.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+                <button
+                  onClick={() => setInput("What are my recent notes about?")}
+                  className="group flex flex-col items-start gap-2 p-4 rounded-lg border bg-card hover:bg-muted/50 hover:border-foreground/20 transition-all text-left"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Search className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors font-lora">
+                      Search
+                    </span>
+                  </div>
+                  <p className="text-sm font-lora leading-relaxed">
+                    What are my recent notes about?
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => setInput("Summarize my notes from this week")}
+                  className="group flex flex-col items-start gap-2 p-4 rounded-lg border bg-card hover:bg-muted/50 hover:border-foreground/20 transition-all text-left"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors font-lora">
+                      Summarize
+                    </span>
+                  </div>
+                  <p className="text-sm font-lora leading-relaxed">
+                    Summarize my notes from this week
+                  </p>
+                </button>
+
+                <button
+                  onClick={() =>
+                    setInput("What insights can you find in my notes?")
+                  }
+                  className="group flex flex-col items-start gap-2 p-4 rounded-lg border bg-card hover:bg-muted/50 hover:border-foreground/20 transition-all text-left"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Lightbulb className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors font-lora">
+                      Explore
+                    </span>
+                  </div>
+                  <p className="text-sm font-lora leading-relaxed">
+                    What insights can you find in my notes?
+                  </p>
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-6">
@@ -143,11 +184,22 @@ export function ChatBox() {
                 <div className="inline-block rounded-lg px-4 py-3 bg-muted/50">
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
-                      <div className="w-2 h-2 rounded-full bg-foreground/60 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <div className="w-2 h-2 rounded-full bg-foreground/60 animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <div className="w-2 h-2 rounded-full bg-foreground/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+                      <div
+                        className="w-2 h-2 rounded-full bg-foreground/60 animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <div
+                        className="w-2 h-2 rounded-full bg-foreground/60 animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <div
+                        className="w-2 h-2 rounded-full bg-foreground/60 animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
                     </div>
-                    <span className="text-xs text-muted-foreground ml-1">Searching notes...</span>
+                    <span className="text-xs text-muted-foreground ml-1">
+                      Searching notes...
+                    </span>
                   </div>
                 </div>
               </div>
@@ -180,6 +232,13 @@ export function ChatBox() {
               >
                 <ArrowUp className="h-4 w-4" />
               </button>
+            </div>
+            <div className="mt-3 flex justify-center">
+              <ChatHistorySidebar
+                onSelectConversation={loadConversation}
+                onNewConversation={handleNewConversation}
+                currentConversationId={conversationId}
+              />
             </div>
           </div>
         </form>
