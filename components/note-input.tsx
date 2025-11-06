@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { TiptapEditor } from "@/components/tiptap-editor";
 import { toast } from "sonner";
+import { useCreateNote } from "@/lib/api/hooks";
 
 interface NoteInputProps {
   onNoteCreated?: () => void;
@@ -11,7 +12,7 @@ interface NoteInputProps {
 
 export function NoteInput({ onNoteCreated }: NoteInputProps) {
   const [content, setContent] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const createNoteMutation = useCreateNote();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,20 +22,8 @@ export function NoteInput({ onNoteCreated }: NoteInputProps) {
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      const response = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to create note");
-      }
-
+      await createNoteMutation.mutateAsync(content);
       toast.success("Note saved successfully");
       setContent("");
       onNoteCreated?.();
@@ -44,8 +33,6 @@ export function NoteInput({ onNoteCreated }: NoteInputProps) {
       } else {
         toast.error("An unexpected error occurred");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -60,10 +47,10 @@ export function NoteInput({ onNoteCreated }: NoteInputProps) {
       <div className="flex justify-end">
         <button
           type="submit"
-          disabled={isLoading || !content.trim()}
+          disabled={createNoteMutation.isPending || !content.trim()}
           className="inline-flex items-center justify-center gap-2 px-4 h-9 text-sm font-medium rounded-md bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? (
+          {createNoteMutation.isPending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Saving...

@@ -64,7 +64,6 @@ export function ChatBox() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with History Button */}
       <div className="flex items-center justify-between gap-2 px-6 py-4 border-b">
         <div className="flex items-center gap-2">
           <ChatHistorySidebar
@@ -82,7 +81,6 @@ export function ChatBox() {
         </div>
       </div>
 
-      {/* Messages Container */}
       <div className="flex-1 overflow-y-auto px-6 py-8">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -159,7 +157,6 @@ export function ChatBox() {
         )}
       </div>
 
-      {/* Input Area */}
       <div className="border-t px-6 py-4">
         <form onSubmit={handleSubmit}>
           <div className="max-w-3xl mx-auto">

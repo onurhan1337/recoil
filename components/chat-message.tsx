@@ -24,8 +24,6 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
     );
   }
 
-  // Parse note cards from the content
-  // Format: [NOTE:id:similarity:content]
   const parseNotesFromContent = (text: string) => {
     const notePattern = /\[NOTE:([^\]]+)\]/g;
     const notes: NoteCard[] = [];
@@ -40,7 +38,6 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
       });
     }
 
-    // Remove note markers from text
     const cleanText = text.replace(notePattern, "");
     return { cleanText, notes };
   };
@@ -53,7 +50,6 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            // Style links
             a: ({ node, ...props }) => (
               <a
                 {...props}
@@ -62,7 +58,6 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
                 rel="noopener noreferrer"
               />
             ),
-            // Style code blocks
             code: ({ node, className, children, ...props }: any) => {
               const isInline = !className || !className.includes("language-");
               return isInline ? (
@@ -81,14 +76,12 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
                 </code>
               );
             },
-            // Style lists
             ul: ({ node, ...props }) => (
               <ul {...props} className="list-disc list-inside space-y-1" />
             ),
             ol: ({ node, ...props }) => (
               <ol {...props} className="list-decimal list-inside space-y-1" />
             ),
-            // Style paragraphs
             p: ({ node, ...props }) => (
               <p {...props} className="leading-relaxed" />
             ),
@@ -98,7 +91,6 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
         </ReactMarkdown>
       </div>
 
-      {/* Render note cards if any */}
       {notes.length > 0 && (
         <div className="space-y-2 mt-3">
           {notes.map((note, idx) => (

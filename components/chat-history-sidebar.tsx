@@ -1,19 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { History, Trash2, Plus, Search } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { Trash2, Search } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-
-interface Conversation {
-  id: string;
-  title: string;
-  created_at: string;
-  updated_at: string;
-}
+import { useConversations, useDeleteConversation } from "@/lib/api/hooks";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ChatHistorySidebarProps {
   onSelectConversation: (id: string) => void;
@@ -26,49 +20,20 @@ export function ChatHistorySidebar({
   onNewConversation,
   currentConversationId,
 }: ChatHistorySidebarProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const supabase = createClient();
 
-  const fetchConversations = async () => {
-    try {
-      const response = await fetch("/api/conversations");
-      if (response.ok) {
-        const data = await response.json();
-        setConversations(data.conversations || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch conversations:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchConversations();
-    }
-  }, [isOpen]);
+  const { data: conversations = [], isLoading } = useConversations();
+  const deleteMutation = useDeleteConversation();
+  const queryClient = useQueryClient();
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("Delete this conversation?")) return;
 
-    try {
-      const response = await fetch(`/api/conversations/${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setConversations((prev) => prev.filter((c) => c.id !== id));
-        if (currentConversationId === id) {
-          onNewConversation();
-        }
-      }
-    } catch (error) {
-      console.error("Failed to delete conversation:", error);
+    await deleteMutation.mutateAsync(id);
+    if (currentConversationId === id) {
+      onNewConversation();
     }
   };
 
@@ -77,13 +42,12 @@ export function ChatHistorySidebar({
     setIsOpen(false);
   };
 
-  const handleNewChat = () => {
-    onNewConversation();
-    setIsOpen(false);
-  };
-
-  const filteredConversations = conversations.filter((conv) =>
-    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredConversations = useMemo(
+    () =>
+      conversations.filter((conv) =>
+        conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [conversations, searchQuery]
   );
 
   return (
