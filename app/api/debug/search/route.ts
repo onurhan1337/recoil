@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q') || 'reading list';
 
-    // Generate embedding for the query
     const queryEmbedding = await generateEmbedding(query);
 
     console.log('Query:', query);

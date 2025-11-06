@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get all notes for this user
     const { data: notes, error: notesError } = await supabase
       .from('notes')
       .select('id, content, embedding, created_at')

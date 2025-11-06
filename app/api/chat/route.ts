@@ -63,11 +63,12 @@ export async function POST(request: NextRequest) {
 
     const { data: usage, error: usageError } = await supabase
       .from("usage")
-      .select("credits")
+      .select("credits, plan")
       .eq("user_id", user.id)
       .single();
 
-    const chatCost = config.credits.costs.chatMessage;
+    const userPlan = (usage?.plan || "free") as "free" | "pro";
+    const chatCost = config.plans[userPlan].costs.chatMessage;
 
     if (usageError || !usage || usage.credits < chatCost) {
       return new Response(
@@ -121,11 +122,27 @@ export async function POST(request: NextRequest) {
       results && results.length > 0
         ? results
             .map(
-              (note: any, idx: number) =>
-                `[Note ${idx + 1}] ID: ${note.id} | Similarity: ${(note.similarity * 100).toFixed(1)}%\nContent:\n${note.content}`
+              (note: any) => {
+                const category = note.category || "Note";
+                const label = note.label || "";
+                return `[${category}${label ? `: ${label}` : ""}] ID: ${note.id} | Similarity: ${(note.similarity * 100).toFixed(1)}%\nContent:\n${note.content}`;
+              }
             )
             .join("\n\n---\n\n")
         : "No relevant notes found in the collection.";
+
+    const notesJsonForAI =
+      results && results.length > 0
+        ? JSON.stringify(
+            results.map((note: any) => ({
+              id: note.id,
+              category: note.category || "Note",
+              label: note.label || "",
+              content: note.content,
+              similarity: note.similarity,
+            }))
+          )
+        : "[]";
 
     const modelMessages = convertToModelMessages(messages.slice(0, -1));
     const result = streamText({
@@ -133,24 +150,35 @@ export async function POST(request: NextRequest) {
       temperature: config.ai.temperature,
       system: `You are a helpful AI assistant that helps users find and recall information from their personal notes.
 
+USER PLAN: ${userPlan.toUpperCase()}
+${userPlan === "pro" ? "- This user has PRO access with advanced analytics and insights capabilities\n- You can provide deeper analysis, thinking patterns, connections between notes, and personalized insights\n- Proactively offer to analyze their notes for patterns, trends, or connections when relevant" : "- This user is on the FREE plan\n- You can ONLY help them find and recall specific notes\n- DO NOT provide analysis, insights, patterns, trends, or connections between notes\n- If they ask for analysis/insights/patterns, politely say: 'I can help you find specific notes, but analysis and insights are available with the Pro plan. Would you like to search for something specific instead?'"}
+
 RESPONSE FORMAT:
 - Use markdown formatting (bold, italic, lists, etc.)
-- For each matching note, include: [NOTE:id:similarity:content]
+- When referencing notes, use this EXACT format: [NOTE_REF:note_id]
 - Be conversational and helpful
+- The note cards will be displayed automatically by the UI, you just need to mention which notes are relevant
+- At the very END of your response, you MUST include a hidden metadata block in this format:
+  <!--NOTES_METADATA:${notesJsonForAI}-->
 
 CRITICAL INSTRUCTIONS:
 1. ALWAYS check if notes are provided in the search results section below
-2. If ANY notes are provided (even with low similarity >10%), you MUST reference them
-3. When you find relevant notes, include them using the [NOTE:id:similarity:content] format
-4. After listing notes, provide a brief summary or answer the user's question
-5. Be direct - if notes match the query, say "I found your notes about..."
+2. If ANY notes are provided (even with low similarity >10%), you MUST include [NOTE_REF:note_id] markers
+3. Include the note reference marker where you want the note card to appear in your response
+4. After the note markers, provide a brief summary or answer based on the note contents
+5. Be direct - if notes match the query, say "I found X relevant notes:"
+6. ALWAYS include the <!--NOTES_METADATA:--> block at the end (even if empty array)
+${userPlan === "pro" ? "7. For PRO users: Offer insights about patterns, connections between notes, thinking trends, or suggest related areas to explore based on their notes" : "7. For FREE users: NEVER analyze, summarize across multiple notes, identify patterns, or provide insights. Only show matching notes and basic info about what's in them. Redirect analysis requests to Pro upgrade."}
 
 EXAMPLE RESPONSE:
-I found your reading list! Here are the books:
+I found your reading list! Here's what I found:
 
-[NOTE:123:0.95:reading list\n\n* Süreyya Ciliv - fırat demirel\n* Elon Musk - walter isaacson\n* Steve Jobs - walter isaacson]
+[NOTE_REF:123e4567-e89b-12d3-a456-426614174000]
 
-You have several biographies by Walter Isaacson on your list, along with a book about Süreyya Ciliv.
+You have several biographies by Walter Isaacson on your list, including books about Elon Musk and Steve Jobs.
+${userPlan === "pro" ? "\n\n**Pro Insight:** I notice you're interested in tech innovators. You might want to explore connections between these figures and their impact on modern technology." : ""}
+
+<!--NOTES_METADATA:${notesJsonForAI}-->
 
 Only say "no notes found" if the search results section explicitly says "No relevant notes found".`,
       messages: [
