@@ -69,13 +69,12 @@ export default function DashboardLayout({
           </Link>
         </div>
 
-        {/* New Note Button */}
         <div className="p-3 border-b">
           <button
             onClick={() => setIsNewNoteDialogOpen(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-foreground text-background hover:bg-foreground/90 transition-colors"
+            className="group w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full bg-[linear-gradient(to_right,rgb(41_37_36),rgb(68_64_60),rgb(41_37_36))] hover:bg-[linear-gradient(to_right,rgb(28_25_23),rgb(41_37_36),rgb(28_25_23))] text-white shadow-[0_1px_2px_0_rgba(0,0,0,0.05),0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
             New Note
           </button>
         </div>
