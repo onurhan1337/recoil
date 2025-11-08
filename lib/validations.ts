@@ -6,12 +6,12 @@ export const noteSchema = z.object({
     .min(1, "Note content is required")
     .max(10000, "Note content must be less than 10,000 characters")
     .trim(),
-  tags: z.array(z.string().trim()).optional(),
+  tags: z.array(z.string().trim().min(1)).optional().default([]),
 });
 
 export const updateNoteSchema = z.object({
   content: z.string().min(1, "Content is required").max(10000).trim(),
-  tags: z.array(z.string().trim()).optional(),
+  tags: z.array(z.string().trim().min(1)).optional().default([]),
 });
 
 export const searchSchema = z.object({
@@ -23,8 +23,18 @@ export const searchSchema = z.object({
 });
 
 export const notesQuerySchema = z.object({
-  limit: z.coerce.number().int().positive().max(100).default(50),
-  offset: z.coerce.number().int().nonnegative().default(0),
+  limit: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 50))
+    .pipe(z.number().int().positive().max(100)),
+  offset: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 0))
+    .pipe(z.number().int().nonnegative()),
 });
 
 export const emailSchema = z.object({
