@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useUsage } from "@/lib/api/hooks";
+import { isProPlan } from "@/lib/api/utils";
 
 interface UpgradePlanDialogProps {
   trigger?: React.ReactNode;
@@ -19,8 +20,7 @@ interface UpgradePlanDialogProps {
 export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
   const [open, setOpen] = useState(false);
   const { data: usage } = useUsage();
-  const currentPlan = usage?.plan || "free";
-  const isPro = currentPlan === "pro";
+  const isPro = isProPlan(usage?.plan);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -49,7 +49,9 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Free</h3>
                   {!isPro && (
-                    <Badge variant="secondary" className="text-xs">Current</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      Current
+                    </Badge>
                   )}
                 </div>
                 <div className="flex items-baseline gap-1">
@@ -82,7 +84,9 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Pro</h3>
                   {isPro && (
-                    <Badge variant="secondary" className="text-xs">Current</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      Current
+                    </Badge>
                   )}
                 </div>
                 <div className="flex items-baseline gap-1">
@@ -105,15 +109,21 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">Advanced analytics dashboard</span>
+                  <span className="font-medium">
+                    Advanced analytics dashboard
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">AI-powered note connections</span>
+                  <span className="font-medium">
+                    AI-powered note connections
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">Thinking patterns analysis</span>
+                  <span className="font-medium">
+                    Thinking patterns analysis
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
