@@ -11,12 +11,17 @@ export default function SettingsPage() {
   const { data: user } = useUser();
   const { data: usage } = useUsage();
   const { data: notes = [] } = useNotes();
-  const { isExporting, exportAsJSON, exportAsMarkdown } = useExportNotes(notes, user?.email);
+  const { isExporting, exportAsJSON, exportAsMarkdown } = useExportNotes(
+    notes,
+    user?.email
+  );
 
   return (
     <div className="space-y-12">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-medium tracking-tight">Settings</h1>
+        <h1 className="text-2xl tracking-tight font-lora text-foreground font-semibold">
+          Settings
+        </h1>
         <UpgradePlanDialog />
       </div>
 
