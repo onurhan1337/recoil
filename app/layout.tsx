@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import { Inter, Lora } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { configure, withRSCTrace, RSCBoundary } from "quzz";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,7 +21,21 @@ export const metadata: Metadata = {
   description: "Store and search your memories with semantic search",
 };
 
-export default function RootLayout({
+configure({
+  logLevel: "info",
+  outputFormat: "pretty",
+  performance: {
+    enabled: true,
+    warnThreshold: 500,
+    trackMemory: true,
+  },
+  logProps: true,
+  contextTracking: false,
+  enableSnapshots: false,
+  verboseMode: false,
+});
+
+function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -28,11 +43,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${lora.variable} antialiased`}>
-        <Providers>
-          {children}
-          <Toaster richColors />
-        </Providers>
+        <RSCBoundary label="app-content">
+          <Providers>
+            {children}
+            <Toaster richColors />
+          </Providers>
+        </RSCBoundary>
       </body>
     </html>
   );
 }
+
+export default withRSCTrace(RootLayout, {
+  componentName: "RootLayout",
+  performance: { enabled: true, warnThreshold: 100 },
+  logProps: false,
+});
