@@ -33,7 +33,7 @@ export async function DELETE(
     const { data: note, error: fetchError } = await supabase
       .from("notes")
       .select("user_id")
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .single();
 
     if (fetchError || !note) {
@@ -47,7 +47,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from("notes")
       .delete()
-      .eq("id", id);
+      .eq("id", idValidation.data);
 
     if (deleteError) {
       throw deleteError;
@@ -94,7 +94,7 @@ export async function PATCH(
     const { data: existingNote, error: fetchError } = await supabase
       .from("notes")
       .select("user_id, content")
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .single();
 
     if (fetchError || !existingNote) {
@@ -134,7 +134,7 @@ export async function PATCH(
     const { data: updatedNote, error: updateError } = await supabase
       .from("notes")
       .update(updateData)
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .select()
       .single();
 

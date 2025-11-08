@@ -10,6 +10,7 @@ import {
   authenticateUser,
   getUserPlan,
 } from "@/lib/api/utils";
+import { validateRequest, validateQuery } from "@/lib/validation-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = noteSchema.safeParse(body);
+    const validation = validateRequest(noteSchema, body);
 
     if (!validation.success) {
       return errorResponse(
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
         embedding: JSON.stringify(embedding),
         label: metadata.label,
         category: metadata.category,
-        tags: tags?.length ? tags : null,
+        tags: tags.length > 0 ? tags : null,
       })
       .select()
       .single();

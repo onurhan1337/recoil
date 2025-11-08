@@ -30,7 +30,7 @@ export async function POST(
         is_public: true,
         share_token: shareToken,
       })
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .eq("user_id", user.id);
 
     if (error) {
@@ -69,7 +69,7 @@ export async function DELETE(
         is_public: false,
         share_token: null,
       })
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .eq("user_id", user.id);
 
     if (error) {

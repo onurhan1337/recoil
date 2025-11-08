@@ -29,7 +29,7 @@ export async function GET(
     const { data: messages, error } = await supabase
       .from("messages")
       .select("*")
-      .eq("conversation_id", id)
+      .eq("conversation_id", idValidation.data)
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -65,7 +65,7 @@ export async function DELETE(
     const { error } = await supabase
       .from("conversations")
       .delete()
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .eq("user_id", user.id);
 
     if (error) {
@@ -113,7 +113,7 @@ export async function PATCH(
     const { data: conversation, error } = await supabase
       .from("conversations")
       .update({ title, updated_at: new Date().toISOString() })
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .eq("user_id", user.id)
       .select()
       .single();

@@ -39,7 +39,7 @@ export async function GET(
     const { data: currentNote, error: noteError } = await supabase
       .from("notes")
       .select("embedding")
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .eq("user_id", user.id)
       .single();
 
@@ -61,7 +61,7 @@ export async function GET(
     }
 
     const connections = notes
-      .filter((note) => note.id !== id)
+      .filter((note) => note.id !== idValidation.data)
       .slice(0, 5)
       .map((note) => ({
         id: note.id,

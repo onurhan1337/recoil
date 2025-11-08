@@ -1,16 +1,19 @@
 import { z } from "zod";
 
-// UUID validation
 export const uuidSchema = z.string().uuid("Invalid ID format");
 
-// Note schemas
 export const noteSchema = z.object({
   content: z
     .string()
     .min(1, "Note content is required")
     .max(10000, "Note content must be less than 10,000 characters")
     .trim(),
-  tags: z.array(z.string().trim()).optional(),
+  tags: z.array(z.string().trim().min(1)).optional().default([]),
+});
+
+export const updateNoteSchema = z.object({
+  content: z.string().min(1, "Content is required").max(10000).trim(),
+  tags: z.array(z.string().trim().min(1)).optional().default([]),
 });
 
 export const noteUpdateSchema = z.object({
@@ -25,7 +28,6 @@ export const noteUpdateSchema = z.object({
     .transform((val) => (val && val.length > 0 ? val : undefined)),
 });
 
-// Search schema
 export const searchSchema = z.object({
   query: z
     .string()
@@ -34,7 +36,6 @@ export const searchSchema = z.object({
     .trim(),
 });
 
-// Query params schemas
 export const paginationSchema = z.object({
   limit: z
     .string()
@@ -48,7 +49,6 @@ export const paginationSchema = z.object({
     .pipe(z.number().int().min(0)),
 });
 
-// Conversation schemas
 export const conversationCreateSchema = z.object({
   title: z
     .string()
@@ -66,7 +66,6 @@ export const conversationUpdateSchema = z.object({
     .trim(),
 });
 
-// User schemas
 export const displayNameSchema = z.object({
   displayName: z
     .string()
@@ -75,7 +74,6 @@ export const displayNameSchema = z.object({
     .trim(),
 });
 
-// Feedback schemas
 export const feedbackSchema = z.object({
   rating: z
     .number()
@@ -90,7 +88,6 @@ export const feedbackSchema = z.object({
     .nullable(),
 });
 
-// Chat schemas
 export const chatMessagePartSchema = z.object({
   type: z.string(),
   text: z.string(),
@@ -108,7 +105,6 @@ export const chatRequestSchema = z.object({
   conversation_id: z.string().uuid("Invalid conversation ID format").optional(),
 });
 
-// Auth schemas
 export const emailSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase(),
 });
@@ -123,7 +119,6 @@ export const passwordSchema = z.object({
 export const signupSchema = emailSchema.extend(passwordSchema.shape);
 export const loginSchema = emailSchema.extend(passwordSchema.shape);
 
-// Type exports
 export type NoteInput = z.infer<typeof noteSchema>;
 export type NoteUpdateInput = z.infer<typeof noteUpdateSchema>;
 export type SearchInput = z.infer<typeof searchSchema>;
@@ -135,3 +130,9 @@ export type FeedbackInput = z.infer<typeof feedbackSchema>;
 export type ChatRequestInput = z.infer<typeof chatRequestSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type FeedbackInput = z.infer<typeof feedbackSchema>;
+export type UpdateDisplayNameInput = z.infer<typeof updateDisplayNameSchema>;
+export type ConversationInput = z.infer<typeof conversationSchema>;
+export type UpdateConversationInput = z.infer<typeof updateConversationSchema>;
+export type ChatMessageInput = z.infer<typeof chatMessageSchema>;
+export type ChatRequestInput = z.infer<typeof chatRequestSchema>;
