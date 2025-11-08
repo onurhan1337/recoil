@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState, useRef, useEffect } from "react";
-import { ArrowUp, Search, FileText, Lightbulb } from "lucide-react";
+import { ArrowUp, Search, FileText, Lightbulb, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatHistorySidebar } from "./chat-history-sidebar";
 import { ChatMessage } from "./chat-message";
@@ -233,7 +233,14 @@ export function ChatBox() {
                 <ArrowUp className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-3 flex justify-center">
+            <div className="mt-3 flex justify-center items-center gap-3">
+              <button
+                onClick={handleNewConversation}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-lora text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted/50"
+              >
+                <Plus className="h-4 w-4" />
+                New Chat
+              </button>
               <ChatHistorySidebar
                 onSelectConversation={loadConversation}
                 onNewConversation={handleNewConversation}
