@@ -88,3 +88,21 @@ export interface CreateFeedbackResponse {
 export interface FeedbackListResponse {
   feedback: Feedback[];
 }
+
+export interface ChatMessagePart {
+  type: string;
+  text: string;
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  parts: ChatMessagePart[];
+}
+
+export interface SearchNoteResult {
+  id: string;
+  content: string;
+  similarity: number;
+  category?: string | null;
+  label?: string | null;
+}

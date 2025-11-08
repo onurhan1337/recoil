@@ -4,6 +4,7 @@ import { generateEmbedding } from "@/lib/embeddings";
 import { streamText, convertToModelMessages } from "ai";
 import { google } from "@ai-sdk/google";
 import { config } from "@/lib/config";
+import type { ChatMessage, SearchNoteResult } from "@/lib/api/types";
 
 export const maxDuration = 30;
 
@@ -23,9 +24,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { messages, conversation_id }: {
-      messages: any[];
-      conversation_id?: string
+    const {
+      messages,
+      conversation_id,
+    }: {
+      messages: ChatMessage[];
+      conversation_id?: string;
     } = await request.json();
 
     if (!messages || messages.length === 0) {
@@ -38,9 +42,13 @@ export async function POST(request: NextRequest) {
     let conversationId = conversation_id;
 
     if (!conversationId) {
-      const lastUserMessage = messages.findLast((m: any) => m.role === "user");
-      const firstMessageText = lastUserMessage?.parts.find((p: any) => p.type === "text")?.text || "New Conversation";
-      const title = firstMessageText.slice(0, 50) + (firstMessageText.length > 50 ? "..." : "");
+      const lastUserMessage = messages.findLast((m) => m.role === "user");
+      const firstMessageText =
+        lastUserMessage?.parts.find((p) => p.type === "text")?.text ||
+        "New Conversation";
+      const title =
+        firstMessageText.slice(0, 50) +
+        (firstMessageText.length > 50 ? "..." : "");
 
       const { data: newConversation, error: convError } = await supabase
         .from("conversations")
@@ -59,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     const lastMessage = messages[messages.length - 1];
-    const query = lastMessage.parts.find((p: any) => p.type === "text")?.text || "";
+    const query = lastMessage.parts.find((p) => p.type === "text")?.text || "";
 
     const { data: usage, error: usageError } = await supabase
       .from("usage")
@@ -99,19 +107,11 @@ export async function POST(request: NextRequest) {
       console.error("Search error:", searchError);
     }
 
-    console.log("\n=== SEARCH DEBUG ===");
-    console.log("Query:", query);
-    console.log("Search results count:", results?.length || 0);
-    console.log("Match threshold:", config.search.matchThreshold);
-    if (results && results.length > 0) {
-      console.log("All results:", results.map((r: any) => ({
-        content: r.content.substring(0, 150) + "...",
-        similarity: (r.similarity * 100).toFixed(1) + "%"
-      })));
-    } else {
-      console.log("NO RESULTS FOUND - This is the problem!");
-    }
-    console.log("===================\n");
+    const displayThreshold = 0.55;
+    const filteredResults =
+      (results as SearchNoteResult[] | null)?.filter(
+        (note) => note.similarity >= displayThreshold
+      ) || [];
 
     await supabase
       .from("usage")
@@ -119,22 +119,24 @@ export async function POST(request: NextRequest) {
       .eq("user_id", user.id);
 
     const notesContext =
-      results && results.length > 0
-        ? results
-            .map(
-              (note: any) => {
-                const category = note.category || "Note";
-                const label = note.label || "";
-                return `[${category}${label ? `: ${label}` : ""}] ID: ${note.id} | Similarity: ${(note.similarity * 100).toFixed(1)}%\nContent:\n${note.content}`;
-              }
-            )
+      filteredResults.length > 0
+        ? filteredResults
+            .map((note) => {
+              const category = note.category || "Note";
+              const label = note.label || "";
+              return `[${category}${label ? `: ${label}` : ""}] ID: ${
+                note.id
+              } | Similarity: ${(note.similarity * 100).toFixed(
+                1
+              )}%\nContent:\n${note.content}`;
+            })
             .join("\n\n---\n\n")
         : "No relevant notes found in the collection.";
 
     const notesJsonForAI =
-      results && results.length > 0
+      filteredResults.length > 0
         ? JSON.stringify(
-            results.map((note: any) => ({
+            filteredResults.map((note) => ({
               id: note.id,
               category: note.category || "Note",
               label: note.label || "",
@@ -144,14 +146,20 @@ export async function POST(request: NextRequest) {
           )
         : "[]";
 
-    const modelMessages = convertToModelMessages(messages.slice(0, -1));
+    const modelMessages = convertToModelMessages(
+      messages.slice(0, -1) as Parameters<typeof convertToModelMessages>[0]
+    );
     const result = streamText({
       model: google(config.ai.model),
       temperature: config.ai.temperature,
       system: `You are a helpful AI assistant that helps users find and recall information from their personal notes.
 
 USER PLAN: ${userPlan.toUpperCase()}
-${userPlan === "pro" ? "- This user has PRO access with advanced analytics and insights capabilities\n- You can provide deeper analysis, thinking patterns, connections between notes, and personalized insights\n- Proactively offer to analyze their notes for patterns, trends, or connections when relevant" : "- This user is on the FREE plan\n- You can ONLY help them find and recall specific notes\n- DO NOT provide analysis, insights, patterns, trends, or connections between notes\n- If they ask for analysis/insights/patterns, politely say: 'I can help you find specific notes, but analysis and insights are available with the Pro plan. Would you like to search for something specific instead?'"}
+${
+  userPlan === "pro"
+    ? "- This user has PRO access with advanced analytics and insights capabilities\n- You can provide deeper analysis, thinking patterns, connections between notes, and personalized insights\n- Proactively offer to analyze their notes for patterns, trends, or connections when relevant"
+    : "- This user is on the FREE plan\n- You can ONLY help them find and recall specific notes\n- DO NOT provide analysis, insights, patterns, trends, or connections between notes\n- If they ask for analysis/insights/patterns, politely say: 'I can help you find specific notes, but analysis and insights are available with the Pro plan. Would you like to search for something specific instead?'"
+}
 
 RESPONSE FORMAT:
 - Use markdown formatting (bold, italic, lists, etc.)
@@ -163,12 +171,17 @@ RESPONSE FORMAT:
 
 CRITICAL INSTRUCTIONS:
 1. ALWAYS check if notes are provided in the search results section below
-2. If ANY notes are provided (even with low similarity >10%), you MUST include [NOTE_REF:note_id] markers
-3. Include the note reference marker where you want the note card to appear in your response
-4. After the note markers, provide a brief summary or answer based on the note contents
-5. Be direct - if notes match the query, say "I found X relevant notes:"
-6. ALWAYS include the <!--NOTES_METADATA:--> block at the end (even if empty array)
-${userPlan === "pro" ? "7. For PRO users: Offer insights about patterns, connections between notes, thinking trends, or suggest related areas to explore based on their notes" : "7. For FREE users: NEVER analyze, summarize across multiple notes, identify patterns, or provide insights. Only show matching notes and basic info about what's in them. Redirect analysis requests to Pro upgrade."}
+2. Only notes with similarity >=55% are shown - these are highly relevant matches
+3. If ANY notes are provided, you MUST include [NOTE_REF:note_id] markers
+4. Include the note reference marker where you want the note card to appear in your response
+5. After the note markers, provide a brief summary or answer based on the note contents
+6. Be direct - if notes match the query, say "I found X relevant notes:"
+7. ALWAYS include the <!--NOTES_METADATA:--> block at the end (even if empty array)
+${
+  userPlan === "pro"
+    ? "8. For PRO users: Offer insights about patterns, connections between notes, thinking trends, or suggest related areas to explore based on their notes"
+    : "8. For FREE users: NEVER analyze, summarize across multiple notes, identify patterns, or provide insights. Only show matching notes and basic info about what's in them. Redirect analysis requests to Pro upgrade."
+}
 
 EXAMPLE RESPONSE:
 I found your reading list! Here's what I found:
@@ -176,7 +189,11 @@ I found your reading list! Here's what I found:
 [NOTE_REF:123e4567-e89b-12d3-a456-426614174000]
 
 You have several biographies by Walter Isaacson on your list, including books about Elon Musk and Steve Jobs.
-${userPlan === "pro" ? "\n\n**Pro Insight:** I notice you're interested in tech innovators. You might want to explore connections between these figures and their impact on modern technology." : ""}
+${
+  userPlan === "pro"
+    ? "\n\n**Pro Insight:** I notice you're interested in tech innovators. You might want to explore connections between these figures and their impact on modern technology."
+    : ""
+}
 
 <!--NOTES_METADATA:${notesJsonForAI}-->
 

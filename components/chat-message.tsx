@@ -20,9 +20,7 @@ interface ChatMessageProps {
 export function ChatMessage({ content, role }: ChatMessageProps) {
   if (role === "user") {
     return (
-      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-        {content}
-      </p>
+      <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
     );
   }
 
@@ -51,7 +49,7 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
     const textWithoutRefs = cleanText.replace(noteRefPattern, "").trim();
 
     const notes = noteRefs
-      .map(id => notesData.find(note => note.id === id))
+      .map((id) => notesData.find((note) => note.id === id))
       .filter((note): note is NoteCard => note !== undefined);
 
     return { cleanText: textWithoutRefs, notes };
@@ -108,9 +106,9 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
 
       {notes.length > 0 && (
         <div className="space-y-2 mt-3">
-          {notes.map((note) => (
+          {notes.map((note, index) => (
             <div
-              key={note.id}
+              key={index}
               className="rounded-lg border bg-card p-3 text-card-foreground shadow-sm"
             >
               <div className="flex items-start justify-between gap-2 mb-2">
