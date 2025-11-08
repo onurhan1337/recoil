@@ -3,11 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
 import { generateNoteMetadata } from "@/lib/ai";
 import { config } from "@/lib/config";
-import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
+import {
+  errorResponse,
+  successResponse,
+  authenticateUser,
+} from "@/lib/api/utils";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -17,7 +21,7 @@ export async function DELETE(
       return errorResponse("Unauthorized", 401);
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const { data: note, error: fetchError } = await supabase
       .from("notes")
@@ -51,7 +55,7 @@ export async function DELETE(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -61,7 +65,7 @@ export async function PATCH(
       return errorResponse("Unauthorized", 401);
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { content } = body;
 
