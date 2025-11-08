@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { config } from "@/lib/config";
-import { authenticateUser, errorResponse, successResponse } from "@/lib/api/utils";
+import { authenticateUser, errorResponse, successResponse, isProPlan } from "@/lib/api/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,9 +20,7 @@ export async function POST(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    const isPro = usage?.plan === "pro";
-
-    if (!isPro) {
+    if (!isProPlan(usage?.plan)) {
       return errorResponse("This feature requires a Pro subscription", 403);
     }
 
@@ -73,6 +71,20 @@ Keep your response concise (3-4 sentences max), insightful, and actionable. Use 
 Response format:
 Your main focus has been on [themes]. You're showing [pattern type] thinking with [observation]. [Insight or recommendation].`,
     });
+
+    const { error: insertError } = await supabase
+      .from("analyses")
+      .insert({
+        user_id: user.id,
+        insights: result.text,
+        note_count: recentNotes.length,
+        start_date: tenDaysAgo.toISOString(),
+        end_date: new Date().toISOString(),
+      });
+
+    if (insertError) {
+      console.error("Error saving analysis:", insertError);
+    }
 
     return successResponse({
       insights: result.text,

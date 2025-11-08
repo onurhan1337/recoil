@@ -68,3 +68,7 @@ export function calculateCreditPercentage(
 ): number {
   return (credits / monthlyLimit) * 100;
 }
+
+export function isProPlan(plan: string | undefined | null): boolean {
+  return plan === "pro";
+}

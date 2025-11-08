@@ -66,3 +66,7 @@ export async function decrementCredits(
   if (error) throw error;
   return data;
 }
+
+export function isProPlan(plan: string | undefined | null): boolean {
+  return plan === "pro";
+}

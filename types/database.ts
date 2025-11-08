@@ -12,6 +12,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      analyses: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          insights: string
+          is_public: boolean | null
+          metadata: Json | null
+          note_count: number
+          share_token: string | null
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          insights: string
+          is_public?: boolean | null
+          metadata?: Json | null
+          note_count: number
+          share_token?: string | null
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          insights?: string
+          is_public?: boolean | null
+          metadata?: Json | null
+          note_count?: number
+          share_token?: string | null
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -32,6 +71,30 @@ export type Database = {
           id?: string
           title?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
           user_id?: string
         }
         Relationships: []
@@ -76,6 +139,8 @@ export type Database = {
           embedding: string | null
           id: string
           label: string | null
+          related_notes: string[] | null
+          tags: string[] | null
           updated_at: string
           user_id: string
         }
@@ -86,6 +151,8 @@ export type Database = {
           embedding?: string | null
           id?: string
           label?: string | null
+          related_notes?: string[] | null
+          tags?: string[] | null
           updated_at?: string
           user_id: string
         }
@@ -96,6 +163,8 @@ export type Database = {
           embedding?: string | null
           id?: string
           label?: string | null
+          related_notes?: string[] | null
+          tags?: string[] | null
           updated_at?: string
           user_id?: string
         }
@@ -141,14 +210,16 @@ export type Database = {
     Functions: {
       search_notes: {
         Args: {
-          match_count?: number
-          match_threshold?: number
+          match_count: number
+          match_threshold: number
           query_embedding: string
         }
         Returns: {
+          category: string
           content: string
           created_at: string
           id: string
+          label: string
           similarity: number
         }[]
       }
