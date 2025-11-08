@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
 import { updateConversationSchema, uuidSchema } from "@/lib/validations";
+import { validateRequest, validateParams } from "@/lib/validation-utils";
 
 export async function GET(
   request: NextRequest,
@@ -16,10 +17,10 @@ export async function GET(
     }
 
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "conversation ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid conversation ID", 400);
+      return idValidation.response;
     }
 
     const { data: messages, error } = await supabase
@@ -52,10 +53,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "conversation ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid conversation ID", 400);
+      return idValidation.response;
     }
 
     const { error } = await supabase
@@ -88,17 +89,17 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "conversation ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid conversation ID", 400);
+      return idValidation.response;
     }
 
     const body = await request.json();
-    const validation = updateConversationSchema.safeParse(body);
+    const validation = validateRequest(updateConversationSchema, body);
 
     if (!validation.success) {
-      return errorResponse("Invalid request", 400);
+      return validation.response;
     }
 
     const { title } = validation.data;

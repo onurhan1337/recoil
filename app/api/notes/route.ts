@@ -10,6 +10,7 @@ import {
   authenticateUser,
   getUserPlan,
 } from "@/lib/api/utils";
+import { validateRequest, validateQuery } from "@/lib/validation-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,10 +22,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = noteSchema.safeParse(body);
+    const validation = validateRequest(noteSchema, body);
 
     if (!validation.success) {
-      return errorResponse("Invalid request", 400);
+      return validation.response;
     }
 
     const { content, tags } = validation.data;
@@ -98,10 +99,10 @@ export async function GET(request: NextRequest) {
       offset: searchParams.get("offset"),
     };
 
-    const validation = notesQuerySchema.safeParse(queryParams);
+    const validation = validateQuery(notesQuerySchema, queryParams);
 
     if (!validation.success) {
-      return errorResponse("Invalid query parameters", 400);
+      return validation.response;
     }
 
     const { limit, offset } = validation.data;

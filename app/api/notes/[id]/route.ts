@@ -10,6 +10,7 @@ import {
   getUserPlan,
 } from "@/lib/api/utils";
 import { updateNoteSchema, uuidSchema } from "@/lib/validations";
+import { validateRequest, validateParams } from "@/lib/validation-utils";
 
 export async function DELETE(
   request: NextRequest,
@@ -24,10 +25,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "note ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid note ID", 400);
+      return idValidation.response;
     }
 
     const { data: note, error: fetchError } = await supabase
@@ -73,17 +74,17 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "note ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid note ID", 400);
+      return idValidation.response;
     }
 
     const body = await request.json();
-    const validation = updateNoteSchema.safeParse(body);
+    const validation = validateRequest(updateNoteSchema, body);
 
     if (!validation.success) {
-      return errorResponse("Invalid request", 400);
+      return validation.response;
     }
 
     const { content, tags } = validation.data;

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
 import { feedbackSchema } from "@/lib/validations";
+import { validateRequest } from "@/lib/validation-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,10 +14,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = feedbackSchema.safeParse(body);
+    const validation = validateRequest(feedbackSchema, body);
 
     if (!validation.success) {
-      return errorResponse("Invalid request", 400);
+      return validation.response;
     }
 
     const { rating, comment } = validation.data;

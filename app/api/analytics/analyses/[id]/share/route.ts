@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { authenticateUser, errorResponse, successResponse } from "@/lib/api/utils";
 import { uuidSchema } from "@/lib/validations";
+import { validateParams } from "@/lib/validation-utils";
 
 export async function POST(
   request: NextRequest,
@@ -9,10 +10,10 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "analysis ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid analysis ID", 400);
+      return idValidation.response;
     }
 
     const supabase = await createClient();
@@ -50,10 +51,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "analysis ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid analysis ID", 400);
+      return idValidation.response;
     }
 
     const supabase = await createClient();
