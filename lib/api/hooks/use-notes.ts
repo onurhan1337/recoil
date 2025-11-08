@@ -5,6 +5,14 @@ import { USAGE_QUERY_KEY } from "./use-usage";
 
 export const NOTES_QUERY_KEY = ["notes"] as const;
 
+export interface NotesFilters {
+  search?: string;
+  category?: string;
+  tag?: string;
+  dateRange?: "week" | "month" | "all";
+  sortBy?: "newest" | "oldest" | "category";
+}
+
 export function useNotes() {
   return useQuery({
     queryKey: NOTES_QUERY_KEY,
@@ -17,11 +25,12 @@ export function useCreateNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (content: string) =>
-      apiPost<CreateNoteResponse>("/api/notes", { content }),
+    mutationFn: ({ content, tags }: { content: string; tags?: string[] }) =>
+      apiPost<CreateNoteResponse>("/api/notes", { content, tags }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
   });
 }
@@ -30,8 +39,7 @@ export function useDeleteNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (noteId: string) =>
-      apiDelete(`/api/notes/${noteId}`),
+    mutationFn: (noteId: string) => apiDelete(`/api/notes/${noteId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
     },
@@ -42,11 +50,12 @@ export function useUpdateNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ noteId, content }: { noteId: string; content: string }) =>
-      apiPatch<CreateNoteResponse>(`/api/notes/${noteId}`, { content }),
+    mutationFn: ({ noteId, content, tags }: { noteId: string; content: string; tags?: string[] }) =>
+      apiPatch<CreateNoteResponse>(`/api/notes/${noteId}`, { content, tags }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
   });
 }
