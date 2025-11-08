@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
+import { updateConversationSchema, uuidSchema } from "@/lib/validations";
 
 export async function GET(
   request: NextRequest,
@@ -15,11 +16,16 @@ export async function GET(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid conversation ID", 400);
+    }
 
     const { data: messages, error } = await supabase
       .from("messages")
       .select("*")
-      .eq("conversation_id", id)
+      .eq("conversation_id", idValidation.data)
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -46,11 +52,16 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid conversation ID", 400);
+    }
 
     const { error } = await supabase
       .from("conversations")
       .delete()
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .eq("user_id", user.id);
 
     if (error) {
@@ -77,12 +88,25 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const { title } = await request.json();
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid conversation ID", 400);
+    }
+
+    const body = await request.json();
+    const validation = updateConversationSchema.safeParse(body);
+
+    if (!validation.success) {
+      return errorResponse("Invalid request", 400);
+    }
+
+    const { title } = validation.data;
 
     const { data: conversation, error } = await supabase
       .from("conversations")
       .update({ title, updated_at: new Date().toISOString() })
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .eq("user_id", user.id)
       .select()
       .single();

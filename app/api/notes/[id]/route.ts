@@ -9,6 +9,7 @@ import {
   authenticateUser,
   getUserPlan,
 } from "@/lib/api/utils";
+import { updateNoteSchema, uuidSchema } from "@/lib/validations";
 
 export async function DELETE(
   request: NextRequest,
@@ -23,11 +24,16 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid note ID", 400);
+    }
 
     const { data: note, error: fetchError } = await supabase
       .from("notes")
       .select("user_id")
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .single();
 
     if (fetchError || !note) {
@@ -41,7 +47,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from("notes")
       .delete()
-      .eq("id", id);
+      .eq("id", idValidation.data);
 
     if (deleteError) {
       throw deleteError;
@@ -67,21 +73,25 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid note ID", 400);
+    }
+
     const body = await request.json();
-    const { content, tags } = body;
+    const validation = updateNoteSchema.safeParse(body);
 
-    if (!content || typeof content !== "string") {
-      return errorResponse("Content is required", 400);
+    if (!validation.success) {
+      return errorResponse("Invalid request", 400);
     }
 
-    if (tags !== undefined && !Array.isArray(tags)) {
-      return errorResponse("Tags must be an array", 400);
-    }
+    const { content, tags } = validation.data;
 
     const { data: existingNote, error: fetchError } = await supabase
       .from("notes")
       .select("user_id, content")
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .single();
 
     if (fetchError || !existingNote) {
@@ -121,7 +131,7 @@ export async function PATCH(
     const { data: updatedNote, error: updateError } = await supabase
       .from("notes")
       .update(updateData)
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .select()
       .single();
 

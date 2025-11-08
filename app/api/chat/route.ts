@@ -7,6 +7,7 @@ import { config } from "@/lib/config";
 import type { ChatMessage, SearchNoteResult } from "@/lib/api/types";
 import { isTimeBasedQuery, getDateRange } from "@/lib/utils/query-helpers";
 import { getUserPlan } from "@/lib/api/utils";
+import { chatRequestSchema } from "@/lib/validations";
 
 export const maxDuration = 30;
 
@@ -26,20 +27,23 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const {
-      messages,
-      conversation_id,
-    }: {
-      messages: ChatMessage[];
-      conversation_id?: string;
-    } = await request.json();
+    const body = await request.json();
+    const validation = chatRequestSchema.safeParse(body);
 
-    if (!messages || messages.length === 0) {
-      return new Response(JSON.stringify({ error: "No messages provided" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request",
+          details: validation.error.format()
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
+
+    const { messages, conversation_id } = validation.data;
 
     let conversationId = conversation_id;
 

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
 import { generateNoteMetadata } from "@/lib/ai";
-import { noteSchema } from "@/lib/validations";
+import { noteSchema, notesQuerySchema } from "@/lib/validations";
 import { config } from "@/lib/config";
 import {
   errorResponse,
@@ -93,8 +93,18 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "50");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const queryParams = {
+      limit: searchParams.get("limit"),
+      offset: searchParams.get("offset"),
+    };
+
+    const validation = notesQuerySchema.safeParse(queryParams);
+
+    if (!validation.success) {
+      return errorResponse("Invalid query parameters", 400);
+    }
+
+    const { limit, offset } = validation.data;
 
     const { data: notes, error } = await supabase
       .from("notes")

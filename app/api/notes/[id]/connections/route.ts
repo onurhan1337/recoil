@@ -5,6 +5,7 @@ import {
   authenticateUser,
   getUserPlan,
 } from "@/lib/api/utils";
+import { uuidSchema } from "@/lib/validations";
 
 export async function GET(
   _request: Request,
@@ -29,11 +30,16 @@ export async function GET(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid note ID", 400);
+    }
 
     const { data: currentNote, error: noteError } = await supabase
       .from("notes")
       .select("embedding")
-      .eq("id", id)
+      .eq("id", idValidation.data)
       .eq("user_id", user.id)
       .single();
 
@@ -55,7 +61,7 @@ export async function GET(
     }
 
     const connections = notes
-      .filter((note) => note.id !== id)
+      .filter((note) => note.id !== idValidation.data)
       .slice(0, 5)
       .map((note) => ({
         id: note.id,
