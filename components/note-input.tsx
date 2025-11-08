@@ -1,18 +1,32 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Loader2, Send, Info } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Loader2, Send, Info, Eye, Edit3 } from "lucide-react";
 import { TiptapEditor } from "@/components/tiptap-editor";
+import { TagInput } from "@/components/tag-input";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useCreateNote, useEstimateNoteCost } from "@/lib/api/hooks";
+import type { NoteTemplate } from "@/lib/note-templates";
 
 interface NoteInputProps {
   onNoteCreated?: () => void;
+  initialTemplate?: NoteTemplate;
 }
 
-export function NoteInput({ onNoteCreated }: NoteInputProps) {
-  const [content, setContent] = useState("");
+export function NoteInput({ onNoteCreated, initialTemplate }: NoteInputProps) {
+  const [content, setContent] = useState(initialTemplate?.content || "");
+  const [tags, setTags] = useState<string[]>([]);
+  const [isPreview, setIsPreview] = useState(false);
   const createNoteMutation = useCreateNote();
+
+  useEffect(() => {
+    if (initialTemplate) {
+      setContent(initialTemplate.content || "");
+      setTags(initialTemplate.tags || []);
+    }
+  }, [initialTemplate]);
 
   const debouncedContent = useMemo(() => {
     const timeoutId = setTimeout(() => content, 500);
@@ -30,9 +44,13 @@ export function NoteInput({ onNoteCreated }: NoteInputProps) {
     }
 
     try {
-      await createNoteMutation.mutateAsync(content);
+      await createNoteMutation.mutateAsync({
+        content,
+        tags: tags.length > 0 ? tags : undefined,
+      });
       toast.success("Note saved successfully");
       setContent("");
+      setTags([]);
       onNoteCreated?.();
     } catch (err) {
       if (err instanceof Error) {
@@ -45,11 +63,55 @@ export function NoteInput({ onNoteCreated }: NoteInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <TiptapEditor
-        content={content}
-        onChange={setContent}
-        placeholder="Write your note..."
-      />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant={isPreview ? "ghost" : "secondary"}
+              size="sm"
+              onClick={() => setIsPreview(false)}
+              className="h-8"
+            >
+              <Edit3 className="h-3 w-3 mr-1.5" />
+              Edit
+            </Button>
+            <Button
+              type="button"
+              variant={isPreview ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setIsPreview(true)}
+              disabled={!content.trim()}
+              className="h-8"
+            >
+              <Eye className="h-3 w-3 mr-1.5" />
+              Preview
+            </Button>
+          </div>
+        </div>
+
+        {isPreview ? (
+          <div className="min-h-[200px] rounded-lg border bg-muted/30 p-4">
+            {content.trim() ? (
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <MarkdownRenderer content={content} />
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                Nothing to preview yet. Write some content first.
+              </p>
+            )}
+          </div>
+        ) : (
+          <TiptapEditor
+            content={content}
+            onChange={setContent}
+            placeholder="Write your note..."
+          />
+        )}
+      </div>
+
+      <TagInput value={tags} onChange={setTags} />
 
       <div className="flex items-center justify-between">
         {costEstimate && content.trim() && (

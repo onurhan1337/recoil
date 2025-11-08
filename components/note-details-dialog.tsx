@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Calendar,
   Tag as TagIcon,
@@ -24,11 +24,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { TagInput } from "@/components/tag-input";
 import { formatShortDate } from "@/lib/utils";
 import {
   useDeleteNote,
   useUpdateNote,
   useEstimateNoteCost,
+  useNoteConnections,
+  useUsage,
 } from "@/lib/api/hooks";
 import { toast } from "sonner";
 import type { Note } from "@/lib/api/types";
@@ -42,13 +45,23 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(note.content);
+  const [editedTags, setEditedTags] = useState<string[]>(note.tags || []);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  useEffect(() => {
+    setEditedContent(note.content);
+    setEditedTags(note.tags || []);
+  }, [note]);
 
   const deleteNoteMutation = useDeleteNote();
   const updateNoteMutation = useUpdateNote();
+  const { data: usage } = useUsage();
+  const isPro = usage?.plan === "pro";
   const { data: costEstimate } = useEstimateNoteCost(
     isEditing ? editedContent : ""
   );
+  const { data: connections = [], isLoading: connectionsLoading } =
+    useNoteConnections(open && isPro ? note.id : null);
 
   const handleDelete = async () => {
     try {
@@ -57,9 +70,7 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
       setOpen(false);
       setShowDeleteConfirm(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete note"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete note");
     }
   };
 
@@ -73,18 +84,18 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
       await updateNoteMutation.mutateAsync({
         noteId: note.id,
         content: editedContent,
+        tags: editedTags,
       });
       toast.success("Note updated successfully");
       setIsEditing(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update note"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to update note");
     }
   };
 
-  const handleCancelEdit = () => {
+  const resetEditing = () => {
     setEditedContent(note.content);
+    setEditedTags(note.tags || []);
     setIsEditing(false);
   };
 
@@ -172,6 +183,8 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
                 />
               </div>
 
+              <TagInput value={editedTags} onChange={setEditedTags} />
+
               {costEstimate &&
                 editedContent.trim() &&
                 editedContent !== note.content && (
@@ -196,7 +209,7 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={handleCancelEdit}
+                onClick={resetEditing}
                 disabled={updateNoteMutation.isPending}
               >
                 <X className="h-4 w-4 mr-2" />
@@ -250,18 +263,71 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
                 </div>
               )}
 
-              {note.related_notes && note.related_notes.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <LinkIcon className="h-4 w-4" />
-                    <span>Related Notes</span>
+              {isPro ? (
+                connectionsLoading ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <LinkIcon className="h-4 w-4" />
+                      <span>Connected Notes</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>Finding connections...</span>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {note.related_notes.length} connected{" "}
-                    {note.related_notes.length === 1 ? "note" : "notes"}
+                ) : connections.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <LinkIcon className="h-4 w-4" />
+                      <span>Connected Notes</span>
+                    </div>
+                    <div className="space-y-2">
+                      {connections.map((connection) => (
+                        <button
+                          key={connection.id}
+                          onClick={() => {
+                            setOpen(false);
+                            setTimeout(() => {
+                              const element = document.querySelector(
+                                `[data-note-id="${connection.id}"]`
+                              );
+                              element?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                              });
+                            }, 100);
+                          }}
+                          className="w-full text-left rounded-lg border bg-muted/30 p-3 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            {connection.label && (
+                              <p className="text-xs font-medium line-clamp-1">
+                                {connection.label}
+                              </p>
+                            )}
+                            <span className="text-[10px] text-muted-foreground shrink-0">
+                              {Math.round(connection.similarity * 100)}% match
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {connection.content}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            {connection.category && (
+                              <Badge variant="outline" className="text-[10px] h-5">
+                                {connection.category}
+                              </Badge>
+                            )}
+                            <span className="text-[10px] text-muted-foreground">
+                              {formatShortDate(connection.created_at)}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null
+              ) : null}
 
               <div className="space-y-2 pt-4 border-t">
                 <div className="text-xs font-medium text-muted-foreground mb-2">
