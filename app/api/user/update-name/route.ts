@@ -1,6 +1,11 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
+import {
+  errorResponse,
+  successResponse,
+  authenticateUser,
+} from "@/lib/api/utils";
+import { displayNameSchema } from "@/lib/validations";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -12,19 +17,20 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { displayName } = body;
+    const validation = displayNameSchema.safeParse(body);
 
-    if (!displayName || typeof displayName !== "string" || displayName.trim().length === 0) {
-      return errorResponse("Display name is required", 400);
+    if (!validation.success) {
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
     }
 
-    if (displayName.length > 50) {
-      return errorResponse("Display name must be 50 characters or less", 400);
-    }
+    const { displayName } = validation.data;
 
     const { error } = await supabase.auth.updateUser({
       data: {
-        display_name: displayName.trim(),
+        display_name: displayName,
       },
     });
 
@@ -34,7 +40,7 @@ export async function PATCH(request: NextRequest) {
 
     return successResponse({
       message: "Display name updated successfully",
-      display_name: displayName.trim(),
+      display_name: displayName,
     });
   } catch (error) {
     console.error("Error updating display name:", error);

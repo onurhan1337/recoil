@@ -1,6 +1,11 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
+import {
+  errorResponse,
+  successResponse,
+  authenticateUser,
+} from "@/lib/api/utils";
+import { conversationCreateSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -37,13 +42,23 @@ export async function POST(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    const { title } = await request.json();
+    const body = await request.json();
+    const validation = conversationCreateSchema.safeParse(body);
+
+    if (!validation.success) {
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
+    }
+
+    const { title } = validation.data;
 
     const { data: conversation, error } = await supabase
       .from("conversations")
       .insert({
         user_id: user.id,
-        title: title || "New Conversation",
+        title,
       })
       .select()
       .single();

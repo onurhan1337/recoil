@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+// UUID validation
+export const uuidSchema = z.string().uuid("Invalid ID format");
+
+// Note schemas
 export const noteSchema = z.object({
   content: z
     .string()
@@ -9,6 +13,19 @@ export const noteSchema = z.object({
   tags: z.array(z.string().trim()).optional(),
 });
 
+export const noteUpdateSchema = z.object({
+  content: z
+    .string()
+    .min(1, "Note content is required")
+    .max(10000, "Note content must be less than 10,000 characters")
+    .trim(),
+  tags: z
+    .array(z.string().trim())
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+});
+
+// Search schema
 export const searchSchema = z.object({
   query: z
     .string()
@@ -17,8 +34,83 @@ export const searchSchema = z.object({
     .trim(),
 });
 
+// Query params schemas
+export const paginationSchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 50))
+    .pipe(z.number().int().min(1).max(100)),
+  offset: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 0))
+    .pipe(z.number().int().min(0)),
+});
+
+// Conversation schemas
+export const conversationCreateSchema = z.object({
+  title: z
+    .string()
+    .max(200, "Title must be less than 200 characters")
+    .trim()
+    .optional()
+    .default("New Conversation"),
+});
+
+export const conversationUpdateSchema = z.object({
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(200, "Title must be less than 200 characters")
+    .trim(),
+});
+
+// User schemas
+export const displayNameSchema = z.object({
+  displayName: z
+    .string()
+    .min(1, "Display name is required")
+    .max(50, "Display name must be 50 characters or less")
+    .trim(),
+});
+
+// Feedback schemas
+export const feedbackSchema = z.object({
+  rating: z
+    .number()
+    .int("Rating must be an integer")
+    .min(1, "Rating must be between 1 and 5")
+    .max(5, "Rating must be between 1 and 5"),
+  comment: z
+    .string()
+    .max(1000, "Comment must be 1000 characters or less")
+    .trim()
+    .optional()
+    .nullable(),
+});
+
+// Chat schemas
+export const chatMessagePartSchema = z.object({
+  type: z.string(),
+  text: z.string(),
+});
+
+export const chatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  parts: z.array(chatMessagePartSchema),
+});
+
+export const chatRequestSchema = z.object({
+  messages: z
+    .array(chatMessageSchema)
+    .min(1, "At least one message is required"),
+  conversation_id: z.string().uuid("Invalid conversation ID format").optional(),
+});
+
+// Auth schemas
 export const emailSchema = z.object({
-  email: z.email({ error: "Invalid email address" }).toLowerCase(),
+  email: z.string().email("Invalid email address").toLowerCase(),
 });
 
 export const passwordSchema = z.object({
@@ -31,7 +123,15 @@ export const passwordSchema = z.object({
 export const signupSchema = emailSchema.extend(passwordSchema.shape);
 export const loginSchema = emailSchema.extend(passwordSchema.shape);
 
+// Type exports
 export type NoteInput = z.infer<typeof noteSchema>;
+export type NoteUpdateInput = z.infer<typeof noteUpdateSchema>;
 export type SearchInput = z.infer<typeof searchSchema>;
+export type PaginationInput = z.infer<typeof paginationSchema>;
+export type ConversationCreateInput = z.infer<typeof conversationCreateSchema>;
+export type ConversationUpdateInput = z.infer<typeof conversationUpdateSchema>;
+export type DisplayNameInput = z.infer<typeof displayNameSchema>;
+export type FeedbackInput = z.infer<typeof feedbackSchema>;
+export type ChatRequestInput = z.infer<typeof chatRequestSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

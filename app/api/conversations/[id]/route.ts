@@ -1,6 +1,11 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
+import {
+  errorResponse,
+  successResponse,
+  authenticateUser,
+} from "@/lib/api/utils";
+import { uuidSchema, conversationUpdateSchema } from "@/lib/validations";
 
 export async function GET(
   request: NextRequest,
@@ -15,6 +20,11 @@ export async function GET(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid conversation ID format", 400);
+    }
 
     const { data: messages, error } = await supabase
       .from("messages")
@@ -46,6 +56,11 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid conversation ID format", 400);
+    }
 
     const { error } = await supabase
       .from("conversations")
@@ -77,7 +92,23 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const { title } = await request.json();
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid conversation ID format", 400);
+    }
+
+    const body = await request.json();
+    const validation = conversationUpdateSchema.safeParse(body);
+
+    if (!validation.success) {
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
+    }
+
+    const { title } = validation.data;
 
     const { data: conversation, error } = await supabase
       .from("conversations")

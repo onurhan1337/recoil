@@ -9,6 +9,7 @@ import {
   authenticateUser,
   getUserPlan,
 } from "@/lib/api/utils";
+import { uuidSchema, noteUpdateSchema } from "@/lib/validations";
 
 export async function DELETE(
   request: NextRequest,
@@ -23,6 +24,11 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid note ID format", 400);
+    }
 
     const { data: note, error: fetchError } = await supabase
       .from("notes")
@@ -67,16 +73,23 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid note ID format", 400);
+    }
+
     const body = await request.json();
-    const { content, tags } = body;
+    const validation = noteUpdateSchema.safeParse(body);
 
-    if (!content || typeof content !== "string") {
-      return errorResponse("Content is required", 400);
+    if (!validation.success) {
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
     }
 
-    if (tags !== undefined && !Array.isArray(tags)) {
-      return errorResponse("Tags must be an array", 400);
-    }
+    const { content, tags } = validation.data;
 
     const { data: existingNote, error: fetchError } = await supabase
       .from("notes")
@@ -115,7 +128,7 @@ export async function PATCH(
       embedding: JSON.stringify(embedding),
       label: metadata.label,
       category: metadata.category,
-      ...(tags !== undefined && { tags: tags.length > 0 ? tags : null }),
+      ...(tags !== undefined && { tags: tags || null }),
     };
 
     const { data: updatedNote, error: updateError } = await supabase

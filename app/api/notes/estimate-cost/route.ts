@@ -7,6 +7,14 @@ import {
   authenticateUser,
   getUserPlan,
 } from "@/lib/api/utils";
+import { z } from "zod";
+
+const estimateCostSchema = z.object({
+  content: z
+    .string()
+    .min(1, "Content is required")
+    .max(100000, "Content must be less than 100,000 characters"),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,11 +26,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { content } = body;
+    const validation = estimateCostSchema.safeParse(body);
 
-    if (!content || typeof content !== "string") {
-      return errorResponse("Content is required", 400);
+    if (!validation.success) {
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
     }
+
+    const { content } = validation.data;
 
     const { data: usage, error: usageError } = await supabase
       .from("usage")

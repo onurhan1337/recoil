@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
+import { feedbackSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,26 +13,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { rating, comment } = body;
+    const validation = feedbackSchema.safeParse(body);
 
-    if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) {
-      return errorResponse("Rating must be between 1 and 5", 400);
+    if (!validation.success) {
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
     }
 
-    if (comment && typeof comment !== "string") {
-      return errorResponse("Comment must be a string", 400);
-    }
-
-    if (comment && comment.length > 1000) {
-      return errorResponse("Comment must be 1000 characters or less", 400);
-    }
+    const { rating, comment } = validation.data;
 
     const { data: feedback, error: feedbackError } = await supabase
       .from("feedback")
       .insert({
         user_id: user.id,
         rating,
-        comment: comment?.trim() || null,
+        comment: comment || null,
       })
       .select()
       .single();

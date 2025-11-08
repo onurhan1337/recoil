@@ -5,6 +5,7 @@ import {
   authenticateUser,
   getUserPlan,
 } from "@/lib/api/utils";
+import { uuidSchema } from "@/lib/validations";
 
 export async function GET(
   _request: Request,
@@ -29,6 +30,11 @@ export async function GET(
     }
 
     const { id } = await params;
+    const idValidation = uuidSchema.safeParse(id);
+
+    if (!idValidation.success) {
+      return errorResponse("Invalid note ID format", 400);
+    }
 
     const { data: currentNote, error: noteError } = await supabase
       .from("notes")
