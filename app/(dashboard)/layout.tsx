@@ -4,16 +4,18 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Home, BookOpen, Plus, Settings, Brain } from "lucide-react";
+import { Home, BookOpen, Plus, Settings, Brain, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewNoteDialog } from "@/components/new-note-dialog";
 import { CreditDisplay } from "@/components/credit-display";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { Badge } from "@/components/ui/badge";
 import { useUser, useUsage } from "@/lib/api/hooks";
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Notes", href: "/notes", icon: BookOpen },
+  { name: "Analytics", href: "/analytics", icon: BarChart3, badge: "PRO" },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -88,14 +90,21 @@ export default function DashboardLayout({
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors",
+                    "flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-md transition-colors",
                     isActive
                       ? "bg-muted font-medium"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
+                  <div className="flex items-center gap-3">
+                    <item.icon className="h-4 w-4" />
+                    {item.name}
+                  </div>
+                  {item.badge && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                      {item.badge}
+                    </Badge>
+                  )}
                 </Link>
               );
             })}
