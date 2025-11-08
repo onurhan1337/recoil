@@ -7,10 +7,14 @@ import { ArrowUp, Search, FileText, Lightbulb, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatHistorySidebar } from "./chat-history-sidebar";
 import { ChatMessage } from "./chat-message";
+import { ProTips } from "./pro-tips";
+import { useUsage } from "@/lib/api/hooks";
 
 export function ChatBox() {
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [input, setInput] = useState("");
+  const { data: usage } = useUsage();
+  const isPro = usage?.plan === "pro";
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -128,6 +132,8 @@ export function ChatBox() {
                   </p>
                 </button>
               </div>
+
+              <ProTips isPro={isPro} />
             </div>
           </div>
         ) : (
