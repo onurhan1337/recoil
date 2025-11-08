@@ -1,8 +1,11 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
-import { conversationSchema } from "@/lib/validations";
-import { validateRequest } from "@/lib/validation-utils";
+import {
+  errorResponse,
+  successResponse,
+  authenticateUser,
+} from "@/lib/api/utils";
+import { conversationCreateSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -40,10 +43,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = validateRequest(conversationSchema, body);
+    const validation = conversationCreateSchema.safeParse(body);
 
     if (!validation.success) {
-      return validation.response;
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
     }
 
     const { title } = validation.data;
@@ -52,7 +58,7 @@ export async function POST(request: NextRequest) {
       .from("conversations")
       .insert({
         user_id: user.id,
-        title: title || "New Conversation",
+        title,
       })
       .select()
       .single();

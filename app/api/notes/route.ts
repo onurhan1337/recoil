@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
 import { generateNoteMetadata } from "@/lib/ai";
-import { noteSchema, notesQuerySchema } from "@/lib/validations";
+import { noteSchema, paginationSchema } from "@/lib/validations";
 import { config } from "@/lib/config";
 import {
   errorResponse,
@@ -25,7 +25,10 @@ export async function POST(request: NextRequest) {
     const validation = validateRequest(noteSchema, body);
 
     if (!validation.success) {
-      return validation.response;
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
     }
 
     const { content, tags } = validation.data;
@@ -94,15 +97,19 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const queryParams = {
-      limit: searchParams.get("limit"),
-      offset: searchParams.get("offset"),
-    };
+    const limitParam = searchParams.get("limit");
+    const offsetParam = searchParams.get("offset");
 
-    const validation = validateQuery(notesQuerySchema, queryParams);
+    const validation = paginationSchema.safeParse({
+      limit: limitParam,
+      offset: offsetParam,
+    });
 
     if (!validation.success) {
-      return validation.response;
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid query parameters",
+        400
+      );
     }
 
     const { limit, offset } = validation.data;

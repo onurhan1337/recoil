@@ -9,8 +9,7 @@ import {
   authenticateUser,
   getUserPlan,
 } from "@/lib/api/utils";
-import { updateNoteSchema, uuidSchema } from "@/lib/validations";
-import { validateRequest, validateParams } from "@/lib/validation-utils";
+import { uuidSchema, noteUpdateSchema } from "@/lib/validations";
 
 export async function DELETE(
   request: NextRequest,
@@ -25,10 +24,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const idValidation = validateParams(uuidSchema, id, "note ID");
+    const idValidation = uuidSchema.safeParse(id);
 
     if (!idValidation.success) {
-      return idValidation.response;
+      return errorResponse("Invalid note ID format", 400);
     }
 
     const { data: note, error: fetchError } = await supabase
@@ -74,17 +73,20 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const idValidation = validateParams(uuidSchema, id, "note ID");
+    const idValidation = uuidSchema.safeParse(id);
 
     if (!idValidation.success) {
-      return idValidation.response;
+      return errorResponse("Invalid note ID format", 400);
     }
 
     const body = await request.json();
-    const validation = validateRequest(updateNoteSchema, body);
+    const validation = noteUpdateSchema.safeParse(body);
 
     if (!validation.success) {
-      return validation.response;
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
     }
 
     const { content, tags } = validation.data;
@@ -126,7 +128,7 @@ export async function PATCH(
       embedding: JSON.stringify(embedding),
       label: metadata.label,
       category: metadata.category,
-      tags: tags.length > 0 ? tags : null,
+      ...(tags !== undefined && { tags: tags || null }),
     };
 
     const { data: updatedNote, error: updateError } = await supabase

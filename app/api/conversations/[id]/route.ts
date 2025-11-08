@@ -1,8 +1,11 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
-import { updateConversationSchema, uuidSchema } from "@/lib/validations";
-import { validateRequest, validateParams } from "@/lib/validation-utils";
+import {
+  errorResponse,
+  successResponse,
+  authenticateUser,
+} from "@/lib/api/utils";
+import { uuidSchema, conversationUpdateSchema } from "@/lib/validations";
 
 export async function GET(
   request: NextRequest,
@@ -17,10 +20,10 @@ export async function GET(
     }
 
     const { id } = await params;
-    const idValidation = validateParams(uuidSchema, id, "conversation ID");
+    const idValidation = uuidSchema.safeParse(id);
 
     if (!idValidation.success) {
-      return idValidation.response;
+      return errorResponse("Invalid conversation ID format", 400);
     }
 
     const { data: messages, error } = await supabase
@@ -53,10 +56,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const idValidation = validateParams(uuidSchema, id, "conversation ID");
+    const idValidation = uuidSchema.safeParse(id);
 
     if (!idValidation.success) {
-      return idValidation.response;
+      return errorResponse("Invalid conversation ID format", 400);
     }
 
     const { error } = await supabase
@@ -89,17 +92,20 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const idValidation = validateParams(uuidSchema, id, "conversation ID");
+    const idValidation = uuidSchema.safeParse(id);
 
     if (!idValidation.success) {
-      return idValidation.response;
+      return errorResponse("Invalid conversation ID format", 400);
     }
 
     const body = await request.json();
-    const validation = validateRequest(updateConversationSchema, body);
+    const validation = conversationUpdateSchema.safeParse(body);
 
     if (!validation.success) {
-      return validation.response;
+      return errorResponse(
+        validation.error.issues[0]?.message || "Invalid request",
+        400
+      );
     }
 
     const { title } = validation.data;

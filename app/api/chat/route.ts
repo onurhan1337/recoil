@@ -8,7 +8,6 @@ import type { ChatMessage, SearchNoteResult } from "@/lib/api/types";
 import { isTimeBasedQuery, getDateRange } from "@/lib/utils/query-helpers";
 import { getUserPlan } from "@/lib/api/utils";
 import { chatRequestSchema } from "@/lib/validations";
-import { validateRequest } from "@/lib/validation-utils";
 
 export const maxDuration = 30;
 
@@ -29,10 +28,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = validateRequest(chatRequestSchema, body);
+    const validation = chatRequestSchema.safeParse(body);
 
     if (!validation.success) {
-      return validation.response;
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request",
+          details: validation.error.issues[0]?.message || "Validation failed",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const { messages, conversation_id } = validation.data;

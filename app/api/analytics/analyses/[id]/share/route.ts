@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { authenticateUser, errorResponse, successResponse } from "@/lib/api/utils";
 import { uuidSchema } from "@/lib/validations";
-import { validateParams } from "@/lib/validation-utils";
 
 export async function POST(
   request: NextRequest,
@@ -10,10 +9,10 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const idValidation = validateParams(uuidSchema, id, "analysis ID");
+    const idValidation = uuidSchema.safeParse(id);
 
     if (!idValidation.success) {
-      return idValidation.response;
+      return errorResponse("Invalid analysis ID format", 400);
     }
 
     const supabase = await createClient();
@@ -51,10 +50,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const idValidation = validateParams(uuidSchema, id, "analysis ID");
+    const idValidation = uuidSchema.safeParse(id);
 
     if (!idValidation.success) {
-      return idValidation.response;
+      return errorResponse("Invalid analysis ID format", 400);
     }
 
     const supabase = await createClient();
