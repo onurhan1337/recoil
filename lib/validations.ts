@@ -6,6 +6,7 @@ export const noteSchema = z.object({
     .min(1, "Note content is required")
     .max(10000, "Note content must be less than 10,000 characters")
     .trim(),
+  tags: z.array(z.string().trim()).optional(),
 });
 
 export const searchSchema = z.object({
