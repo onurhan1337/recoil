@@ -8,10 +8,8 @@ import {
   errorResponse,
   successResponse,
   authenticateUser,
-  isProPlan,
+  getUserPlan,
 } from "@/lib/api/utils";
-
-type UserPlan = "free" | "pro";
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,18 +35,12 @@ export async function POST(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    if (
-      !usage ||
-      usage.credits <
-        config.plans[(usage.plan ?? "free") as UserPlan].costs.createNote
-    ) {
+    const userPlan = getUserPlan(usage?.plan);
+    const noteCost = config.plans[userPlan].costs.createNote;
+
+    if (!usage || usage.credits < noteCost) {
       return errorResponse("Insufficient credits", 403);
     }
-
-    const userPlan = isProPlan(usage.plan ?? "free")
-      ? ("pro" as UserPlan)
-      : ("free" as UserPlan);
-    const noteCost = config.plans[userPlan].costs.createNote;
 
     const [embedding, metadata] = await Promise.all([
       generateEmbedding(content),

@@ -7,10 +7,8 @@ import {
   errorResponse,
   successResponse,
   authenticateUser,
-  isProPlan,
+  getUserPlan,
 } from "@/lib/api/utils";
-
-type UserPlan = "free" | "pro";
 
 export async function DELETE(
   request: NextRequest,
@@ -100,18 +98,12 @@ export async function PATCH(
       .eq("user_id", user.id)
       .single();
 
-    if (
-      !usage ||
-      usage.credits <
-        config.plans[(usage.plan ?? "free") as UserPlan].costs.createNote
-    ) {
+    const userPlan = getUserPlan(usage?.plan);
+    const updateCost = config.plans[userPlan].costs.createNote;
+
+    if (!usage || usage.credits < updateCost) {
       return errorResponse("Insufficient credits", 403);
     }
-
-    const userPlan = isProPlan(usage.plan ?? "free")
-      ? ("pro" as UserPlan)
-      : ("free" as UserPlan);
-    const updateCost = config.plans[userPlan].costs.createNote;
 
     const [embedding, metadata] = await Promise.all([
       generateEmbedding(content),

@@ -6,6 +6,7 @@ import { google } from "@ai-sdk/google";
 import { config } from "@/lib/config";
 import type { ChatMessage, SearchNoteResult } from "@/lib/api/types";
 import { isTimeBasedQuery, getDateRange } from "@/lib/utils/query-helpers";
+import { getUserPlan } from "@/lib/api/utils";
 
 export const maxDuration = 30;
 
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    const userPlan = (usage?.plan || "free") as "free" | "pro";
+    const userPlan = getUserPlan(usage?.plan);
     const chatCost = config.plans[userPlan].costs.chatMessage;
 
     if (usageError || !usage || usage.credits < chatCost) {

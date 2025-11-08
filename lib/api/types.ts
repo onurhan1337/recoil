@@ -17,6 +17,8 @@ export interface Conversation {
   user_id: string;
 }
 
+export type UserPlan = "free" | "pro";
+
 export interface Message {
   id: string;
   conversation_id: string;
@@ -28,7 +30,7 @@ export interface Message {
 export interface Usage {
   user_id: string;
   credits: number;
-  plan: "free" | "pro";
+  plan: UserPlan;
   monthly_credits_limit: number;
   last_reset: string;
 }
@@ -52,7 +54,7 @@ export interface SearchNotesResponse {
 
 export interface UsageResponse {
   credits: number;
-  plan: "free" | "pro";
+  plan: UserPlan;
   monthly_credits_limit: number;
 }
 

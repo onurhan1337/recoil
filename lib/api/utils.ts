@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { UserPlan } from "./types";
 
 export function errorResponse(message: string, status: number = 500) {
   return NextResponse.json({ error: message }, { status });
@@ -40,7 +41,7 @@ export async function ensureUserUsage(
         user_id: userId,
         credits: defaultCredits,
         plan: "free",
-        monthly_credits_limit: 500
+        monthly_credits_limit: 500,
       })
       .select()
       .single();
@@ -65,6 +66,10 @@ export async function decrementCredits(
 
   if (error) throw error;
   return data;
+}
+
+export function getUserPlan(plan: string | undefined | null): UserPlan {
+  return plan === "pro" ? "pro" : "free";
 }
 
 export function isProPlan(plan: string | undefined | null): boolean {

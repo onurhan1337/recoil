@@ -5,10 +5,8 @@ import {
   errorResponse,
   successResponse,
   authenticateUser,
-  isProPlan,
+  getUserPlan,
 } from "@/lib/api/utils";
-
-type UserPlan = "free" | "pro";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,9 +34,7 @@ export async function POST(request: NextRequest) {
       throw usageError;
     }
 
-    const userPlan = isProPlan(usage?.plan ?? "free")
-      ? ("pro" as UserPlan)
-      : ("free" as UserPlan);
+    const userPlan = getUserPlan(usage?.plan);
     const baseCost = config.plans[userPlan].costs.createNote;
 
     const contentLength = content.length;

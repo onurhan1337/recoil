@@ -3,10 +3,8 @@ import {
   errorResponse,
   successResponse,
   authenticateUser,
-  isProPlan,
+  getUserPlan,
 } from "@/lib/api/utils";
-
-type UserPlan = "free" | "pro";
 
 export async function GET(
   _request: Request,
@@ -26,7 +24,7 @@ export async function GET(
       .eq("user_id", user.id)
       .single();
 
-    if (!isProPlan(usage?.plan ?? "free")) {
+    if (getUserPlan(usage?.plan) !== "pro") {
       return errorResponse("Pro plan required for note connections", 403);
     }
 
