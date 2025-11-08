@@ -39,6 +39,7 @@ function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{}>;
 }>) {
   return (
     <html lang="en">

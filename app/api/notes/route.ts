@@ -25,10 +25,7 @@ export async function POST(request: NextRequest) {
     const validation = validateRequest(noteSchema, body);
 
     if (!validation.success) {
-      return errorResponse(
-        validation.error.issues[0]?.message || "Invalid request",
-        400
-      );
+      return validation.response;
     }
 
     const { content, tags } = validation.data;
@@ -100,16 +97,13 @@ export async function GET(request: NextRequest) {
     const limitParam = searchParams.get("limit");
     const offsetParam = searchParams.get("offset");
 
-    const validation = paginationSchema.safeParse({
+    const validation = validateQuery(paginationSchema, {
       limit: limitParam,
       offset: offsetParam,
     });
 
     if (!validation.success) {
-      return errorResponse(
-        validation.error.issues[0]?.message || "Invalid query parameters",
-        400
-      );
+      return validation.response;
     }
 
     const { limit, offset } = validation.data;

@@ -1,6 +1,6 @@
 import { withRSCTrace } from "quzz";
 
-function AuthLayout({ children }: { children: React.ReactNode }) {
+function AuthLayout({ children }: { children: React.ReactNode; params: Promise<{}> }) {
   return <>{children}</>;
 }
 
