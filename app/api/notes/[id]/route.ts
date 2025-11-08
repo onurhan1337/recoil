@@ -7,7 +7,10 @@ import {
   errorResponse,
   successResponse,
   authenticateUser,
+  isProPlan,
 } from "@/lib/api/utils";
+
+type UserPlan = "free" | "pro";
 
 export async function DELETE(
   request: NextRequest,
@@ -67,10 +70,14 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { content } = body;
+    const { content, tags } = body;
 
     if (!content || typeof content !== "string") {
       return errorResponse("Content is required", 400);
+    }
+
+    if (tags !== undefined && !Array.isArray(tags)) {
+      return errorResponse("Tags must be an array", 400);
     }
 
     const { data: existingNote, error: fetchError } = await supabase
@@ -87,32 +94,41 @@ export async function PATCH(
       return errorResponse("Forbidden", 403);
     }
 
-    const { data: usage, error: usageError } = await supabase
+    const { data: usage } = await supabase
       .from("usage")
       .select("credits, plan")
       .eq("user_id", user.id)
       .single();
 
-    const userPlan = (usage?.plan || "free") as "free" | "pro";
-    const updateCost = config.plans[userPlan].costs.createNote;
-
-    if (usageError || !usage || usage.credits < updateCost) {
+    if (
+      !usage ||
+      usage.credits <
+        config.plans[(usage.plan ?? "free") as UserPlan].costs.createNote
+    ) {
       return errorResponse("Insufficient credits", 403);
     }
+
+    const userPlan = isProPlan(usage.plan ?? "free")
+      ? ("pro" as UserPlan)
+      : ("free" as UserPlan);
+    const updateCost = config.plans[userPlan].costs.createNote;
 
     const [embedding, metadata] = await Promise.all([
       generateEmbedding(content),
       generateNoteMetadata(content),
     ]);
 
+    const updateData: Record<string, unknown> = {
+      content,
+      embedding: JSON.stringify(embedding),
+      label: metadata.label,
+      category: metadata.category,
+      ...(tags !== undefined && { tags: tags.length > 0 ? tags : null }),
+    };
+
     const { data: updatedNote, error: updateError } = await supabase
       .from("notes")
-      .update({
-        content,
-        embedding: JSON.stringify(embedding),
-        label: metadata.label,
-        category: metadata.category,
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();

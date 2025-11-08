@@ -1,7 +1,14 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { config } from "@/lib/config";
-import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
+import {
+  errorResponse,
+  successResponse,
+  authenticateUser,
+  isProPlan,
+} from "@/lib/api/utils";
+
+type UserPlan = "free" | "pro";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +36,9 @@ export async function POST(request: NextRequest) {
       throw usageError;
     }
 
-    const userPlan = (usage?.plan || "free") as "free" | "pro";
+    const userPlan = isProPlan(usage?.plan ?? "free")
+      ? ("pro" as UserPlan)
+      : ("free" as UserPlan);
     const baseCost = config.plans[userPlan].costs.createNote;
 
     const contentLength = content.length;
@@ -37,7 +46,10 @@ export async function POST(request: NextRequest) {
     const estimatedChunks = Math.ceil(contentLength / chunkSize);
 
     const embeddingCostPerChunk = config.plans[userPlan].costs.embedding;
-    const additionalEmbeddingCost = Math.max(0, (estimatedChunks - 1) * embeddingCostPerChunk);
+    const additionalEmbeddingCost = Math.max(
+      0,
+      (estimatedChunks - 1) * embeddingCostPerChunk
+    );
 
     const totalCost = baseCost + additionalEmbeddingCost;
 

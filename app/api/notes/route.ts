@@ -4,7 +4,14 @@ import { generateEmbedding } from "@/lib/embeddings";
 import { generateNoteMetadata } from "@/lib/ai";
 import { noteSchema } from "@/lib/validations";
 import { config } from "@/lib/config";
-import { errorResponse, successResponse, authenticateUser } from "@/lib/api/utils";
+import {
+  errorResponse,
+  successResponse,
+  authenticateUser,
+  isProPlan,
+} from "@/lib/api/utils";
+
+type UserPlan = "free" | "pro";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,20 +29,26 @@ export async function POST(request: NextRequest) {
       return errorResponse("Invalid request", 400);
     }
 
-    const { content } = validation.data;
+    const { content, tags } = validation.data;
 
-    const { data: usage, error: usageError } = await supabase
+    const { data: usage } = await supabase
       .from("usage")
       .select("credits, plan")
       .eq("user_id", user.id)
       .single();
 
-    const userPlan = (usage?.plan || "free") as "free" | "pro";
-    const noteCost = config.plans[userPlan].costs.createNote;
-
-    if (usageError || !usage || usage.credits < noteCost) {
+    if (
+      !usage ||
+      usage.credits <
+        config.plans[(usage.plan ?? "free") as UserPlan].costs.createNote
+    ) {
       return errorResponse("Insufficient credits", 403);
     }
+
+    const userPlan = isProPlan(usage.plan ?? "free")
+      ? ("pro" as UserPlan)
+      : ("free" as UserPlan);
+    const noteCost = config.plans[userPlan].costs.createNote;
 
     const [embedding, metadata] = await Promise.all([
       generateEmbedding(content),
@@ -50,6 +63,7 @@ export async function POST(request: NextRequest) {
         embedding: JSON.stringify(embedding),
         label: metadata.label,
         category: metadata.category,
+        tags: tags?.length ? tags : null,
       })
       .select()
       .single();
@@ -92,7 +106,7 @@ export async function GET(request: NextRequest) {
 
     const { data: notes, error } = await supabase
       .from("notes")
-      .select("id, content, label, category, created_at")
+      .select("id, content, label, category, tags, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
