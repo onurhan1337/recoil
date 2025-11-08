@@ -25,6 +25,7 @@ export default function NotesPage() {
     }, {} as Record<string, number>);
 
     const topCategories = Object.entries(categoryCount)
+      .filter(([, count]) => count >= 3)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5);
 
