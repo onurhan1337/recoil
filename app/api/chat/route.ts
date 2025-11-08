@@ -5,6 +5,7 @@ import { streamText, convertToModelMessages } from "ai";
 import { google } from "@ai-sdk/google";
 import { config } from "@/lib/config";
 import type { ChatMessage, SearchNoteResult } from "@/lib/api/types";
+import { isTimeBasedQuery, getDateRange } from "@/lib/utils/query-helpers";
 
 export const maxDuration = 30;
 
@@ -92,26 +93,74 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const queryEmbedding = await generateEmbedding(query);
+    let filteredResults: SearchNoteResult[] = [];
 
-    const { data: results, error: searchError } = await supabase.rpc(
-      "search_notes",
-      {
-        query_embedding: JSON.stringify(queryEmbedding),
-        match_threshold: config.search.matchThreshold,
-        match_count: config.search.matchCount,
+    if (isTimeBasedQuery(query)) {
+      const dateRange = getDateRange(query);
+      if (dateRange) {
+        const queryBuilder = supabase
+          .from("notes")
+          .select("id, content, category, label")
+          .eq("user_id", user.id)
+          .gte("created_at", dateRange.start.toISOString())
+          .order("created_at", { ascending: false })
+          .limit(config.search.matchCount);
+
+        const { data: notes } = dateRange.end
+          ? await queryBuilder.lte("created_at", dateRange.end.toISOString())
+          : await queryBuilder;
+
+        if (notes) {
+          filteredResults = notes.map((note) => ({
+            id: note.id,
+            content: note.content,
+            category: note.category || null,
+            label: note.label || null,
+            similarity: 1.0,
+          }));
+        }
       }
-    );
+    } else {
+      const queryEmbedding = await generateEmbedding(query);
 
-    if (searchError) {
-      console.error("Search error:", searchError);
+      const { data: results, error: searchError } = await supabase.rpc(
+        "search_notes",
+        {
+          query_embedding: JSON.stringify(queryEmbedding),
+          match_threshold: config.search.matchThreshold,
+          match_count: config.search.matchCount,
+        }
+      );
+
+      if (searchError) {
+        console.error("Search error:", searchError);
+      }
+
+      const displayThreshold = 0.45;
+      filteredResults =
+        (results as SearchNoteResult[] | null)?.filter(
+          (note) => note.similarity >= displayThreshold
+        ) || [];
+
+      if (filteredResults.length === 0) {
+        const { data: recentNotes } = await supabase
+          .from("notes")
+          .select("id, content, category, label")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (recentNotes && recentNotes.length > 0) {
+          filteredResults = recentNotes.map((note) => ({
+            id: note.id,
+            content: note.content,
+            category: note.category || null,
+            label: note.label || null,
+            similarity: 0.3,
+          }));
+        }
+      }
     }
-
-    const displayThreshold = 0.55;
-    const filteredResults =
-      (results as SearchNoteResult[] | null)?.filter(
-        (note) => note.similarity >= displayThreshold
-      ) || [];
 
     await supabase
       .from("usage")
@@ -171,11 +220,11 @@ RESPONSE FORMAT:
 
 CRITICAL INSTRUCTIONS:
 1. ALWAYS check if notes are provided in the search results section below
-2. Only notes with similarity >=55% are shown - these are highly relevant matches
+2. Notes may come from semantic search (similarity >=55%) or time-based queries (summaries, this week, etc.)
 3. If ANY notes are provided, you MUST include [NOTE_REF:note_id] markers
 4. Include the note reference marker where you want the note card to appear in your response
 5. After the note markers, provide a brief summary or answer based on the note contents
-6. Be direct - if notes match the query, say "I found X relevant notes:"
+6. Be direct - if notes match the query, say "I found X relevant notes:" or "Here are your notes from [time period]:"
 7. ALWAYS include the <!--NOTES_METADATA:--> block at the end (even if empty array)
 ${
   userPlan === "pro"
