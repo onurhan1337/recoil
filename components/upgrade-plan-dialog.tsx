@@ -38,6 +38,11 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          <div className="text-center space-y-2 pb-2">
+            <p className="text-sm text-muted-foreground">
+              Unlock powerful AI features and advanced analytics
+            </p>
+          </div>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="rounded-lg border-2 border-border p-5 space-y-4">
               <div className="space-y-1">
@@ -64,6 +69,10 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                   <span>5 credits per chat</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <span>Basic features</span>
                 </div>
               </div>
             </div>
@@ -96,7 +105,19 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">Analytics dashboard</span>
+                  <span className="font-medium">Advanced analytics dashboard</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
+                  <span className="font-medium">AI-powered note connections</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
+                  <span className="font-medium">Thinking patterns analysis</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
+                  <span className="font-medium">Share analysis insights</span>
                 </div>
               </div>
               {!isPro && (
@@ -107,8 +128,39 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
             </div>
           </div>
 
-          <div className="text-center text-xs text-muted-foreground pt-2">
-            <p>Cancel anytime • No hidden fees • Instant activation</p>
+          <div className="space-y-3 pt-2">
+            <div className="rounded-lg bg-muted/30 p-4">
+              <p className="text-xs font-medium mb-2">All plans include:</p>
+              <div className="grid sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Check className="h-3 w-3" />
+                  <span>Smart note organization</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Check className="h-3 w-3" />
+                  <span>AI-powered categorization</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Check className="h-3 w-3" />
+                  <span>Tags & filters</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Check className="h-3 w-3" />
+                  <span>Note templates</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Check className="h-3 w-3" />
+                  <span>Export (JSON & Markdown)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Check className="h-3 w-3" />
+                  <span>Search & discovery</span>
+                </div>
+              </div>
+            </div>
+            <div className="text-center text-xs text-muted-foreground">
+              <p>Cancel anytime • No hidden fees • Instant activation</p>
+            </div>
           </div>
         </div>
       </DialogContent>
