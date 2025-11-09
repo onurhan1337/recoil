@@ -137,8 +137,10 @@ export type Database = {
           content: string
           created_at: string
           embedding: string | null
+          favorite: boolean
           id: string
           label: string | null
+          pinned: boolean
           related_notes: string[] | null
           tags: string[] | null
           updated_at: string
@@ -149,8 +151,10 @@ export type Database = {
           content: string
           created_at?: string
           embedding?: string | null
+          favorite?: boolean
           id?: string
           label?: string | null
+          pinned?: boolean
           related_notes?: string[] | null
           tags?: string[] | null
           updated_at?: string
@@ -161,8 +165,10 @@ export type Database = {
           content?: string
           created_at?: string
           embedding?: string | null
+          favorite?: boolean
           id?: string
           label?: string | null
+          pinned?: boolean
           related_notes?: string[] | null
           tags?: string[] | null
           updated_at?: string
