@@ -110,7 +110,9 @@ export async function GET(request: NextRequest) {
 
     const { data: notes, error } = await supabase
       .from("notes")
-      .select("id, content, label, category, tags, created_at")
+      .select(
+        "id, content, label, category, tags, created_at, pinned, favorite"
+      )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);

@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Heart } from "lucide-react";
 import { useNotes, useUsage, useTags } from "@/lib/api/hooks";
 import { useNotesFilter } from "@/lib/api/hooks/use-notes-filter";
 import { useNotesAnalytics } from "@/lib/api/hooks/use-notes-analytics";
 import { NotesFilters } from "@/components/notes-filters";
 import { NotesAnalytics } from "@/components/notes-analytics";
 import { NotesGrid } from "@/components/notes-grid";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { isProPlan } from "@/lib/utils";
 
 export default function NotesPage() {
@@ -26,6 +32,9 @@ export default function NotesPage() {
   } = useNotesFilter(allNotes);
 
   const analytics = useNotesAnalytics(allNotes);
+
+  const favoriteNotes = notes.filter((note) => note.favorite);
+  const nonFavoriteNotes = notes.filter((note) => !note.favorite);
 
   return (
     <div className="space-y-8">
@@ -86,7 +95,35 @@ export default function NotesPage() {
           </p>
         </div>
       ) : (
-        <NotesGrid notes={notes} />
+        <>
+          {favoriteNotes.length > 0 && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="favorites" className="border-none">
+                <AccordionTrigger className="text-base font-medium py-3 hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-primary fill-primary" />
+                    <span className="font-medium font-lora tracking-tight">
+                      Favorites
+                    </span>
+                    <span className="text-xs text-muted-foreground font-normal font-lora tracking-tight">
+                      ({favoriteNotes.length})
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="pt-2">
+                    <NotesGrid notes={favoriteNotes} />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
+          {nonFavoriteNotes.length > 0 && (
+            <div className={favoriteNotes.length > 0 ? "pt-4" : ""}>
+              <NotesGrid notes={nonFavoriteNotes} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

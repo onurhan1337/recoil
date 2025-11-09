@@ -81,17 +81,10 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const validation = validateRequest(noteUpdateSchema, body);
-
-    if (!validation.success) {
-      return validation.response;
-    }
-
-    const { content, tags } = validation.data;
 
     const { data: existingNote, error: fetchError } = await supabase
       .from("notes")
-      .select("user_id, content")
+      .select("user_id, content, pinned")
       .eq("id", idValidation.data)
       .single();
 
@@ -102,6 +95,62 @@ export async function PATCH(
     if (existingNote.user_id !== user.id) {
       return errorResponse("Forbidden", 403);
     }
+
+    if (body.pinned !== undefined) {
+      const wantsToPin = Boolean(body.pinned);
+
+      if (wantsToPin && !existingNote.pinned) {
+        const { count: pinnedCount } = await supabase
+          .from("notes")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("pinned", true);
+
+        if (pinnedCount !== null && pinnedCount >= 3) {
+          return errorResponse("Maximum of 3 pinned notes allowed", 400);
+        }
+      }
+
+      const { data: updatedNote, error: updateError } = await supabase
+        .from("notes")
+        .update({ pinned: wantsToPin } as { pinned: boolean })
+        .eq("id", idValidation.data)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      return successResponse({
+        note: updatedNote,
+      });
+    }
+
+    if (body.favorite !== undefined) {
+      const { data: updatedNote, error: updateError } = await supabase
+        .from("notes")
+        .update({ favorite: Boolean(body.favorite) } as { favorite: boolean })
+        .eq("id", idValidation.data)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      return successResponse({
+        note: updatedNote,
+      });
+    }
+
+    const validation = validateRequest(noteUpdateSchema, body);
+
+    if (!validation.success) {
+      return validation.response;
+    }
+
+    const { content, tags } = validation.data;
 
     const { data: usage } = await supabase
       .from("usage")
