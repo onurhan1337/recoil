@@ -6,6 +6,7 @@ import {
   authenticateUser,
 } from "@/lib/api/utils";
 import { uuidSchema, conversationUpdateSchema } from "@/lib/validations";
+import { validateParams, validateRequest } from "@/lib/validation-utils";
 
 export async function GET(
   request: NextRequest,
@@ -20,10 +21,10 @@ export async function GET(
     }
 
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "conversation ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid conversation ID format", 400);
+      return idValidation.response;
     }
 
     const { data: messages, error } = await supabase
@@ -56,10 +57,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "conversation ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid conversation ID format", 400);
+      return idValidation.response;
     }
 
     const { error } = await supabase
@@ -92,20 +93,17 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const idValidation = uuidSchema.safeParse(id);
+    const idValidation = validateParams(uuidSchema, id, "conversation ID");
 
     if (!idValidation.success) {
-      return errorResponse("Invalid conversation ID format", 400);
+      return idValidation.response;
     }
 
     const body = await request.json();
-    const validation = conversationUpdateSchema.safeParse(body);
+    const validation = validateRequest(conversationUpdateSchema, body);
 
     if (!validation.success) {
-      return errorResponse(
-        validation.error.issues[0]?.message || "Invalid request",
-        400
-      );
+      return validation.response;
     }
 
     const { title } = validation.data;

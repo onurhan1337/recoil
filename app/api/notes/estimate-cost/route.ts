@@ -8,12 +8,12 @@ import {
   getUserPlan,
 } from "@/lib/api/utils";
 import { z } from "zod";
+import { validateRequest } from "@/lib/validation-utils";
 
 const estimateCostSchema = z.object({
   content: z
-    .string()
-    .min(1, "Content is required")
-    .max(100000, "Content must be less than 100,000 characters"),
+    .preprocess((val) => (val === null ? undefined : val), z.string())
+    .pipe(z.string().min(1, "Content is required").max(100000, "Content must be less than 100,000 characters")),
 });
 
 export async function POST(request: NextRequest) {
@@ -26,13 +26,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = estimateCostSchema.safeParse(body);
+    const validation = validateRequest(estimateCostSchema, body);
 
     if (!validation.success) {
-      return errorResponse(
-        validation.error.issues[0]?.message || "Invalid request",
-        400
-      );
+      return validation.response;
     }
 
     const { content } = validation.data;

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { errorResponse, successResponse } from "@/lib/api/utils";
 import { uuidSchema } from "@/lib/validations";
+import { validateParams } from "@/lib/validation-utils";
 
 export async function GET(
   request: NextRequest,
@@ -9,10 +10,10 @@ export async function GET(
 ) {
   try {
     const { token } = await params;
-    const tokenValidation = uuidSchema.safeParse(token);
+    const tokenValidation = validateParams(uuidSchema, token, "token");
 
     if (!tokenValidation.success) {
-      return errorResponse("Invalid token format", 400);
+      return tokenValidation.response;
     }
 
     const supabase = await createClient();

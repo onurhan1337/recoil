@@ -6,6 +6,7 @@ import {
   authenticateUser,
 } from "@/lib/api/utils";
 import { displayNameSchema } from "@/lib/validations";
+import { validateRequest } from "@/lib/validation-utils";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -17,13 +18,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = displayNameSchema.safeParse(body);
+    const validation = validateRequest(displayNameSchema, body);
 
     if (!validation.success) {
-      return errorResponse(
-        validation.error.issues[0]?.message || "Invalid request",
-        400
-      );
+      return validation.response;
     }
 
     const { displayName } = validation.data;

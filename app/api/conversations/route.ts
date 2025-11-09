@@ -6,6 +6,7 @@ import {
   authenticateUser,
 } from "@/lib/api/utils";
 import { conversationCreateSchema } from "@/lib/validations";
+import { validateRequest } from "@/lib/validation-utils";
 
 export async function GET() {
   try {
@@ -43,13 +44,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = conversationCreateSchema.safeParse(body);
+    const validation = validateRequest(conversationCreateSchema, body);
 
     if (!validation.success) {
-      return errorResponse(
-        validation.error.issues[0]?.message || "Invalid request",
-        400
-      );
+      return validation.response;
     }
 
     const { title } = validation.data;

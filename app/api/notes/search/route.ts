@@ -4,6 +4,7 @@ import { generateEmbedding } from '@/lib/embeddings';
 import { searchSchema } from '@/lib/validations';
 import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
+import { validateRequest } from '@/lib/validation-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,13 +20,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = searchSchema.safeParse(body);
+    const validation = validateRequest(searchSchema, body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.format() },
-        { status: 400 }
-      );
+      return validation.response;
     }
 
     const { query } = validation.data;
