@@ -126,7 +126,7 @@ export async function PATCH(
       embedding: JSON.stringify(embedding),
       label: metadata.label,
       category: metadata.category,
-      ...(tags !== undefined && { tags: tags || null }),
+      tags: tags && tags.length > 0 ? tags : null,
     };
 
     const { data: updatedNote, error: updateError } = await supabase

@@ -11,12 +11,14 @@ interface TagInputProps {
   value: string[];
   onChange: (tags: string[]) => void;
   placeholder?: string;
+  onBlur?: () => void;
 }
 
 export function TagInput({
   value,
   onChange,
   placeholder = "Add tags...",
+  onBlur,
 }: TagInputProps) {
   const [inputValue, setInputValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -34,6 +36,9 @@ export function TagInput({
   useHotkeys(
     "arrowdown",
     (e) => {
+      const isInputFocused = document.activeElement === inputRef.current;
+      if (!isInputFocused) return;
+
       if (showSuggestions && suggestions.length > 0) {
         e.preventDefault();
         setSelectedIndex((prev) =>
@@ -47,6 +52,9 @@ export function TagInput({
   useHotkeys(
     "arrowup",
     (e) => {
+      const isInputFocused = document.activeElement === inputRef.current;
+      if (!isInputFocused) return;
+
       if (showSuggestions && suggestions.length > 0) {
         e.preventDefault();
         setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
@@ -58,22 +66,65 @@ export function TagInput({
   useHotkeys(
     "enter",
     (e) => {
+      const isInputFocused = document.activeElement === inputRef.current;
+      if (!isInputFocused) return;
+
+      e.preventDefault();
       if (
         showSuggestions &&
         selectedIndex >= 0 &&
         selectedIndex < suggestions.length
       ) {
-        e.preventDefault();
         addTag(suggestions[selectedIndex]);
         setSelectedIndex(-1);
+      } else if (inputValue.trim()) {
+        addTag(inputValue);
       }
     },
-    { enabled: showSuggestions && selectedIndex >= 0 }
+    { enabled: true }
+  );
+
+  useHotkeys(
+    "comma",
+    (e) => {
+      const isInputFocused = document.activeElement === inputRef.current;
+      if (!isInputFocused) return;
+
+      e.preventDefault();
+      if (
+        showSuggestions &&
+        selectedIndex >= 0 &&
+        selectedIndex < suggestions.length
+      ) {
+        addTag(suggestions[selectedIndex]);
+        setSelectedIndex(-1);
+      } else if (inputValue.trim()) {
+        addTag(inputValue);
+      }
+    },
+    { enabled: true }
+  );
+
+  useHotkeys(
+    "backspace",
+    (e) => {
+      const isInputFocused = document.activeElement === inputRef.current;
+      if (!isInputFocused) return;
+
+      if (!inputValue && value.length > 0) {
+        e.preventDefault();
+        removeTag(value[value.length - 1]);
+      }
+    },
+    { enabled: true }
   );
 
   useHotkeys(
     "escape",
     () => {
+      const isInputFocused = document.activeElement === inputRef.current;
+      if (!isInputFocused) return;
+
       setShowSuggestions(false);
       setSelectedIndex(-1);
     },
@@ -83,9 +134,19 @@ export function TagInput({
   const addTag = (tag: string) => {
     const trimmedTag = tag.trim();
     if (trimmedTag && !value.includes(trimmedTag)) {
-      onChange([...value, trimmedTag]);
+      const newTags = [...value, trimmedTag];
+      onChange(newTags);
       setInputValue("");
       setShowSuggestions(false);
+    }
+  };
+
+  const flushPendingInput = () => {
+    if (inputValue.trim()) {
+      addTag(inputValue);
+    }
+    if (onBlur) {
+      onBlur();
     }
   };
 
@@ -94,26 +155,12 @@ export function TagInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-        addTag(suggestions[selectedIndex]);
-        setSelectedIndex(-1);
-      } else if (inputValue.trim()) {
-        addTag(inputValue);
-      }
-    } else if (e.key === "Backspace" && !inputValue && value.length > 0) {
-      removeTag(value[value.length - 1]);
-    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      if (e.key === "ArrowDown") {
-        setSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : prev
-        );
-      } else {
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-      }
-    } else {
+    // Reset selected index when typing (handled by useHotkeys for special keys)
+    if (
+      !["Enter", ",", "Backspace", "ArrowDown", "ArrowUp", "Escape"].includes(
+        e.key
+      )
+    ) {
       setSelectedIndex(-1);
     }
   };
@@ -177,6 +224,7 @@ export function TagInput({
             }}
             onKeyDown={handleKeyDown}
             onFocus={() => setShowSuggestions(inputValue.length > 0)}
+            onBlur={flushPendingInput}
             placeholder={value.length === 0 ? placeholder : ""}
             className="flex-1 min-w-[120px] border-0 shadow-none focus-visible:ring-0 p-0 h-6"
           />
