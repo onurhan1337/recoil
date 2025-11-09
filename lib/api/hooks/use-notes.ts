@@ -102,3 +102,8 @@ export function useFavoriteNote() {
     },
   });
 }
+
+export function usePinnedNotesCount() {
+  const { data: notes = [] } = useNotes();
+  return notes.filter((note) => note.pinned).length;
+}

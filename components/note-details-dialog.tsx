@@ -15,6 +15,7 @@ import {
   PinOff,
   Heart,
   HeartOff,
+  MoreVertical,
 } from "lucide-react";
 import {
   Dialog,
@@ -24,6 +25,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,6 +45,7 @@ import {
   useUsage,
   usePinNote,
   useFavoriteNote,
+  usePinnedNotesCount,
 } from "@/lib/api/hooks";
 import { toast } from "sonner";
 import type { Note } from "@/lib/api/types";
@@ -63,6 +71,7 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
   const updateNoteMutation = useUpdateNote();
   const pinNoteMutation = usePinNote();
   const favoriteNoteMutation = useFavoriteNote();
+  const pinnedCount = usePinnedNotesCount();
   const { data: usage } = useUsage();
   const isPro = usage?.plan === "pro";
   const { data: costEstimate } = useEstimateNoteCost(
@@ -70,6 +79,8 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
   );
   const { data: connections = [], isLoading: connectionsLoading } =
     useNoteConnections(open && isPro ? note.id : null);
+
+  const canPin = note.pinned || pinnedCount < 3;
 
   const handleDelete = async () => {
     try {
@@ -409,34 +420,50 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </Button>
-              <Button
-                variant="outline"
-                onClick={handleFavoriteToggle}
-                disabled={favoriteNoteMutation.isPending}
-              >
-                {favoriteNoteMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : note.favorite ? (
-                  <HeartOff className="h-4 w-4 mr-2" />
-                ) : (
-                  <Heart className="h-4 w-4 mr-2" />
-                )}
-                {note.favorite ? "Unfavorite" : "Favorite"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handlePinToggle}
-                disabled={pinNoteMutation.isPending}
-              >
-                {pinNoteMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : note.pinned ? (
-                  <PinOff className="h-4 w-4 mr-2" />
-                ) : (
-                  <Pin className="h-4 w-4 mr-2" />
-                )}
-                {note.pinned ? "Unpin" : "Pin"}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={
+                      pinNoteMutation.isPending ||
+                      favoriteNoteMutation.isPending
+                    }
+                  >
+                    <MoreVertical className="h-4 w-4 mr-2" />
+                    More
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {canPin && (
+                    <DropdownMenuItem
+                      onClick={handlePinToggle}
+                      disabled={pinNoteMutation.isPending}
+                    >
+                      {pinNoteMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : note.pinned ? (
+                        <PinOff className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Pin className="h-4 w-4 mr-2" />
+                      )}
+                      {note.pinned ? "Unpin" : "Pin"}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={handleFavoriteToggle}
+                    disabled={favoriteNoteMutation.isPending}
+                  >
+                    {favoriteNoteMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : note.favorite ? (
+                      <HeartOff className="h-4 w-4 mr-2" />
+                    ) : (
+                      <Heart className="h-4 w-4 mr-2" />
+                    )}
+                    {note.favorite ? "Unfavorite" : "Favorite"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button onClick={() => setIsEditing(true)}>
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit
