@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { NoteDetailsDialog } from "@/components/note-details-dialog";
 import { formatShortDate } from "@/lib/utils";
+import { Pin } from "lucide-react";
 import type { Note } from "@/lib/api/types";
 
 interface NotesGridProps {
@@ -28,9 +29,15 @@ export function NotesGrid({ notes }: NotesGridProps) {
     );
   };
 
+  const sortedNotes = [...notes].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return 0;
+  });
+
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {notes.map((note) => {
+      {sortedNotes.map((note) => {
         const showLabel =
           note.label && !isLabelRedundant(note.label, note.content);
 
@@ -41,8 +48,15 @@ export function NotesGrid({ notes }: NotesGridProps) {
             trigger={
               <button
                 data-note-id={note.id}
-                className="group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 text-left w-full"
+                className={`group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 text-left w-full ${
+                  note.pinned ? "border-primary/50 bg-primary/5" : ""
+                }`}
               >
+                {note.pinned && (
+                  <div className="absolute top-2 right-2">
+                    <Pin className="h-4 w-4 text-primary fill-primary" />
+                  </div>
+                )}
                 <div className="flex-1 flex flex-col gap-3">
                   {showLabel && (
                     <h3 className="text-sm font-medium line-clamp-1">

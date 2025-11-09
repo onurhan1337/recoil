@@ -7,6 +7,8 @@ export interface Note {
   related_notes?: string[] | null;
   created_at: string;
   user_id: string;
+  pinned?: boolean;
+  favorite?: boolean;
 }
 
 export interface Conversation {

@@ -9,6 +9,7 @@ export function useNotesFilter(allNotes: Note[]) {
     tag: undefined,
     dateRange: "all",
     sortBy: "newest",
+    pinned: undefined,
   });
 
   const filteredNotes = useMemo(() => {
@@ -32,6 +33,10 @@ export function useNotesFilter(allNotes: Note[]) {
       result = result.filter((note) => note.tags?.includes(filters.tag as string));
     }
 
+    if (filters.pinned !== undefined) {
+      result = result.filter((note) => note.pinned === filters.pinned);
+    }
+
     if (filters.dateRange !== "all") {
       const cutoffDate = new Date();
       if (filters.dateRange === "week") {
@@ -43,11 +48,29 @@ export function useNotesFilter(allNotes: Note[]) {
     }
 
     if (filters.sortBy === "newest") {
-      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      result.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
     } else if (filters.sortBy === "oldest") {
-      result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      result.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
     } else if (filters.sortBy === "category") {
-      result.sort((a, b) => (a.category || "").localeCompare(b.category || ""));
+      result.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return (a.category || "").localeCompare(b.category || "");
+      });
+    } else {
+      result.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return 0;
+      });
     }
 
     return result;
@@ -63,7 +86,8 @@ export function useNotesFilter(allNotes: Note[]) {
     filters.category ||
     filters.tag ||
     filters.dateRange !== "all" ||
-    filters.sortBy !== "newest";
+    filters.sortBy !== "newest" ||
+    filters.pinned !== undefined;
 
   const clearFilters = useCallback(() => {
     setFilters({
@@ -72,6 +96,7 @@ export function useNotesFilter(allNotes: Note[]) {
       tag: undefined,
       dateRange: "all",
       sortBy: "newest",
+      pinned: undefined,
     });
   }, []);
 

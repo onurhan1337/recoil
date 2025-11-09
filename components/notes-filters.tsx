@@ -1,6 +1,16 @@
 "use client";
 
-import { Search, X, Filter, Tag, Calendar, ArrowUpDown, Folder, Check } from "lucide-react";
+import {
+  Search,
+  X,
+  Filter,
+  Tag,
+  Calendar,
+  ArrowUpDown,
+  Folder,
+  Check,
+  Pin,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +29,9 @@ import type { NotesFilters } from "@/lib/api/hooks/use-notes";
 
 interface NotesFiltersProps {
   filters: NotesFilters;
-  onFiltersChange: (filters: NotesFilters | ((prev: NotesFilters) => NotesFilters)) => void;
+  onFiltersChange: (
+    filters: NotesFilters | ((prev: NotesFilters) => NotesFilters)
+  ) => void;
   availableCategories: string[];
   availableTags: string[];
   hasActiveFilters: boolean;
@@ -34,18 +46,23 @@ export function NotesFilters({
   hasActiveFilters,
   onClearFilters,
 }: NotesFiltersProps) {
-  const getActiveFilterLabel = (key: string, value: string | undefined) => {
-    if (!value || value === "all") return null;
-    
+  const getActiveFilterLabel = (
+    key: string,
+    value: string | boolean | undefined
+  ) => {
+    if (value === undefined || value === "all" || value === false) return null;
+
     switch (key) {
       case "category":
-        return value;
+        return value as string;
       case "tag":
-        return value;
+        return value as string;
       case "dateRange":
         return value === "week" ? "This week" : "This month";
       case "sortBy":
         return value === "oldest" ? "Oldest first" : "By category";
+      case "pinned":
+        return "Pinned";
       default:
         return null;
     }
@@ -61,6 +78,8 @@ export function NotesFilters({
         return { ...prev, dateRange: "all" };
       } else if (key === "sortBy") {
         return { ...prev, sortBy: "newest" };
+      } else if (key === "pinned") {
+        return { ...prev, pinned: undefined };
       }
       return prev;
     });
@@ -68,10 +87,27 @@ export function NotesFilters({
 
   const activeFilters = [
     filters.search && { key: "search" as const, label: filters.search },
-    filters.category && { key: "category" as const, label: getActiveFilterLabel("category", filters.category) },
-    filters.tag && { key: "tag" as const, label: getActiveFilterLabel("tag", filters.tag) },
-    filters.dateRange !== "all" && { key: "dateRange" as const, label: getActiveFilterLabel("dateRange", filters.dateRange) },
-    filters.sortBy !== "newest" && { key: "sortBy" as const, label: getActiveFilterLabel("sortBy", filters.sortBy) },
+    filters.category && {
+      key: "category" as const,
+      label: getActiveFilterLabel("category", filters.category),
+    },
+    filters.tag && {
+      key: "tag" as const,
+      label: getActiveFilterLabel("tag", filters.tag),
+    },
+    filters.dateRange !== "all" && {
+      key: "dateRange" as const,
+      label: getActiveFilterLabel("dateRange", filters.dateRange),
+    },
+    filters.sortBy !== "newest" && {
+      key: "sortBy" as const,
+      label: getActiveFilterLabel("sortBy", filters.sortBy),
+    },
+    filters.pinned !== undefined &&
+      filters.pinned && {
+        key: "pinned" as const,
+        label: getActiveFilterLabel("pinned", filters.pinned),
+      },
   ].filter(Boolean) as Array<{ key: keyof NotesFilters; label: string }>;
 
   return (
@@ -91,19 +127,21 @@ export function NotesFilters({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className={`gap-2 h-9 px-4 transition-all ${
-                hasActiveFilters 
-                  ? "border-primary/50 bg-primary/5 hover:bg-primary/10" 
+                hasActiveFilters
+                  ? "border-primary/50 bg-primary/5 hover:bg-primary/10"
                   : "hover:bg-muted/50"
               }`}
             >
-              <Filter className={`h-4 w-4 ${hasActiveFilters ? "text-primary" : ""}`} />
+              <Filter
+                className={`h-4 w-4 ${hasActiveFilters ? "text-primary" : ""}`}
+              />
               <span className="font-medium">Filters</span>
               {hasActiveFilters && (
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className="ml-1 h-5 min-w-5 rounded-full px-1.5 flex items-center justify-center text-xs font-semibold bg-primary/10 text-primary border-primary/20"
                 >
                   {activeFilters.length}
@@ -119,10 +157,19 @@ export function NotesFilters({
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="px-2 py-2">
-                <Folder className={`h-4 w-4 ${filters.category ? "text-primary" : ""}`} />
-                <span className={filters.category ? "font-medium" : ""}>Category</span>
+                <Folder
+                  className={`h-4 w-4 ${
+                    filters.category ? "text-primary" : ""
+                  }`}
+                />
+                <span className={filters.category ? "font-medium" : ""}>
+                  Category
+                </span>
                 {filters.category && (
-                  <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0 h-5">
+                  <Badge
+                    variant="secondary"
+                    className="ml-auto text-xs px-1.5 py-0 h-5"
+                  >
                     {filters.category}
                   </Badge>
                 )}
@@ -130,12 +177,21 @@ export function NotesFilters({
               <DropdownMenuSubContent className="p-1">
                 <DropdownMenuItem
                   onClick={() =>
-                    onFiltersChange((prev) => ({ ...prev, category: undefined }))
+                    onFiltersChange((prev) => ({
+                      ...prev,
+                      category: undefined,
+                    }))
                   }
                   className="px-2 py-2"
                 >
-                  <Check className={`h-4 w-4 mr-2 ${!filters.category ? "opacity-100" : "opacity-0"}`} />
-                  <span className={!filters.category ? "font-medium" : ""}>All categories</span>
+                  <Check
+                    className={`h-4 w-4 mr-2 ${
+                      !filters.category ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                  <span className={!filters.category ? "font-medium" : ""}>
+                    All categories
+                  </span>
                 </DropdownMenuItem>
                 {availableCategories.map((category) => (
                   <DropdownMenuItem
@@ -145,8 +201,18 @@ export function NotesFilters({
                     }
                     className="px-2 py-2"
                   >
-                    <Check className={`h-4 w-4 mr-2 ${filters.category === category ? "opacity-100" : "opacity-0"}`} />
-                    <span className={filters.category === category ? "font-medium" : ""}>
+                    <Check
+                      className={`h-4 w-4 mr-2 ${
+                        filters.category === category
+                          ? "opacity-100"
+                          : "opacity-0"
+                      }`}
+                    />
+                    <span
+                      className={
+                        filters.category === category ? "font-medium" : ""
+                      }
+                    >
                       {category}
                     </span>
                   </DropdownMenuItem>
@@ -156,10 +222,15 @@ export function NotesFilters({
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="px-2 py-2">
-                <Tag className={`h-4 w-4 ${filters.tag ? "text-primary" : ""}`} />
+                <Tag
+                  className={`h-4 w-4 ${filters.tag ? "text-primary" : ""}`}
+                />
                 <span className={filters.tag ? "font-medium" : ""}>Tag</span>
                 {filters.tag && (
-                  <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0 h-5">
+                  <Badge
+                    variant="secondary"
+                    className="ml-auto text-xs px-1.5 py-0 h-5"
+                  >
                     {filters.tag}
                   </Badge>
                 )}
@@ -171,8 +242,14 @@ export function NotesFilters({
                   }
                   className="px-2 py-2"
                 >
-                  <Check className={`h-4 w-4 mr-2 ${!filters.tag ? "opacity-100" : "opacity-0"}`} />
-                  <span className={!filters.tag ? "font-medium" : ""}>All tags</span>
+                  <Check
+                    className={`h-4 w-4 mr-2 ${
+                      !filters.tag ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                  <span className={!filters.tag ? "font-medium" : ""}>
+                    All tags
+                  </span>
                 </DropdownMenuItem>
                 {availableTags.map((tag) => (
                   <DropdownMenuItem
@@ -182,7 +259,11 @@ export function NotesFilters({
                     }
                     className="px-2 py-2"
                   >
-                    <Check className={`h-4 w-4 mr-2 ${filters.tag === tag ? "opacity-100" : "opacity-0"}`} />
+                    <Check
+                      className={`h-4 w-4 mr-2 ${
+                        filters.tag === tag ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
                     <span className={filters.tag === tag ? "font-medium" : ""}>
                       {tag}
                     </span>
@@ -193,10 +274,21 @@ export function NotesFilters({
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="px-2 py-2">
-                <Calendar className={`h-4 w-4 ${filters.dateRange !== "all" ? "text-primary" : ""}`} />
-                <span className={filters.dateRange !== "all" ? "font-medium" : ""}>Date</span>
+                <Calendar
+                  className={`h-4 w-4 ${
+                    filters.dateRange !== "all" ? "text-primary" : ""
+                  }`}
+                />
+                <span
+                  className={filters.dateRange !== "all" ? "font-medium" : ""}
+                >
+                  Date
+                </span>
                 {filters.dateRange !== "all" && (
-                  <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0 h-5">
+                  <Badge
+                    variant="secondary"
+                    className="ml-auto text-xs px-1.5 py-0 h-5"
+                  >
                     {filters.dateRange === "week" ? "Week" : "Month"}
                   </Badge>
                 )}
@@ -210,8 +302,18 @@ export function NotesFilters({
                     }
                     className="px-2 py-2"
                   >
-                    <Check className={`h-4 w-4 mr-2 ${filters.dateRange === range ? "opacity-100" : "opacity-0"}`} />
-                    <span className={filters.dateRange === range ? "font-medium" : ""}>
+                    <Check
+                      className={`h-4 w-4 mr-2 ${
+                        filters.dateRange === range
+                          ? "opacity-100"
+                          : "opacity-0"
+                      }`}
+                    />
+                    <span
+                      className={
+                        filters.dateRange === range ? "font-medium" : ""
+                      }
+                    >
                       {range === "all"
                         ? "All time"
                         : range === "week"
@@ -225,10 +327,21 @@ export function NotesFilters({
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="px-2 py-2">
-                <ArrowUpDown className={`h-4 w-4 ${filters.sortBy !== "newest" ? "text-primary" : ""}`} />
-                <span className={filters.sortBy !== "newest" ? "font-medium" : ""}>Sort</span>
+                <ArrowUpDown
+                  className={`h-4 w-4 ${
+                    filters.sortBy !== "newest" ? "text-primary" : ""
+                  }`}
+                />
+                <span
+                  className={filters.sortBy !== "newest" ? "font-medium" : ""}
+                >
+                  Sort
+                </span>
                 {filters.sortBy !== "newest" && (
-                  <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0 h-5">
+                  <Badge
+                    variant="secondary"
+                    className="ml-auto text-xs px-1.5 py-0 h-5"
+                  >
                     {filters.sortBy === "oldest" ? "Oldest" : "Category"}
                   </Badge>
                 )}
@@ -242,8 +355,14 @@ export function NotesFilters({
                     }
                     className="px-2 py-2"
                   >
-                    <Check className={`h-4 w-4 mr-2 ${filters.sortBy === sort ? "opacity-100" : "opacity-0"}`} />
-                    <span className={filters.sortBy === sort ? "font-medium" : ""}>
+                    <Check
+                      className={`h-4 w-4 mr-2 ${
+                        filters.sortBy === sort ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                    <span
+                      className={filters.sortBy === sort ? "font-medium" : ""}
+                    >
                       {sort === "newest"
                         ? "Newest first"
                         : sort === "oldest"
@@ -255,10 +374,36 @@ export function NotesFilters({
               </DropdownMenuSubContent>
             </DropdownMenuSub>
 
+            <DropdownMenuSeparator className="my-1" />
+
+            <DropdownMenuItem
+              onClick={() =>
+                onFiltersChange((prev) => ({
+                  ...prev,
+                  pinned: prev.pinned === true ? undefined : true,
+                }))
+              }
+              className="px-2 py-2"
+            >
+              <Pin
+                className={`h-4 w-4 mr-2 ${
+                  filters.pinned === true ? "text-primary" : ""
+                }`}
+              />
+              <Check
+                className={`h-4 w-4 mr-2 ${
+                  filters.pinned === true ? "opacity-100" : "opacity-0"
+                }`}
+              />
+              <span className={filters.pinned === true ? "font-medium" : ""}>
+                Pinned
+              </span>
+            </DropdownMenuItem>
+
             {hasActiveFilters && (
               <>
                 <DropdownMenuSeparator className="my-1" />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={onClearFilters}
                   className="px-2 py-2 text-destructive focus:text-destructive focus:bg-destructive/10"
                 >
@@ -274,11 +419,7 @@ export function NotesFilters({
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-2">
           {activeFilters.map((filter) => (
-            <Badge
-              key={filter.key}
-              variant="secondary"
-              className="gap-1 pr-1"
-            >
+            <Badge key={filter.key} variant="secondary" className="gap-1 pr-1">
               {filter.label}
               <button
                 onClick={() => removeFilter(filter.key)}

@@ -11,6 +11,7 @@ export interface NotesFilters {
   tag?: string;
   dateRange?: "week" | "month" | "all";
   sortBy?: "newest" | "oldest" | "category";
+  pinned?: boolean;
 }
 
 export function useNotes() {
@@ -50,7 +51,15 @@ export function useUpdateNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ noteId, content, tags }: { noteId: string; content: string; tags?: string[] }) =>
+    mutationFn: ({
+      noteId,
+      content,
+      tags,
+    }: {
+      noteId: string;
+      content: string;
+      tags?: string[];
+    }) =>
       apiPatch<CreateNoteResponse>(`/api/notes/${noteId}`, { content, tags }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
@@ -63,8 +72,33 @@ export function useUpdateNote() {
 export function useEstimateNoteCost(content: string) {
   return useQuery({
     queryKey: ["note-cost-estimate", content],
-    queryFn: () => apiPost<NoteCostEstimate>("/api/notes/estimate-cost", { content }),
+    queryFn: () =>
+      apiPost<NoteCostEstimate>("/api/notes/estimate-cost", { content }),
     enabled: content.length > 0,
     staleTime: 1000,
+  });
+}
+
+export function usePinNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ noteId, pinned }: { noteId: string; pinned: boolean }) =>
+      apiPatch<{ note: Note }>(`/api/notes/${noteId}`, { pinned }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+    },
+  });
+}
+
+export function useFavoriteNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ noteId, favorite }: { noteId: string; favorite: boolean }) =>
+      apiPatch<{ note: Note }>(`/api/notes/${noteId}`, { favorite }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+    },
   });
 }

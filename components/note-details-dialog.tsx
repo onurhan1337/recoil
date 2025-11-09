@@ -11,6 +11,10 @@ import {
   Info,
   Save,
   X,
+  Pin,
+  PinOff,
+  Heart,
+  HeartOff,
 } from "lucide-react";
 import {
   Dialog,
@@ -32,6 +36,8 @@ import {
   useEstimateNoteCost,
   useNoteConnections,
   useUsage,
+  usePinNote,
+  useFavoriteNote,
 } from "@/lib/api/hooks";
 import { toast } from "sonner";
 import type { Note } from "@/lib/api/types";
@@ -55,6 +61,8 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
 
   const deleteNoteMutation = useDeleteNote();
   const updateNoteMutation = useUpdateNote();
+  const pinNoteMutation = usePinNote();
+  const favoriteNoteMutation = useFavoriteNote();
   const { data: usage } = useUsage();
   const isPro = usage?.plan === "pro";
   const { data: costEstimate } = useEstimateNoteCost(
@@ -70,7 +78,9 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
       setOpen(false);
       setShowDeleteConfirm(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete note");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete note"
+      );
     }
   };
 
@@ -89,7 +99,9 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
       toast.success("Note updated successfully");
       setIsEditing(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update note");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update note"
+      );
     }
   };
 
@@ -97,6 +109,42 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
     setEditedContent(note.content);
     setEditedTags(note.tags || []);
     setIsEditing(false);
+  };
+
+  const handlePinToggle = async () => {
+    try {
+      await pinNoteMutation.mutateAsync({
+        noteId: note.id,
+        pinned: !note.pinned,
+      });
+      toast.success(note.pinned ? "Note unpinned" : "Note pinned");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to toggle pin";
+      if (errorMessage.includes("Maximum of 3 pinned notes")) {
+        toast.error(
+          "Maximum of 3 pinned notes allowed. Unpin another note first."
+        );
+      } else {
+        toast.error(errorMessage);
+      }
+    }
+  };
+
+  const handleFavoriteToggle = async () => {
+    try {
+      await favoriteNoteMutation.mutateAsync({
+        noteId: note.id,
+        favorite: !note.favorite,
+      });
+      toast.success(
+        note.favorite ? "Removed from favorites" : "Added to favorites"
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to toggle favorite"
+      );
+    }
   };
 
   return (
@@ -314,7 +362,10 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
                           </p>
                           <div className="flex items-center gap-2 mt-2">
                             {connection.category && (
-                              <Badge variant="outline" className="text-[10px] h-5">
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] h-5"
+                              >
                                 {connection.category}
                               </Badge>
                             )}
@@ -357,6 +408,34 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleFavoriteToggle}
+                disabled={favoriteNoteMutation.isPending}
+              >
+                {favoriteNoteMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : note.favorite ? (
+                  <HeartOff className="h-4 w-4 mr-2" />
+                ) : (
+                  <Heart className="h-4 w-4 mr-2" />
+                )}
+                {note.favorite ? "Unfavorite" : "Favorite"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handlePinToggle}
+                disabled={pinNoteMutation.isPending}
+              >
+                {pinNoteMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : note.pinned ? (
+                  <PinOff className="h-4 w-4 mr-2" />
+                ) : (
+                  <Pin className="h-4 w-4 mr-2" />
+                )}
+                {note.pinned ? "Unpin" : "Pin"}
               </Button>
               <Button onClick={() => setIsEditing(true)}>
                 <Pencil className="h-4 w-4 mr-2" />
