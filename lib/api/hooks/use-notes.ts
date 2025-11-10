@@ -121,3 +121,16 @@ export function useArchiveNote() {
     },
   });
 }
+
+export function useDuplicateNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (noteId: string) =>
+      apiPost<CreateNoteResponse>(`/api/notes/${noteId}/duplicate`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
+    },
+  });
+}

@@ -10,6 +10,7 @@ import {
   useFavoriteNote,
   useArchiveNote,
   usePinnedNotesCount,
+  useDuplicateNote,
 } from "@/lib/api/hooks";
 import type { Note } from "@/lib/api/types";
 import { isProPlan } from "@/lib/api/utils";
@@ -39,6 +40,7 @@ export function useNoteDialog({
   const pinNoteMutation = usePinNote();
   const favoriteNoteMutation = useFavoriteNote();
   const archiveNoteMutation = useArchiveNote();
+  const duplicateNoteMutation = useDuplicateNote();
   const pinnedCount = usePinnedNotesCount();
   const { data: usage } = useUsage();
 
@@ -160,6 +162,18 @@ export function useNoteDialog({
     }
   }, [archiveNoteMutation, note.archived, note.id, onOpenChange]);
 
+  const handleDuplicate = useCallback(async () => {
+    try {
+      await duplicateNoteMutation.mutateAsync(note.id);
+      toast.success("Note duplicated successfully");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to duplicate note"
+      );
+    }
+  }, [duplicateNoteMutation, note.id, onOpenChange]);
+
   const handleConnectionClick = useCallback(
     (connectionId: string) => {
       onOpenChange(false);
@@ -207,12 +221,14 @@ export function useNoteDialog({
     pinNoteMutation,
     favoriteNoteMutation,
     archiveNoteMutation,
+    duplicateNoteMutation,
     handleDelete,
     handleUpdate,
     resetEditing,
     handlePinToggle,
     handleFavoriteToggle,
     handleArchiveToggle,
+    handleDuplicate,
     handleConnectionClick,
   };
 }

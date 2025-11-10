@@ -14,7 +14,8 @@ export const noteSchema = z.object({
     .trim(),
   title: z
     .preprocess(
-      (val) => (val === null || val === undefined || val === "" ? undefined : val),
+      (val) =>
+        val === null || val === undefined || val === "" ? undefined : val,
       z.string()
     )
     .pipe(z.string().max(200, "Title must be less than 200 characters").trim())
@@ -32,7 +33,8 @@ export const updateNoteSchema = z.object({
   content: z.string().min(1, "Content is required").max(10000).trim(),
   title: z
     .preprocess(
-      (val) => (val === null || val === undefined || val === "" ? undefined : val),
+      (val) =>
+        val === null || val === undefined || val === "" ? undefined : val,
       z.string()
     )
     .pipe(z.string().max(200, "Title must be less than 200 characters").trim())
@@ -54,7 +56,8 @@ export const noteUpdateSchema = z.object({
     .trim(),
   title: z
     .preprocess(
-      (val) => (val === null || val === undefined || val === "" ? undefined : val),
+      (val) =>
+        val === null || val === undefined || val === "" ? undefined : val,
       z.string()
     )
     .pipe(z.string().max(200, "Title must be less than 200 characters").trim())
@@ -62,7 +65,9 @@ export const noteUpdateSchema = z.object({
   tags: z
     .array(z.string().min(1, "Tag cannot be empty"))
     .default([])
-    .transform((tags) => tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0)),
+    .transform((tags) =>
+      tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0)
+    ),
 });
 
 export const searchSchema = z.object({
@@ -201,6 +206,48 @@ export const passwordSchema = z.object({
     ),
 });
 
+export const templateSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Template name is required")
+    .max(100, "Template name must be less than 100 characters")
+    .trim(),
+  description: z
+    .string()
+    .max(500, "Description must be less than 500 characters")
+    .trim()
+    .optional(),
+  content: z
+    .string()
+    .min(1, "Content is required")
+    .max(10000, "Content must be less than 10,000 characters")
+    .trim(),
+  category: z.string().max(100).trim().optional(),
+  tags: z.array(z.string().trim().min(1)).optional().default([]),
+});
+
+export const templateUpdateSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Template name is required")
+    .max(100, "Template name must be less than 100 characters")
+    .trim()
+    .optional(),
+  description: z
+    .string()
+    .max(500, "Description must be less than 500 characters")
+    .trim()
+    .optional(),
+  content: z
+    .string()
+    .min(1, "Content is required")
+    .max(10000, "Content must be less than 10,000 characters")
+    .trim()
+    .optional(),
+  category: z.string().max(100).trim().optional(),
+  tags: z.array(z.string().trim().min(1)).optional().default([]),
+});
+
 export const signupSchema = emailSchema.extend(passwordSchema.shape);
 export const loginSchema = emailSchema.extend(passwordSchema.shape);
 
@@ -216,3 +263,5 @@ export type ChatRequestInput = z.infer<typeof chatRequestSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ChatMessageInput = z.infer<typeof chatMessageSchema>;
+export type TemplateInput = z.infer<typeof templateSchema>;
+export type TemplateUpdateInput = z.infer<typeof templateUpdateSchema>;

@@ -10,3 +10,4 @@ export * from "./use-analyses";
 export * from "./use-export-notes";
 export * from "./use-notes-filter";
 export * from "./use-notes-analytics";
+export * from "./use-templates";
