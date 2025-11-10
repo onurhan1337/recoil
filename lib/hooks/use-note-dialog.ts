@@ -13,6 +13,8 @@ import {
 import type { Note } from "@/lib/api/types";
 import { isProPlan } from "@/lib/api/utils";
 
+const MAX_PINNED_NOTES = 3;
+
 interface UseNoteDialogProps {
   note: Note;
   open: boolean;
@@ -38,7 +40,7 @@ export function useNoteDialog({
   const { data: usage } = useUsage();
 
   const isPro = isProPlan(usage?.plan);
-  const canPin = note.pinned || pinnedCount < 3;
+  const canPin = note.pinned || pinnedCount < MAX_PINNED_NOTES;
 
   const { data: costEstimate } = useEstimateNoteCost(
     isEditing && open ? editedContent : ""
@@ -100,9 +102,13 @@ export function useNoteDialog({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to toggle pin";
-      if (errorMessage.includes("Maximum of 3 pinned notes")) {
+      if (
+        errorMessage.includes(
+          `Maximum of ${MAX_PINNED_NOTES} pinned notes allowed.`
+        )
+      ) {
         toast.error(
-          "Maximum of 3 pinned notes allowed. Unpin another note first."
+          `Maximum of ${MAX_PINNED_NOTES} pinned notes allowed. Unpin another note first.`
         );
       } else {
         toast.error(errorMessage);
