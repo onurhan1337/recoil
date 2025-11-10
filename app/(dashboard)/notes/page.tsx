@@ -24,6 +24,8 @@ export default function NotesPage() {
 
   const {
     filters,
+    search,
+    setSearch,
     setFilters,
     filteredNotes: notes,
     availableCategories,
@@ -54,6 +56,8 @@ export default function NotesPage() {
       {allNotes.length > 0 && (
         <NotesFilters
           filters={filters}
+          search={search}
+          setSearch={setSearch}
           onFiltersChange={setFilters}
           availableCategories={availableCategories as string[]}
           availableTags={allTags}

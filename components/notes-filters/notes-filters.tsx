@@ -19,12 +19,18 @@ import { SortFilter } from "./filters/sort-filter";
 import { PinnedFilter } from "./filters/pinned-filter";
 import { ClearFiltersButton } from "./filters/clear-filters-button";
 import { getActiveFilters } from "./filter-utils";
-import type { NotesFilters } from "@/lib/api/hooks/use-notes";
+import type { URLNotesFilters } from "@/lib/api/hooks/use-notes-filter";
+import type { NotesFiltersFromParsers } from "@/lib/filters/config";
+import { getFilterDefaults } from "@/lib/filters/config";
 
 interface NotesFiltersProps {
-  filters: NotesFilters;
+  filters: URLNotesFilters;
+  search: string;
+  setSearch: (value: string) => void;
   onFiltersChange: (
-    filters: NotesFilters | ((prev: NotesFilters) => NotesFilters)
+    updates:
+      | Partial<NotesFiltersFromParsers>
+      | ((prev: NotesFiltersFromParsers) => Partial<NotesFiltersFromParsers>)
   ) => void;
   availableCategories: string[];
   availableTags: string[];
@@ -34,30 +40,36 @@ interface NotesFiltersProps {
 
 export function NotesFilters({
   filters,
+  search,
+  setSearch,
   onFiltersChange,
   availableCategories,
   availableTags,
   hasActiveFilters,
   onClearFilters,
 }: NotesFiltersProps) {
-  const removeFilter = (key: keyof NotesFilters) => {
-    onFiltersChange((prev) => {
-      if (key === "search") {
-        return { ...prev, search: "" };
-      } else if (key === "category" || key === "tag") {
-        return { ...prev, [key]: undefined };
-      } else if (key === "dateRange") {
-        return { ...prev, dateRange: "all" };
-      } else if (key === "sortBy") {
-        return { ...prev, sortBy: "newest" };
-      } else if (key === "pinned") {
-        return { ...prev, pinned: undefined };
-      }
-      return prev;
-    });
+  const removeFilter = (key: keyof URLNotesFilters) => {
+    if (key === "search") {
+      setSearch("");
+      return;
+    }
+
+    const defaults = getFilterDefaults();
+    onFiltersChange((prev: NotesFiltersFromParsers) => ({
+      ...prev,
+      [key]: defaults[key as keyof typeof defaults],
+    }));
   };
 
   const activeFilters = getActiveFilters(filters);
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      // Force immediate update on Enter (bypass debounce)
+      setSearch(e.currentTarget.value);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -66,10 +78,9 @@ export function NotesFilters({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search notes..."
-            value={filters.search}
-            onChange={(e) =>
-              onFiltersChange((prev) => ({ ...prev, search: e.target.value }))
-            }
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
             className="pl-9"
           />
         </div>

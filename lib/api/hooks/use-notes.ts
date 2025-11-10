@@ -7,11 +7,11 @@ export const NOTES_QUERY_KEY = ["notes"] as const;
 
 export interface NotesFilters {
   search?: string;
-  category?: string;
-  tag?: string;
+  category?: string | null;
+  tag?: string | null;
   dateRange?: "week" | "month" | "all";
   sortBy?: "newest" | "oldest" | "category";
-  pinned?: boolean;
+  pinned?: boolean | null;
 }
 
 export function useNotes() {

@@ -1,107 +1,67 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useCallback } from "react";
+import { useQueryState, useQueryStates, debounce } from "nuqs";
+import {
+  searchParser,
+  notesFiltersParsers,
+  applyFilters,
+  hasActiveFilters as checkHasActiveFilters,
+  getFilterDefaults,
+  type NotesFiltersFromParsers,
+} from "@/lib/filters/config";
 import type { Note } from "../types";
-import type { NotesFilters } from "./use-notes";
+
+const SEARCH_DEBOUNCE_DELAY = 200;
 
 export function useNotesFilter(allNotes: Note[]) {
-  const [filters, setFilters] = useState<NotesFilters>({
-    search: "",
-    category: undefined,
-    tag: undefined,
-    dateRange: "all",
-    sortBy: "newest",
-    pinned: undefined,
+  const [search, setSearch] = useQueryState("search", {
+    ...searchParser,
+    shallow: false,
+    limitUrlUpdates: debounce(SEARCH_DEBOUNCE_DELAY),
   });
 
-  const filteredNotes = useMemo(() => {
-    let result = [...allNotes];
+  const [filters, setFilters] = useQueryStates(notesFiltersParsers, {
+    shallow: false,
+    throttleMs: 100,
+  });
 
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(
-        (note) =>
-          note.content.toLowerCase().includes(searchLower) ||
-          note.label?.toLowerCase().includes(searchLower) ||
-          note.category?.toLowerCase().includes(searchLower)
-      );
-    }
+  const allFilters = useMemo(
+    () => ({ search: search ?? "", ...filters }),
+    [search, filters]
+  );
 
-    if (filters.category) {
-      result = result.filter((note) => note.category === filters.category);
-    }
-
-    if (filters.tag) {
-      result = result.filter((note) => note.tags?.includes(filters.tag as string));
-    }
-
-    if (filters.pinned !== undefined) {
-      result = result.filter((note) => note.pinned === filters.pinned);
-    }
-
-    if (filters.dateRange !== "all") {
-      const cutoffDate = new Date();
-      if (filters.dateRange === "week") {
-        cutoffDate.setDate(cutoffDate.getDate() - 7);
-      } else if (filters.dateRange === "month") {
-        cutoffDate.setMonth(cutoffDate.getMonth() - 1);
-      }
-      result = result.filter((note) => new Date(note.created_at) >= cutoffDate);
-    }
-
-    if (filters.sortBy === "newest") {
-      result.sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-    } else if (filters.sortBy === "oldest") {
-      result.sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      });
-    } else if (filters.sortBy === "category") {
-      result.sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return (a.category || "").localeCompare(b.category || "");
-      });
-    } else {
-      result.sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return 0;
-      });
-    }
-
-    return result;
-  }, [allNotes, filters]);
+  const filteredNotes = useMemo(
+    () => applyFilters(allNotes, allFilters),
+    [allNotes, allFilters]
+  );
 
   const availableCategories = useMemo(() => {
-    const categories = new Set(allNotes.map((note) => note.category).filter(Boolean));
+    const categories = new Set(
+      allNotes.map((note) => note.category).filter(Boolean)
+    );
     return Array.from(categories).sort();
   }, [allNotes]);
 
-  const hasActiveFilters =
-    filters.search ||
-    filters.category ||
-    filters.tag ||
-    filters.dateRange !== "all" ||
-    filters.sortBy !== "newest" ||
-    filters.pinned !== undefined;
+  const hasActiveFilters = useMemo(
+    () => checkHasActiveFilters(allFilters),
+    [allFilters]
+  );
 
+  const defaults = useMemo(() => getFilterDefaults(), []);
   const clearFilters = useCallback(() => {
+    setSearch(defaults.search);
     setFilters({
-      search: "",
-      category: undefined,
-      tag: undefined,
-      dateRange: "all",
-      sortBy: "newest",
-      pinned: undefined,
+      category: defaults.category,
+      tag: defaults.tag,
+      dateRange: defaults.dateRange,
+      sortBy: defaults.sortBy,
+      pinned: defaults.pinned,
     });
-  }, []);
+  }, [setSearch, setFilters, defaults]);
 
   return {
-    filters,
+    filters: allFilters,
+    search: search ?? "",
+    setSearch,
     setFilters,
     filteredNotes,
     availableCategories,
@@ -109,3 +69,5 @@ export function useNotesFilter(allNotes: Note[]) {
     clearFilters,
   };
 }
+
+export type URLNotesFilters = NotesFiltersFromParsers & { search: string };

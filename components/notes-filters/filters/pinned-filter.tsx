@@ -1,19 +1,24 @@
 import { Pin, Check } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import type { NotesFilters } from "@/lib/api/hooks/use-notes";
+import type { URLNotesFilters } from "@/lib/api/hooks/use-notes-filter";
+import type { NotesFiltersFromParsers } from "@/lib/filters/config";
 
 interface PinnedFilterProps {
-  filters: NotesFilters;
-  onFiltersChange: (filters: (prev: NotesFilters) => NotesFilters) => void;
+  filters: URLNotesFilters;
+  onFiltersChange: (
+    updates:
+      | Partial<NotesFiltersFromParsers>
+      | ((prev: NotesFiltersFromParsers) => Partial<NotesFiltersFromParsers>)
+  ) => void;
 }
 
 export function PinnedFilter({ filters, onFiltersChange }: PinnedFilterProps) {
   return (
     <DropdownMenuItem
       onClick={() =>
-        onFiltersChange((prev) => ({
+        onFiltersChange((prev: NotesFiltersFromParsers) => ({
           ...prev,
-          pinned: prev.pinned === true ? undefined : true,
+          pinned: prev.pinned === true ? null : true,
         }))
       }
       className="px-2 py-2"
