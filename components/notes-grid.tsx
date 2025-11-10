@@ -48,8 +48,10 @@ export function NotesGrid({ notes }: NotesGridProps) {
             trigger={
               <button
                 data-note-id={note.id}
-                className={`group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 text-left w-full ${
-                  note.pinned ? "border-primary/50 bg-primary/5" : ""
+                className={`group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 text-left w-full h-[280px] ${
+                  note.pinned
+                    ? "border-primary/50 bg-primary/5"
+                    : "border-border"
                 }`}
               >
                 {note.pinned && (
@@ -57,24 +59,26 @@ export function NotesGrid({ notes }: NotesGridProps) {
                     <Pin className="h-4 w-4 text-primary fill-primary" />
                   </div>
                 )}
-                <div className="flex-1 flex flex-col gap-3">
+                <div className="flex-1 flex flex-col gap-3 min-h-0">
                   {showLabel && (
-                    <h3 className="text-sm font-medium line-clamp-1">
+                    <h3 className="text-sm font-medium line-clamp-1 text-foreground">
                       {note.label}
                     </h3>
                   )}
-                  <div className="text-sm line-clamp-6 leading-relaxed font-lora">
-                    <MarkdownRenderer content={note.content} />
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <div className="text-sm line-clamp-6 leading-relaxed font-lora text-foreground/90">
+                      <MarkdownRenderer content={note.content} compact />
+                    </div>
                   </div>
-                  <div className="mt-auto pt-2 border-t flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="mt-auto pt-2 border-t flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       {note.category && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs shrink-0">
                           {note.category}
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
                       {formatShortDate(note.created_at)}
                     </span>
                   </div>

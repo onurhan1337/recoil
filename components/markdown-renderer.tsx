@@ -7,11 +7,13 @@ import { cn } from "@/lib/utils";
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  compact?: boolean;
 }
 
 export function MarkdownRenderer({
   content,
   className,
+  compact = false,
 }: MarkdownRendererProps) {
   return (
     <div
@@ -34,17 +36,32 @@ export function MarkdownRenderer({
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className="text-xl font-lora font-semibold mb-3 mt-6 first:mt-0">
+            <h1
+              className={cn(
+                "font-lora font-semibold mb-2 mt-3 first:mt-0",
+                compact ? "text-sm" : "text-xl"
+              )}
+            >
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-lg font-lora font-semibold mb-2.5 mt-5 first:mt-0">
+            <h2
+              className={cn(
+                "font-lora font-semibold mb-1.5 mt-2.5 first:mt-0",
+                compact ? "text-sm" : "text-lg"
+              )}
+            >
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-base font-lora font-semibold mb-2 mt-4 first:mt-0">
+            <h3
+              className={cn(
+                "font-lora font-semibold mb-1 mt-2 first:mt-0",
+                compact ? "text-sm" : "text-base"
+              )}
+            >
               {children}
             </h3>
           ),

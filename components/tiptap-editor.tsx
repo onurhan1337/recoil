@@ -3,6 +3,9 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import { useRef, useMemo } from "react";
+import { marked } from "marked";
+import TurndownService from "turndown";
 import {
   Bold,
   Italic,
@@ -10,7 +13,7 @@ import {
   ListOrdered,
   Heading2,
   Quote,
-  Minus
+  Minus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +23,31 @@ interface TiptapEditorProps {
   placeholder?: string;
 }
 
-export function TiptapEditor({ content, onChange, placeholder = "Start writing..." }: TiptapEditorProps) {
+const turndownService = new TurndownService({
+  headingStyle: "atx",
+  codeBlockStyle: "fenced",
+  bulletListMarker: "-",
+});
+
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
+export function TiptapEditor({
+  content,
+  onChange,
+  placeholder = "Start writing...",
+}: TiptapEditorProps) {
+  const contentRef = useRef(content);
+  const isInternalUpdateRef = useRef(false);
+
+  const initialHtml = useMemo(() => {
+    if (!content) return "";
+    const parseResult = marked.parse(content);
+    return typeof parseResult === "string" ? parseResult : "";
+  }, []);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -28,17 +55,43 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
         placeholder,
       }),
     ],
-    content,
+    content: initialHtml,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      onChange(editor.getText());
+      if (isInternalUpdateRef.current) return;
+      const html = editor.getHTML();
+      const markdown = turndownService.turndown(html);
+      contentRef.current = markdown;
+      onChange(markdown);
     },
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none focus:outline-none min-h-[300px] px-6 py-4 font-lora",
+        class:
+          "prose prose-sm max-w-none focus:outline-none min-h-[300px] px-6 py-4 font-lora",
       },
     },
   });
+
+  if (
+    editor &&
+    content !== contentRef.current &&
+    !isInternalUpdateRef.current
+  ) {
+    isInternalUpdateRef.current = true;
+    contentRef.current = content;
+    const parseResult = marked.parse(content);
+    const parsePromise =
+      typeof parseResult === "string"
+        ? Promise.resolve(parseResult)
+        : parseResult;
+
+    parsePromise.then((html: string) => {
+      if (editor && !editor.isDestroyed) {
+        editor.commands.setContent(String(html) || "");
+      }
+      isInternalUpdateRef.current = false;
+    });
+  }
 
   if (!editor) {
     return null;
@@ -72,7 +125,9 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
         </button>
         <div className="w-px h-4 bg-border mx-0.5" />
         <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
           className={cn(
             "p-1.5 rounded-sm hover:bg-muted transition-colors",
             editor.isActive("heading", { level: 2 }) && "bg-muted"
