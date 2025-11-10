@@ -26,8 +26,8 @@ export function useCreateNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ content, tags }: { content: string; tags?: string[] }) =>
-      apiPost<CreateNoteResponse>("/api/notes", { content, tags }),
+    mutationFn: ({ content, title, tags }: { content: string; title?: string; tags?: string[] }) =>
+      apiPost<CreateNoteResponse>("/api/notes", { content, title, tags }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
@@ -54,13 +54,15 @@ export function useUpdateNote() {
     mutationFn: ({
       noteId,
       content,
+      title,
       tags,
     }: {
       noteId: string;
       content: string;
+      title?: string;
       tags?: string[];
     }) =>
-      apiPatch<CreateNoteResponse>(`/api/notes/${noteId}`, { content, tags }),
+      apiPatch<CreateNoteResponse>(`/api/notes/${noteId}`, { content, title, tags }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });

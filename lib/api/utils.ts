@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { UserPlan } from "./types";
+import { config } from "@/lib/config";
 
 export function errorResponse(message: string, status: number = 500) {
   return NextResponse.json({ error: message }, { status });
@@ -8,6 +9,27 @@ export function errorResponse(message: string, status: number = 500) {
 
 export function successResponse<T>(data: T, headers?: HeadersInit) {
   return NextResponse.json(data, { headers });
+}
+
+export function calculateNoteCost(content: string, userPlan: UserPlan) {
+  const baseCost = config.plans[userPlan].costs.createNote;
+  const contentLength = content.length;
+  const chunkSize = config.embeddings.chunkSize;
+  const estimatedChunks = Math.ceil(contentLength / chunkSize);
+  const embeddingCostPerChunk = config.plans[userPlan].costs.embedding;
+  const additionalEmbeddingCost = Math.max(
+    0,
+    (estimatedChunks - 1) * embeddingCostPerChunk
+  );
+  const totalCost = baseCost + additionalEmbeddingCost;
+
+  return {
+    totalCost,
+    baseCost,
+    embeddingCost: additionalEmbeddingCost,
+    contentLength,
+    estimatedChunks,
+  };
 }
 
 export async function authenticateUser(supabase: SupabaseClient) {

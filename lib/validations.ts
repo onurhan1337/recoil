@@ -12,6 +12,13 @@ export const noteSchema = z.object({
     .min(1, "Note content is required")
     .max(10000, "Note content must be less than 10,000 characters")
     .trim(),
+  title: z
+    .preprocess(
+      (val) => (val === null || val === undefined || val === "" ? undefined : val),
+      z.string()
+    )
+    .pipe(z.string().max(200, "Title must be less than 200 characters").trim())
+    .optional(),
   tags: z
     .preprocess(
       (val) => (val === null ? undefined : val),
@@ -23,6 +30,13 @@ export const noteSchema = z.object({
 
 export const updateNoteSchema = z.object({
   content: z.string().min(1, "Content is required").max(10000).trim(),
+  title: z
+    .preprocess(
+      (val) => (val === null || val === undefined || val === "" ? undefined : val),
+      z.string()
+    )
+    .pipe(z.string().max(200, "Title must be less than 200 characters").trim())
+    .optional(),
   tags: z
     .preprocess(
       (val) => (val === null ? undefined : val),
@@ -38,6 +52,13 @@ export const noteUpdateSchema = z.object({
     .min(1, "Note content is required")
     .max(10000, "Note content must be less than 10,000 characters")
     .trim(),
+  title: z
+    .preprocess(
+      (val) => (val === null || val === undefined || val === "" ? undefined : val),
+      z.string()
+    )
+    .pipe(z.string().max(200, "Title must be less than 200 characters").trim())
+    .optional(),
   tags: z
     .array(z.string().min(1, "Tag cannot be empty"))
     .default([])

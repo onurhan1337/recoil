@@ -29,6 +29,7 @@ export function useNoteDialog({
 }: UseNoteDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(note.content);
+  const [editedTitle, setEditedTitle] = useState(note.title || "");
   const [editedTags, setEditedTags] = useState<string[]>(note.tags || []);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
@@ -74,6 +75,7 @@ export function useNoteDialog({
       await updateNoteMutation.mutateAsync({
         noteId: note.id,
         content: editedContent,
+        title: editedTitle.trim() || undefined,
         tags: editedTags,
       });
       toast.success("Note saved successfully");
@@ -83,14 +85,15 @@ export function useNoteDialog({
         error instanceof Error ? error.message : "Failed to update note"
       );
     }
-  }, [editedContent, editedTags, note.id, updateNoteMutation]);
+  }, [editedContent, editedTitle, editedTags, note.id, updateNoteMutation]);
 
   const resetEditing = useCallback(() => {
     setEditedContent(note.content);
+    setEditedTitle(note.title || "");
     setEditedTags(note.tags || []);
     setIsEditing(false);
     setIsPreview(false);
-  }, [note.content, note.tags]);
+  }, [note.content, note.title, note.tags]);
 
   const handlePinToggle = useCallback(async () => {
     try {
@@ -175,16 +178,19 @@ export function useNoteDialog({
 
   const startEditing = useCallback(() => {
     setEditedContent(note.content);
+    setEditedTitle(note.title || "");
     setEditedTags(note.tags || []);
     setIsEditing(true);
     setIsPreview(false);
-  }, [note.content, note.tags]);
+  }, [note.content, note.title, note.tags]);
 
   return {
     isEditing,
     startEditing,
     editedContent,
     setEditedContent,
+    editedTitle,
+    setEditedTitle,
     editedTags,
     setEditedTags,
     showDeleteConfirm,

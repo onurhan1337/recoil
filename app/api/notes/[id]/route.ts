@@ -2,12 +2,12 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
 import { generateNoteMetadata } from "@/lib/ai";
-import { config } from "@/lib/config";
 import {
   errorResponse,
   successResponse,
   authenticateUser,
   getUserPlan,
+  calculateNoteCost,
 } from "@/lib/api/utils";
 import { uuidSchema, noteUpdateSchema } from "@/lib/validations";
 import { validateParams, validateRequest } from "@/lib/validation-utils";
@@ -140,7 +140,7 @@ export async function PATCH(
       return validation.response;
     }
 
-    const { content, tags } = validation.data;
+    const { content, title, tags } = validation.data;
 
     const { data: usage } = await supabase
       .from("usage")
@@ -149,7 +149,8 @@ export async function PATCH(
       .single();
 
     const userPlan = getUserPlan(usage?.plan);
-    const updateCost = config.plans[userPlan].costs.createNote;
+    const costCalculation = calculateNoteCost(content, userPlan);
+    const updateCost = costCalculation.totalCost;
 
     if (!usage || usage.credits < updateCost) {
       return errorResponse("Insufficient credits", 403);
@@ -162,6 +163,7 @@ export async function PATCH(
 
     const contentUpdateData: Record<string, unknown> = {
       content,
+      title: title || null,
       embedding: JSON.stringify(embedding),
       label: metadata.label,
       category: metadata.category,

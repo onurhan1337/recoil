@@ -3,12 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
 import { generateNoteMetadata } from "@/lib/ai";
 import { noteSchema, paginationSchema } from "@/lib/validations";
-import { config } from "@/lib/config";
 import {
   errorResponse,
   successResponse,
   authenticateUser,
   getUserPlan,
+  calculateNoteCost,
 } from "@/lib/api/utils";
 import { validateRequest, validateQuery } from "@/lib/validation-utils";
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       return validation.response;
     }
 
-    const { content, tags } = validation.data;
+    const { content, title, tags } = validation.data;
 
     const { data: usage } = await supabase
       .from("usage")
@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     const userPlan = getUserPlan(usage?.plan);
-    const noteCost = config.plans[userPlan].costs.createNote;
+    const costCalculation = calculateNoteCost(content, userPlan);
+    const noteCost = costCalculation.totalCost;
 
     if (!usage || usage.credits < noteCost) {
       return errorResponse("Insufficient credits", 403);
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         content,
+        title: title || null,
         embedding: JSON.stringify(embedding),
         label: metadata.label,
         category: metadata.category,
@@ -111,7 +113,7 @@ export async function GET(request: NextRequest) {
     const { data: notes, error } = await supabase
       .from("notes")
       .select(
-        "id, content, label, category, tags, created_at, pinned, favorite, archived"
+        "id, content, title, label, category, tags, created_at, pinned, favorite, archived"
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
