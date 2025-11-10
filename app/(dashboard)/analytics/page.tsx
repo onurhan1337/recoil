@@ -170,7 +170,7 @@ export default function AnalyticsPage() {
                       <Brain className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl">
+                      <CardTitle className="text-xl font-lora">
                         Thinking Patterns
                       </CardTitle>
                       <CardDescription className="mt-1">

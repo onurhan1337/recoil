@@ -1,6 +1,14 @@
 "use client";
 
-import { Brain, FileText, Calendar, Share2, Check, Copy, Sparkles } from "lucide-react";
+import {
+  Brain,
+  FileText,
+  Calendar,
+  Share2,
+  Check,
+  Copy,
+  Sparkles,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +30,7 @@ export function AnalysisHistoryItem({
   onUnshare,
 }: AnalysisHistoryItemProps) {
   const createdDate = new Date(analysis.created_at);
-  const isRecent =
-    Date.now() - createdDate.getTime() < 7 * 24 * 60 * 60 * 1000;
+  const isRecent = Date.now() - createdDate.getTime() < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <Card className="group border hover:border-foreground/20 transition-colors">
@@ -36,21 +43,23 @@ export function AnalysisHistoryItem({
                   <Brain className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium font-lora">
-                      {createdDate.toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </p>
-                    <span className="text-xs text-muted-foreground">
-                      at{" "}
-                      {createdDate.toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </span>
+                  <div className="flex items-start gap-2 flex-wrap">
+                    <div className="flex flex-col items-start">
+                      <p className="text-sm font-medium font-lora">
+                        {createdDate.toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                      <span className="text-xs text-muted-foreground">
+                        at{" "}
+                        {createdDate.toLocaleTimeString("en-US", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
                     {analysis.is_public && analysis.share_token && (
                       <Badge variant="secondary" className="text-xs gap-1">
                         <Share2 className="h-3 w-3" />
@@ -60,7 +69,7 @@ export function AnalysisHistoryItem({
                     {isRecent && (
                       <Badge
                         variant="secondary"
-                        className="text-xs gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                        className="text-xs gap-1 bg-amber-900/10 text-amber-900 dark:text-amber-400 border-amber-900/20"
                       >
                         <Sparkles className="h-3 w-3" />
                         Recent
@@ -72,7 +81,9 @@ export function AnalysisHistoryItem({
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted/50 border text-xs">
                   <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="font-medium">{analysis.note_count} notes</span>
+                  <span className="font-medium">
+                    {analysis.note_count} notes
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted/50 border text-xs">
                   <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
@@ -141,4 +152,3 @@ export function AnalysisHistoryItem({
     </Card>
   );
 }
-
