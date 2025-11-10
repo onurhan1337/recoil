@@ -14,184 +14,84 @@ interface TagInputProps {
   onBlur?: () => void;
 }
 
-export function TagInput({
-  value,
-  onChange,
-  placeholder = "Add tags...",
-  onBlur,
-}: TagInputProps) {
-  const [inputValue, setInputValue] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+export function TagInput({ value, onChange, placeholder = "Add tags...", onBlur }: TagInputProps) {
+  const [input, setInput] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [selected, setSelected] = useState(-1);
   const { data: allTags = [] } = useTags();
   const inputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const suggestions = allTags.filter(
-    (tag) =>
-      tag.toLowerCase().includes(inputValue.toLowerCase()) &&
-      !value.includes(tag)
-  );
+  const suggestions = allTags
+    .filter((tag) => tag.toLowerCase().includes(input.toLowerCase()) && !value.includes(tag))
+    .slice(0, 5);
 
-  useHotkeys(
-    "arrowdown",
-    (e) => {
-      const isInputFocused = document.activeElement === inputRef.current;
-      if (!isInputFocused) return;
+  const reset = () => {
+    setInput("");
+    setIsOpen(false);
+    setSelected(-1);
+  };
 
-      if (showSuggestions && suggestions.length > 0) {
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : prev
-        );
-      }
-    },
-    { enabled: showSuggestions && suggestions.length > 0 }
-  );
-
-  useHotkeys(
-    "arrowup",
-    (e) => {
-      const isInputFocused = document.activeElement === inputRef.current;
-      if (!isInputFocused) return;
-
-      if (showSuggestions && suggestions.length > 0) {
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-      }
-    },
-    { enabled: showSuggestions && suggestions.length > 0 }
-  );
-
-  useHotkeys(
-    "enter",
-    (e) => {
-      const isInputFocused = document.activeElement === inputRef.current;
-      if (!isInputFocused) return;
-
-      e.preventDefault();
-      if (
-        showSuggestions &&
-        selectedIndex >= 0 &&
-        selectedIndex < suggestions.length
-      ) {
-        addTag(suggestions[selectedIndex]);
-        setSelectedIndex(-1);
-      } else if (inputValue.trim()) {
-        addTag(inputValue);
-      }
-    },
-    { enabled: true }
-  );
-
-  useHotkeys(
-    "comma",
-    (e) => {
-      const isInputFocused = document.activeElement === inputRef.current;
-      if (!isInputFocused) return;
-
-      e.preventDefault();
-      if (
-        showSuggestions &&
-        selectedIndex >= 0 &&
-        selectedIndex < suggestions.length
-      ) {
-        addTag(suggestions[selectedIndex]);
-        setSelectedIndex(-1);
-      } else if (inputValue.trim()) {
-        addTag(inputValue);
-      }
-    },
-    { enabled: true }
-  );
-
-  useHotkeys(
-    "backspace",
-    (e) => {
-      const isInputFocused = document.activeElement === inputRef.current;
-      if (!isInputFocused) return;
-
-      if (!inputValue && value.length > 0) {
-        e.preventDefault();
-        removeTag(value[value.length - 1]);
-      }
-    },
-    { enabled: true }
-  );
-
-  useHotkeys(
-    "escape",
-    () => {
-      const isInputFocused = document.activeElement === inputRef.current;
-      if (!isInputFocused) return;
-
-      setShowSuggestions(false);
-      setSelectedIndex(-1);
-    },
-    { enabled: showSuggestions }
-  );
-
-  const addTag = (tag: string) => {
-    const trimmedTag = tag.trim();
-    if (trimmedTag && !value.includes(trimmedTag)) {
-      const newTags = [...value, trimmedTag];
-      onChange(newTags);
-      setInputValue("");
-      setShowSuggestions(false);
+  const add = (tag: string) => {
+    const trimmed = tag.trim();
+    if (trimmed && !value.includes(trimmed)) {
+      onChange([...value, trimmed]);
+      reset();
     }
   };
 
-  const flushPendingInput = () => {
-    if (inputValue.trim()) {
-      addTag(inputValue);
-    }
-    if (onBlur) {
-      onBlur();
-    }
+  const remove = (tag: string) => {
+    onChange(value.filter((t) => t !== tag));
   };
 
-  const removeTag = (tagToRemove: string) => {
-    onChange(value.filter((tag) => tag !== tagToRemove));
-  };
+  useHotkeys("down", () => {
+    if (suggestions.length === 0) return;
+    if (!isOpen) setIsOpen(true);
+    setSelected((prev) => Math.min(prev + 1, suggestions.length - 1));
+  }, { enableOnFormTags: ["INPUT"], preventDefault: true }, [suggestions.length, isOpen]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Reset selected index when typing (handled by useHotkeys for special keys)
-    if (
-      !["Enter", ",", "Backspace", "ArrowDown", "ArrowUp", "Escape"].includes(
-        e.key
-      )
-    ) {
-      setSelectedIndex(-1);
+  useHotkeys("up", () => {
+    setSelected((prev) => Math.max(prev - 1, -1));
+  }, { enableOnFormTags: ["INPUT"], preventDefault: true });
+
+  useHotkeys("enter, comma", () => {
+    if (selected >= 0 && suggestions[selected]) {
+      add(suggestions[selected]);
+    } else if (input) {
+      add(input);
     }
-  };
+  }, { enableOnFormTags: ["INPUT"], preventDefault: true }, [selected, suggestions, input]);
+
+  useHotkeys("backspace", () => {
+    if (!input && value.length > 0) {
+      remove(value[value.length - 1]);
+    }
+  }, { enableOnFormTags: ["INPUT"] }, [input, value]);
+
+  useHotkeys("escape", () => {
+    setIsOpen(false);
+    setSelected(-1);
+  }, { enableOnFormTags: ["INPUT"], enabled: isOpen }, [isOpen]);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-        setSelectedIndex(-1);
+    const handleClick = (e: MouseEvent) => {
+      if (!inputRef.current?.contains(e.target as Node) && !menuRef.current?.contains(e.target as Node)) {
+        setIsOpen(false);
+        setSelected(-1);
       }
     };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   useEffect(() => {
-    if (selectedIndex >= 0 && suggestionsRef.current) {
-      const suggestionElements =
-        suggestionsRef.current.querySelectorAll("button");
-      if (suggestionElements[selectedIndex]) {
-        suggestionElements[selectedIndex].scrollIntoView({
-          block: "nearest",
-          behavior: "smooth",
-        });
-      }
+    if (selected >= 0 && menuRef.current) {
+      menuRef.current.querySelectorAll("button")[selected]?.scrollIntoView({ block: "nearest" });
     }
-  }, [selectedIndex]);
+  }, [selected]);
 
   return (
-    <div className="relative" ref={inputRef}>
+    <div className="relative">
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <TagIcon className="h-3 w-3" />
@@ -199,56 +99,52 @@ export function TagInput({
         </label>
         <div className="flex flex-wrap gap-2 p-2 rounded-md border bg-background min-h-[40px]">
           {value.map((tag) => (
-            <Badge
-              key={tag}
-              variant="secondary"
-              className="text-xs flex items-center gap-1 pr-1"
-            >
+            <Badge key={tag} variant="secondary" className="text-xs flex items-center gap-1 pr-1">
               {tag}
               <button
                 type="button"
-                onClick={() => removeTag(tag)}
+                onClick={() => remove(tag)}
                 className="hover:bg-muted-foreground/20 rounded-sm p-0.5"
+                aria-label={`Remove ${tag}`}
               >
                 <X className="h-3 w-3" />
               </button>
             </Badge>
           ))}
           <Input
-            type="text"
-            value={inputValue}
+            ref={inputRef}
+            value={input}
             onChange={(e) => {
-              setInputValue(e.target.value);
-              setShowSuggestions(e.target.value.length > 0);
-              setSelectedIndex(-1);
+              setInput(e.target.value);
+              setIsOpen(e.target.value.length > 0);
+              setSelected(-1);
             }}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setShowSuggestions(inputValue.length > 0)}
-            onBlur={flushPendingInput}
+            onFocus={() => setIsOpen(input.length > 0)}
+            onBlur={(e) => {
+              if (menuRef.current?.contains(e.relatedTarget as Node)) return;
+              if (input.trim()) add(input);
+              onBlur?.();
+            }}
             placeholder={value.length === 0 ? placeholder : ""}
             className="flex-1 min-w-[120px] border-0 shadow-none focus-visible:ring-0 p-0 h-6"
           />
         </div>
       </div>
 
-      {showSuggestions && suggestions.length > 0 && (
-        <div
-          ref={suggestionsRef}
-          className="absolute z-10 w-full mt-1 rounded-md border bg-popover p-1 shadow-md"
-        >
-          <div className="text-[10px] text-muted-foreground px-2 py-1">
-            Suggestions
-          </div>
-          {suggestions.slice(0, 5).map((tag, index) => (
+      {isOpen && suggestions.length > 0 && (
+        <div ref={menuRef} className="absolute z-10 w-full mt-1 rounded-md border bg-popover p-1 shadow-md">
+          <div className="text-[10px] text-muted-foreground px-2 py-1">Suggestions</div>
+          {suggestions.map((tag, i) => (
             <button
               key={tag}
               type="button"
-              onClick={() => {
-                addTag(tag);
-                setSelectedIndex(-1);
+              onMouseDown={(e) => {
+                e.preventDefault();
+                add(tag);
+                inputRef.current?.focus();
               }}
               className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors ${
-                index === selectedIndex ? "bg-accent" : "hover:bg-accent"
+                i === selected ? "bg-accent" : "hover:bg-accent"
               }`}
             >
               {tag}
