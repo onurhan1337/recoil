@@ -48,7 +48,7 @@ export function NotesGrid({ notes }: NotesGridProps) {
             trigger={
               <button
                 data-note-id={note.id}
-                className={`group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 text-left w-full h-[280px] ${
+                className={`group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 text-left w-full max-h-[180px] ${
                   note.pinned
                     ? "border-primary/50 bg-primary/5"
                     : "border-border"
@@ -66,7 +66,7 @@ export function NotesGrid({ notes }: NotesGridProps) {
                     </h3>
                   )}
                   <div className="flex-1 min-h-0 overflow-hidden">
-                    <div className="text-sm line-clamp-6 leading-relaxed font-lora text-foreground/90">
+                    <div className="text-sm line-clamp-2 leading-relaxed font-lora text-foreground/90">
                       <MarkdownRenderer content={note.content} compact />
                     </div>
                   </div>
