@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { NoteViewMode } from "./note-view-mode";
 import { NoteEditMode } from "./note-edit-mode";
 import { NoteDeleteConfirm } from "./note-delete-confirm";
+import { SaveAsTemplateDialog } from "@/components/save-as-template-dialog";
 import { formatShortDate } from "@/lib/utils";
 import { useNoteDialog } from "@/lib/hooks/use-note-dialog";
 import type { Note } from "@/lib/api/types";
@@ -24,6 +25,7 @@ interface NoteDetailsDialogProps {
 
 export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
   const [open, setOpen] = useState<boolean>(false);
+  const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false);
 
   const {
     isEditing,
@@ -48,12 +50,14 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
     pinNoteMutation,
     favoriteNoteMutation,
     archiveNoteMutation,
+    duplicateNoteMutation,
     handleDelete,
     handleUpdate,
     resetEditing,
     handlePinToggle,
     handleFavoriteToggle,
     handleArchiveToggle,
+    handleDuplicate,
     handleConnectionClick,
   } = useNoteDialog({ note, open, onOpenChange: setOpen });
 
@@ -120,15 +124,26 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
             isPinPending={pinNoteMutation.isPending}
             isFavoritePending={favoriteNoteMutation.isPending}
             isArchivePending={archiveNoteMutation.isPending}
+            isDuplicatePending={duplicateNoteMutation.isPending}
             onEdit={startEditing}
             onDelete={() => setShowDeleteConfirm(true)}
             onPinToggle={handlePinToggle}
             onFavoriteToggle={handleFavoriteToggle}
             onArchiveToggle={handleArchiveToggle}
+            onDuplicate={handleDuplicate}
+            onSaveAsTemplate={() => setShowSaveAsTemplate(true)}
             onConnectionClick={handleConnectionClick}
           />
         )}
       </DialogContent>
+      <SaveAsTemplateDialog
+        open={showSaveAsTemplate}
+        onOpenChange={setShowSaveAsTemplate}
+        noteContent={note.content}
+        noteTitle={note.title}
+        noteCategory={note.category}
+        noteTags={note.tags}
+      />
     </Dialog>
   );
 }
