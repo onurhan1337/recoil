@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
     const { data: notes, error } = await supabase
       .from("notes")
       .select(
-        "id, content, label, category, tags, created_at, pinned, favorite"
+        "id, content, label, category, tags, created_at, pinned, favorite, archived"
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })

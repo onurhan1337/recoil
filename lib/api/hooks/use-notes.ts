@@ -107,3 +107,15 @@ export function usePinnedNotesCount() {
   const { data: notes = [] } = useNotes();
   return notes.filter((note) => note.pinned).length;
 }
+
+export function useArchiveNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ noteId, archived }: { noteId: string; archived: boolean }) =>
+      apiPatch<{ note: Note }>(`/api/notes/${noteId}`, { archived }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+    },
+  });
+}

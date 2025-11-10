@@ -8,6 +8,7 @@ import {
   useUsage,
   usePinNote,
   useFavoriteNote,
+  useArchiveNote,
   usePinnedNotesCount,
 } from "@/lib/api/hooks";
 import type { Note } from "@/lib/api/types";
@@ -36,6 +37,7 @@ export function useNoteDialog({
   const updateNoteMutation = useUpdateNote();
   const pinNoteMutation = usePinNote();
   const favoriteNoteMutation = useFavoriteNote();
+  const archiveNoteMutation = useArchiveNote();
   const pinnedCount = usePinnedNotesCount();
   const { data: usage } = useUsage();
 
@@ -134,6 +136,27 @@ export function useNoteDialog({
     }
   }, [favoriteNoteMutation, note.favorite, note.id]);
 
+  const handleArchiveToggle = useCallback(async () => {
+    try {
+      await archiveNoteMutation.mutateAsync({
+        noteId: note.id,
+        archived: !note.archived,
+      });
+      toast.success(
+        note.archived
+          ? "Note unarchived successfully"
+          : "Note archived successfully"
+      );
+      if (!note.archived) {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to toggle archive"
+      );
+    }
+  }, [archiveNoteMutation, note.archived, note.id, onOpenChange]);
+
   const handleConnectionClick = useCallback(
     (connectionId: string) => {
       onOpenChange(false);
@@ -177,11 +200,13 @@ export function useNoteDialog({
     updateNoteMutation,
     pinNoteMutation,
     favoriteNoteMutation,
+    archiveNoteMutation,
     handleDelete,
     handleUpdate,
     resetEditing,
     handlePinToggle,
     handleFavoriteToggle,
+    handleArchiveToggle,
     handleConnectionClick,
   };
 }

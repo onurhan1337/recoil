@@ -55,6 +55,7 @@ export function useNotesFilter(allNotes: Note[]) {
       dateRange: defaults.dateRange,
       sortBy: defaults.sortBy,
       pinned: defaults.pinned,
+      archived: defaults.archived,
     });
   }, [setSearch, setFilters, defaults]);
 

@@ -96,10 +96,17 @@ export async function PATCH(
       return errorResponse("Forbidden", 403);
     }
 
-    if (body.pinned !== undefined) {
-      const wantsToPin = Boolean(body.pinned);
+    const booleanFields = ["pinned", "favorite", "archived"] as const;
+    const updateData: Record<string, unknown> = {};
 
-      if (wantsToPin && !existingNote.pinned) {
+    for (const field of booleanFields) {
+      if (body[field] !== undefined) {
+        updateData[field] = Boolean(body[field]);
+      }
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      if (updateData.pinned === true && !existingNote.pinned) {
         const { count: pinnedCount } = await supabase
           .from("notes")
           .select("*", { count: "exact", head: true })
@@ -113,24 +120,7 @@ export async function PATCH(
 
       const { data: updatedNote, error: updateError } = await supabase
         .from("notes")
-        .update({ pinned: wantsToPin } as { pinned: boolean })
-        .eq("id", idValidation.data)
-        .select()
-        .single();
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      return successResponse({
-        note: updatedNote,
-      });
-    }
-
-    if (body.favorite !== undefined) {
-      const { data: updatedNote, error: updateError } = await supabase
-        .from("notes")
-        .update({ favorite: Boolean(body.favorite) } as { favorite: boolean })
+        .update(updateData)
         .eq("id", idValidation.data)
         .select()
         .single();
@@ -170,7 +160,7 @@ export async function PATCH(
       generateNoteMetadata(content),
     ]);
 
-    const updateData: Record<string, unknown> = {
+    const contentUpdateData: Record<string, unknown> = {
       content,
       embedding: JSON.stringify(embedding),
       label: metadata.label,
@@ -180,7 +170,7 @@ export async function PATCH(
 
     const { data: updatedNote, error: updateError } = await supabase
       .from("notes")
-      .update(updateData)
+      .update(contentUpdateData)
       .eq("id", idValidation.data)
       .select()
       .single();
