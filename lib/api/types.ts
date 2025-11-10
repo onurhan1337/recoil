@@ -9,6 +9,7 @@ export interface Note {
   user_id: string;
   pinned?: boolean;
   favorite?: boolean;
+  archived?: boolean;
 }
 
 export interface Conversation {

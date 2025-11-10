@@ -21,6 +21,7 @@ type FilterValues = {
   dateRange: DateRange;
   sortBy: SortOption;
   pinned: boolean | null;
+  archived: boolean | null;
 };
 
 const filterBySearch = (notes: Note[], value: string): Note[] => {
@@ -47,6 +48,11 @@ const filterByTag = (notes: Note[], value: string | null): Note[] => {
 const filterByPinned = (notes: Note[], value: boolean | null): Note[] => {
   if (value === null) return notes;
   return notes.filter((note) => note.pinned === value);
+};
+
+const filterByArchived = (notes: Note[], value: boolean | null): Note[] => {
+  if (value === null) return notes.filter((note) => !note.archived);
+  return notes.filter((note) => note.archived === value);
 };
 
 const filterByDateRange = (notes: Note[], value: DateRange): Note[] => {
@@ -123,6 +129,13 @@ export const FILTER_CONFIG = {
     getLabel: (value: boolean | null) => (value === true ? "Pinned" : null),
     defaultValue: null,
   },
+  archived: {
+    parser: parseAsBoolean,
+    filter: filterByArchived,
+    isActive: (value: boolean | null) => value !== null && value === true,
+    getLabel: (value: boolean | null) => (value === true ? "Archived" : null),
+    defaultValue: null,
+  },
 } as const;
 
 export const notesFiltersParsers = {
@@ -131,6 +144,7 @@ export const notesFiltersParsers = {
   dateRange: FILTER_CONFIG.dateRange.parser,
   sortBy: FILTER_CONFIG.sortBy.parser,
   pinned: FILTER_CONFIG.pinned.parser,
+  archived: FILTER_CONFIG.archived.parser,
 } as const;
 
 export const searchParser = FILTER_CONFIG.search.parser;
@@ -157,6 +171,7 @@ export const applyFilters = (notes: Note[], filters: FilterValues): Note[] => {
   result = FILTER_CONFIG.category.filter(result, filters.category);
   result = FILTER_CONFIG.tag.filter(result, filters.tag);
   result = FILTER_CONFIG.pinned.filter(result, filters.pinned);
+  result = FILTER_CONFIG.archived.filter(result, filters.archived);
   result = FILTER_CONFIG.dateRange.filter(result, filters.dateRange);
   result = FILTER_CONFIG.sortBy.filter(result, filters.sortBy);
   return result;
@@ -169,7 +184,8 @@ export const hasActiveFilters = (filters: FilterValues): boolean => {
     FILTER_CONFIG.tag.isActive(filters.tag) ||
     FILTER_CONFIG.dateRange.isActive(filters.dateRange) ||
     FILTER_CONFIG.sortBy.isActive(filters.sortBy) ||
-    FILTER_CONFIG.pinned.isActive(filters.pinned)
+    FILTER_CONFIG.pinned.isActive(filters.pinned) ||
+    FILTER_CONFIG.archived.isActive(filters.archived)
   );
 };
 
@@ -196,6 +212,9 @@ export const getActiveFilters = (
   const pinnedLabel = FILTER_CONFIG.pinned.getLabel(filters.pinned);
   if (pinnedLabel) results.push({ key: "pinned", label: pinnedLabel });
 
+  const archivedLabel = FILTER_CONFIG.archived.getLabel(filters.archived);
+  if (archivedLabel) results.push({ key: "archived", label: archivedLabel });
+
   return results;
 };
 
@@ -207,5 +226,6 @@ export const getFilterDefaults = (): FilterValues => {
     dateRange: FILTER_CONFIG.dateRange.defaultValue,
     sortBy: FILTER_CONFIG.sortBy.defaultValue,
     pinned: FILTER_CONFIG.pinned.defaultValue,
+    archived: FILTER_CONFIG.archived.defaultValue,
   };
 };
