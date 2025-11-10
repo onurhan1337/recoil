@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Home, BookOpen, Plus, Settings, Brain, BarChart3 } from "lucide-react";
+import { Home, BookOpen, Plus, Settings, Brain, BarChart3, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewNoteDialog } from "@/components/new-note-dialog";
 import { CreditDisplay } from "@/components/credit-display";
@@ -15,6 +15,7 @@ import { useUser, useUsage } from "@/lib/api/hooks";
 const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Notes", href: "/notes", icon: BookOpen },
+  { name: "Templates", href: "/templates", icon: Layers },
   { name: "Analytics", href: "/analytics", icon: BarChart3, badge: "PRO" },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
