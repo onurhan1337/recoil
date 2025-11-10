@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { NoteInput } from "@/components/note-input";
 import { TemplateSelector } from "@/components/template-selector";
@@ -15,7 +20,9 @@ interface NewNoteDialogProps {
 
 export function NewNoteDialog({ open, onOpenChange }: NewNoteDialogProps) {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<NoteTemplate | undefined>();
+  const [selectedTemplate, setSelectedTemplate] = useState<
+    NoteTemplate | undefined
+  >();
   const [key, setKey] = useState(0);
 
   const resetState = () => {
@@ -47,7 +54,9 @@ export function NewNoteDialog({ open, onOpenChange }: NewNoteDialogProps) {
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle className="text-lg font-semibold">New Note</DialogTitle>
+                <DialogTitle className="text-lg font-semibold">
+                  New Note
+                </DialogTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   Capture your thoughts and ideas
                 </p>
@@ -62,7 +71,7 @@ export function NewNoteDialog({ open, onOpenChange }: NewNoteDialogProps) {
               </Button>
             </div>
           </DialogHeader>
-          <div className="mt-6">
+          <div className="mb-6">
             <NoteInput
               key={key}
               onNoteCreated={handleNoteCreated}

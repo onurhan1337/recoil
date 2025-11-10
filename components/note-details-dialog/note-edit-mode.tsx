@@ -1,6 +1,7 @@
 import { Info, Loader2, Save, X, Eye, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { TiptapEditor } from "@/components/tiptap-editor";
 import { TagInput } from "@/components/tag-input";
@@ -9,11 +10,13 @@ import type { Note, NoteCostEstimate } from "@/lib/api/types";
 interface NoteEditModeProps {
   note: Note;
   editedContent: string;
+  editedTitle: string;
   editedTags: string[];
   isPreview: boolean;
   costEstimate?: NoteCostEstimate;
   isPending: boolean;
   onContentChange: (content: string) => void;
+  onTitleChange: (title: string) => void;
   onTagsChange: (tags: string[]) => void;
   onPreviewToggle: (preview: boolean) => void;
   onCancel: () => void;
@@ -23,11 +26,13 @@ interface NoteEditModeProps {
 export function NoteEditMode({
   note,
   editedContent,
+  editedTitle,
   editedTags,
   isPreview,
   costEstimate,
   isPending,
   onContentChange,
+  onTitleChange,
   onTagsChange,
   onPreviewToggle,
   onCancel,
@@ -36,6 +41,18 @@ export function NoteEditMode({
   return (
     <>
       <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">
+            Title
+          </label>
+          <Input
+            value={editedTitle}
+            onChange={(e) => onTitleChange(e.target.value)}
+            placeholder="Enter note title..."
+            className="font-medium"
+          />
+        </div>
+
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-muted-foreground">
@@ -100,10 +117,16 @@ export function NoteEditMode({
                   {costEstimate.estimated_cost}
                 </strong>{" "}
                 credits
-                {costEstimate.embedding_cost > 0 && (
-                  <span className="ml-1">
-                    ({costEstimate.base_cost} base +{" "}
-                    {costEstimate.embedding_cost} vectorizing)
+                {costEstimate.estimated_chunks > 1 && (
+                  <span className="ml-1 text-[10px]">
+                    ({costEstimate.base_cost} base
+                    {costEstimate.embedding_cost > 0 && (
+                      <> + {costEstimate.embedding_cost} embedding</>
+                    )}
+                    {costEstimate.embedding_cost === 0 && (
+                      <> • {costEstimate.estimated_chunks} chunks (free)</>
+                    )}
+                    )
                   </span>
                 )}
               </span>

@@ -30,6 +30,8 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
     startEditing,
     editedContent,
     setEditedContent,
+    editedTitle,
+    setEditedTitle,
     editedTags,
     setEditedTags,
     showDeleteConfirm,
@@ -67,9 +69,9 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex-1 min-w-0">
-            {note.label && (
+            {(note.title || note.label) && (
               <DialogTitle className="text-xl font-semibold mb-2 line-clamp-2">
-                {note.label}
+                {note.title || note.label}
               </DialogTitle>
             )}
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -96,11 +98,13 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
           <NoteEditMode
             note={note}
             editedContent={editedContent}
+            editedTitle={editedTitle}
             editedTags={editedTags}
             isPreview={isPreview}
             costEstimate={costEstimate}
             isPending={updateNoteMutation.isPending}
             onContentChange={setEditedContent}
+            onTitleChange={setEditedTitle}
             onTagsChange={setEditedTags}
             onPreviewToggle={setIsPreview}
             onCancel={resetEditing}

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Send, Info, Eye, Edit3 } from "lucide-react";
 import { TiptapEditor } from "@/components/tiptap-editor";
 import { TagInput } from "@/components/tag-input";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useCreateNote, useEstimateNoteCost } from "@/lib/api/hooks";
@@ -17,6 +18,7 @@ interface NoteInputProps {
 
 export function NoteInput({ onNoteCreated, initialTemplate }: NoteInputProps) {
   const [content, setContent] = useState(initialTemplate?.content || "");
+  const [title, setTitle] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState(false);
   const createNoteMutation = useCreateNote();
@@ -28,9 +30,14 @@ export function NoteInput({ onNoteCreated, initialTemplate }: NoteInputProps) {
     }
   }, [initialTemplate]);
 
-  const debouncedContent = useMemo(() => {
-    const timeoutId = setTimeout(() => content, 500);
-    return content;
+  const [debouncedContent, setDebouncedContent] = useState(content);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedContent(content);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
   }, [content]);
 
   const { data: costEstimate } = useEstimateNoteCost(debouncedContent);
@@ -46,10 +53,12 @@ export function NoteInput({ onNoteCreated, initialTemplate }: NoteInputProps) {
     try {
       await createNoteMutation.mutateAsync({
         content,
+        title: title.trim() || undefined,
         tags: tags.length > 0 ? tags : undefined,
       });
       toast.success("Note saved successfully");
       setContent("");
+      setTitle("");
       setTags([]);
       onNoteCreated?.();
     } catch (err) {
@@ -63,6 +72,18 @@ export function NoteInput({ onNoteCreated, initialTemplate }: NoteInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-muted-foreground">
+          Title
+        </label>
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter note title..."
+          className="font-medium shadow-none"
+        />
+      </div>
+
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -118,10 +139,21 @@ export function NoteInput({ onNoteCreated, initialTemplate }: NoteInputProps) {
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Info className="h-3 w-3" />
             <span>
-              Cost: <strong className="text-foreground">{costEstimate.estimated_cost}</strong> credits
-              {costEstimate.embedding_cost > 0 && (
+              Cost:{" "}
+              <strong className="text-foreground">
+                {costEstimate.estimated_cost}
+              </strong>{" "}
+              credits
+              {costEstimate.estimated_chunks > 1 && (
                 <span className="ml-1 text-[10px]">
-                  ({costEstimate.base_cost} base + {costEstimate.embedding_cost} vectorizing)
+                  ({costEstimate.base_cost} base
+                  {costEstimate.embedding_cost > 0 && (
+                    <> + {costEstimate.embedding_cost} embedding</>
+                  )}
+                  {costEstimate.embedding_cost === 0 && (
+                    <> • {costEstimate.estimated_chunks} chunks (free)</>
+                  )}
+                  )
                 </span>
               )}
             </span>
