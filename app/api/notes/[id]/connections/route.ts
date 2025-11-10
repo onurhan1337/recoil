@@ -8,6 +8,11 @@ import {
 import { uuidSchema } from "@/lib/validations";
 import { validateParams } from "@/lib/validation-utils";
 
+const MIN_SIMILARITY = 0.99;
+const MAX_SIMILARITY = 1.0;
+const MIN_MATCH_COUNT = 10;
+const MAX_CONNECTIONS = 5;
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -39,7 +44,7 @@ export async function GET(
 
     const { data: currentNote, error: noteError } = await supabase
       .from("notes")
-      .select("embedding")
+      .select("embedding, content")
       .eq("id", idValidation.data)
       .eq("user_id", user.id)
       .single();
@@ -52,8 +57,8 @@ export async function GET(
       "search_notes",
       {
         query_embedding: currentNote.embedding as string,
-        match_threshold: 0.7,
-        match_count: 6,
+        match_threshold: MIN_SIMILARITY,
+        match_count: MIN_MATCH_COUNT,
       }
     );
 
@@ -61,9 +66,32 @@ export async function GET(
       throw notesError;
     }
 
-    const connections = notes
-      .filter((note) => note.id !== idValidation.data)
-      .slice(0, 5)
+    const { data: exactMatches } = await supabase
+      .from("notes")
+      .select("id, content, label, category, created_at")
+      .eq("user_id", user.id)
+      .eq("embedding", currentNote.embedding as string)
+      .neq("id", idValidation.data);
+
+    const exactMatchConnections = (exactMatches || []).map((note) => ({
+      id: note.id,
+      content: note.content,
+      label: note.label,
+      category: note.category,
+      created_at: note.created_at,
+      similarity: MAX_SIMILARITY,
+    }));
+
+    const similarityConnections = notes
+      .filter((note) => {
+        if (note.id === idValidation.data) {
+          return false;
+        }
+        if (note.similarity > MAX_SIMILARITY) {
+          return false;
+        }
+        return true;
+      })
       .map((note) => ({
         id: note.id,
         content: note.content,
@@ -73,7 +101,23 @@ export async function GET(
         similarity: note.similarity,
       }));
 
-    return successResponse({ connections });
+    const connectionMap = new Map<string, (typeof exactMatchConnections)[0]>();
+
+    for (const connection of [
+      ...exactMatchConnections,
+      ...similarityConnections,
+    ]) {
+      const existing = connectionMap.get(connection.id);
+      if (!existing || connection.similarity > existing.similarity) {
+        connectionMap.set(connection.id, connection);
+      }
+    }
+
+    const allConnections = Array.from(connectionMap.values())
+      .sort((left, right) => right.similarity - left.similarity)
+      .slice(0, MAX_CONNECTIONS);
+
+    return successResponse({ connections: allConnections });
   } catch (error) {
     console.error("Error fetching note connections:", error);
     return errorResponse("Internal server error");
