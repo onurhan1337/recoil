@@ -4,6 +4,8 @@ import {
   PinOff,
   Heart,
   HeartOff,
+  Archive,
+  ArchiveRestore,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,26 +19,35 @@ import {
 interface NoteActionsDropdownProps {
   isPinned: boolean;
   isFavorite: boolean;
+  isArchived: boolean;
   canPin: boolean;
   isPinPending: boolean;
   isFavoritePending: boolean;
+  isArchivePending: boolean;
   onPinToggle: () => void;
   onFavoriteToggle: () => void;
+  onArchiveToggle: () => void;
 }
 
 export function NoteActionsDropdown({
   isPinned,
   isFavorite,
+  isArchived,
   canPin,
   isPinPending,
   isFavoritePending,
+  isArchivePending,
   onPinToggle,
   onFavoriteToggle,
+  onArchiveToggle,
 }: NoteActionsDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={isPinPending || isFavoritePending}>
+        <Button
+          variant="outline"
+          disabled={isPinPending || isFavoritePending || isArchivePending}
+        >
           <MoreVertical className="h-4 w-4 mr-2" />
           <span className="text-sm text-muted-foreground font-normal tracking-tight">
             Actions
@@ -68,6 +79,16 @@ export function NoteActionsDropdown({
             <Heart className="h-4 w-4 mr-2" />
           )}
           {isFavorite ? "Unfavorite" : "Favorite"}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onArchiveToggle} disabled={isArchivePending}>
+          {isArchivePending ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : isArchived ? (
+            <ArchiveRestore className="h-4 w-4 mr-2" />
+          ) : (
+            <Archive className="h-4 w-4 mr-2" />
+          )}
+          {isArchived ? "Unarchive" : "Archive"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

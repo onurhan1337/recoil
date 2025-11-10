@@ -45,11 +45,13 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
     updateNoteMutation,
     pinNoteMutation,
     favoriteNoteMutation,
+    archiveNoteMutation,
     handleDelete,
     handleUpdate,
     resetEditing,
     handlePinToggle,
     handleFavoriteToggle,
+    handleArchiveToggle,
     handleConnectionClick,
   } = useNoteDialog({ note, open, onOpenChange: setOpen });
 
@@ -113,10 +115,12 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
             connectionsLoading={connectionsLoading}
             isPinPending={pinNoteMutation.isPending}
             isFavoritePending={favoriteNoteMutation.isPending}
+            isArchivePending={archiveNoteMutation.isPending}
             onEdit={startEditing}
             onDelete={() => setShowDeleteConfirm(true)}
             onPinToggle={handlePinToggle}
             onFavoriteToggle={handleFavoriteToggle}
+            onArchiveToggle={handleArchiveToggle}
             onConnectionClick={handleConnectionClick}
           />
         )}

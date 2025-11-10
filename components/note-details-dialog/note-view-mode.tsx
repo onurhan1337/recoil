@@ -17,10 +17,12 @@ interface NoteViewModeProps {
   connectionsLoading: boolean;
   isPinPending: boolean;
   isFavoritePending: boolean;
+  isArchivePending: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onPinToggle: () => void;
   onFavoriteToggle: () => void;
+  onArchiveToggle: () => void;
   onConnectionClick: (connectionId: string) => void;
 }
 
@@ -32,10 +34,12 @@ export function NoteViewMode({
   connectionsLoading,
   isPinPending,
   isFavoritePending,
+  isArchivePending,
   onEdit,
   onDelete,
   onPinToggle,
   onFavoriteToggle,
+  onArchiveToggle,
   onConnectionClick,
 }: NoteViewModeProps) {
   return (
@@ -102,11 +106,14 @@ export function NoteViewMode({
         <NoteActionsDropdown
           isPinned={note.pinned || false}
           isFavorite={note.favorite || false}
+          isArchived={note.archived || false}
           canPin={canPin}
           isPinPending={isPinPending}
           isFavoritePending={isFavoritePending}
+          isArchivePending={isArchivePending}
           onPinToggle={onPinToggle}
           onFavoriteToggle={onFavoriteToggle}
+          onArchiveToggle={onArchiveToggle}
         />
         <Button onClick={onEdit}>
           <Pencil className="h-4 w-4 mr-2" />

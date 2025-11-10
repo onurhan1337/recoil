@@ -17,6 +17,7 @@ import { TagFilter } from "./filters/tag-filter";
 import { DateFilter } from "./filters/date-filter";
 import { SortFilter } from "./filters/sort-filter";
 import { PinnedFilter } from "./filters/pinned-filter";
+import { ArchivedFilter } from "./filters/archived-filter";
 import { ClearFiltersButton } from "./filters/clear-filters-button";
 import { getActiveFilters } from "./filter-utils";
 import type { URLNotesFilters } from "@/lib/api/hooks/use-notes-filter";
@@ -134,6 +135,11 @@ export function NotesFilters({
             <DropdownMenuSeparator className="my-1" />
 
             <PinnedFilter filters={filters} onFiltersChange={onFiltersChange} />
+
+            <ArchivedFilter
+              filters={filters}
+              onFiltersChange={onFiltersChange}
+            />
 
             {hasActiveFilters && (
               <>
