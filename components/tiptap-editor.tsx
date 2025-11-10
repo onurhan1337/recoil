@@ -14,6 +14,7 @@ import {
   Heading2,
   Quote,
   Minus,
+  Code,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -169,6 +170,17 @@ export function TiptapEditor({
           title="Quote"
         >
           <Quote className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          className={cn(
+            "p-1.5 rounded-sm hover:bg-muted transition-colors",
+            editor.isActive("codeBlock") && "bg-muted"
+          )}
+          type="button"
+          title="Code Block"
+        >
+          <Code className="h-4 w-4" />
         </button>
         <div className="w-px h-4 bg-border mx-0.5" />
         <button
