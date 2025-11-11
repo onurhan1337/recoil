@@ -85,10 +85,10 @@ export const searchSchema = z.object({
 export const paginationSchema = z.object({
   limit: z
     .preprocess(
-      (val) => (val === null || val === undefined ? "50" : val),
+      (val) => (val === null || val === undefined ? "6" : val),
       z.string()
     )
-    .transform((val) => (val ? parseInt(val, 10) : 50))
+    .transform((val) => (val ? parseInt(val, 10) : 6))
     .pipe(z.number().int().min(1).max(100)),
   offset: z
     .preprocess(

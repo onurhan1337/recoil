@@ -27,7 +27,7 @@ configure({
   performance: {
     enabled: true,
     warnThreshold: 500,
-    trackMemory: true,
+    trackMemory: false,
   },
   logProps: true,
   contextTracking: false,

@@ -9,7 +9,6 @@ import {
   usePinNote,
   useFavoriteNote,
   useArchiveNote,
-  usePinnedNotesCount,
   useDuplicateNote,
 } from "@/lib/api/hooks";
 import type { Note } from "@/lib/api/types";
@@ -21,12 +20,14 @@ interface UseNoteDialogProps {
   note: Note;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  pinnedCount: number;
 }
 
 export function useNoteDialog({
   note,
   open,
   onOpenChange,
+  pinnedCount,
 }: UseNoteDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(note.content);
@@ -41,7 +42,6 @@ export function useNoteDialog({
   const favoriteNoteMutation = useFavoriteNote();
   const archiveNoteMutation = useArchiveNote();
   const duplicateNoteMutation = useDuplicateNote();
-  const pinnedCount = usePinnedNotesCount();
   const { data: usage } = useUsage();
 
   const isPro = isProPlan(usage?.plan);

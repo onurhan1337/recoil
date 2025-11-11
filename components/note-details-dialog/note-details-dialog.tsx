@@ -21,9 +21,10 @@ import type { Note } from "@/lib/api/types";
 interface NoteDetailsDialogProps {
   note: Note;
   trigger?: React.ReactNode;
+  pinnedCount: number;
 }
 
-export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
+export function NoteDetailsDialog({ note, trigger, pinnedCount }: NoteDetailsDialogProps) {
   const [open, setOpen] = useState<boolean>(false);
   const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false);
 
@@ -59,7 +60,7 @@ export function NoteDetailsDialog({ note, trigger }: NoteDetailsDialogProps) {
     handleArchiveToggle,
     handleDuplicate,
     handleConnectionClick,
-  } = useNoteDialog({ note, open, onOpenChange: setOpen });
+  } = useNoteDialog({ note, open, onOpenChange: setOpen, pinnedCount });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

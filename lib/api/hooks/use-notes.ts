@@ -1,9 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { apiGet, apiPost, apiDelete, apiPatch } from "../client";
 import type { Note, CreateNoteResponse, NoteCostEstimate } from "../types";
 import { USAGE_QUERY_KEY } from "./use-usage";
 
 export const NOTES_QUERY_KEY = ["notes"] as const;
+export const NOTES_INFINITE_QUERY_KEY = ["notes", "infinite"] as const;
 
 export interface NotesFilters {
   search?: string;
@@ -22,6 +23,30 @@ export function useNotes() {
   });
 }
 
+const NOTES_PAGE_SIZE = 6;
+
+export function useNotesInfinite() {
+  return useInfiniteQuery({
+    queryKey: NOTES_INFINITE_QUERY_KEY,
+    queryFn: ({ pageParam = 0 }) =>
+      apiGet<{ notes: Note[]; total: number }>(`/api/notes?limit=${NOTES_PAGE_SIZE}&offset=${pageParam}`),
+    getNextPageParam: (lastPage, allPages) => {
+      const loadedCount = allPages.reduce((sum, page) => sum + page.notes.length, 0);
+      if (loadedCount >= lastPage.total) {
+        return undefined;
+      }
+      return loadedCount;
+    },
+    initialPageParam: 0,
+    select: (data) => ({
+      pages: data.pages,
+      pageParams: data.pageParams,
+      notes: data.pages.flatMap((page) => page.notes),
+      total: data.pages[0]?.total || 0,
+    }),
+  });
+}
+
 export function useCreateNote() {
   const queryClient = useQueryClient();
 
@@ -30,6 +55,7 @@ export function useCreateNote() {
       apiPost<CreateNoteResponse>("/api/notes", { content, title, tags }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
@@ -43,6 +69,7 @@ export function useDeleteNote() {
     mutationFn: (noteId: string) => apiDelete(`/api/notes/${noteId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
     },
   });
 }
@@ -65,6 +92,7 @@ export function useUpdateNote() {
       apiPatch<CreateNoteResponse>(`/api/notes/${noteId}`, { content, title, tags }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
@@ -89,6 +117,7 @@ export function usePinNote() {
       apiPatch<{ note: Note }>(`/api/notes/${noteId}`, { pinned }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
     },
   });
 }
@@ -101,6 +130,7 @@ export function useFavoriteNote() {
       apiPatch<{ note: Note }>(`/api/notes/${noteId}`, { favorite }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
     },
   });
 }
@@ -118,6 +148,7 @@ export function useArchiveNote() {
       apiPatch<{ note: Note }>(`/api/notes/${noteId}`, { archived }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
     },
   });
 }
@@ -130,6 +161,7 @@ export function useDuplicateNote() {
       apiPost<CreateNoteResponse>(`/api/notes/${noteId}/duplicate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
     },
   });

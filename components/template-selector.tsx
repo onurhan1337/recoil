@@ -55,7 +55,7 @@ export function TemplateSelector({
   const allCustomTemplates = customTemplates.map((t) => ({
     id: t.id,
     name: t.name,
-    description: t.description || undefined,
+    description: t.description || "",
     content: t.content,
     category: t.category || undefined,
     tags: t.tags || undefined,

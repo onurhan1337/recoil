@@ -110,20 +110,31 @@ export async function GET(request: NextRequest) {
 
     const { limit, offset } = validation.data;
 
-    const { data: notes, error } = await supabase
-      .from("notes")
-      .select(
-        "id, content, title, label, category, tags, created_at, pinned, favorite, archived"
-      )
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+    const [notesResult, countResult] = await Promise.all([
+      supabase
+        .from("notes")
+        .select(
+          "id, content, title, label, category, tags, created_at, pinned, favorite, archived"
+        )
+        .eq("user_id", user.id)
+        .order("favorite", { ascending: false })
+        .order("pinned", { ascending: false })
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1),
+      supabase
+        .from("notes")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id),
+    ]);
 
-    if (error) {
-      throw error;
+    if (notesResult.error) {
+      throw notesResult.error;
     }
 
-    return successResponse({ notes });
+    return successResponse({
+      notes: notesResult.data,
+      total: countResult.count || 0,
+    });
   } catch (error) {
     console.error("Error fetching notes:", error);
     return errorResponse("Internal server error");

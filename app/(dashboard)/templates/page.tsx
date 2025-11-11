@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FileText, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  useTemplates,
+  useTemplatesInfinite,
   useCreateTemplate,
   useUpdateTemplate,
   useDeleteTemplate,
@@ -13,10 +13,18 @@ import {
 import { isProPlan } from "@/lib/api/utils";
 import { toast } from "sonner";
 import { TemplateDialog } from "./template-dialog";
-import { TemplateCard } from "./template-card";
+import { TemplateCard } from "@/components/template-card";
 
 export default function TemplatesPage() {
-  const { data: templates = [], isLoading } = useTemplates();
+  const {
+    data: infiniteData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useTemplatesInfinite();
+
+  const templates = infiniteData?.templates || [];
   const { data: usage } = useUsage();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
@@ -129,16 +137,38 @@ export default function TemplatesPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {templates.map((template) => (
-            <TemplateCard
-              key={template.id}
-              template={template}
-              onEdit={setEditingTemplate}
-              onDelete={handleDelete}
-              isDeleting={deleteTemplateMutation.isPending}
-            />
-          ))}
+        <div className="space-y-6 pb-8">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {templates.map((template, index) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                onEdit={setEditingTemplate}
+                onDelete={handleDelete}
+                isDeleting={deleteTemplateMutation.isPending}
+                index={index}
+              />
+            ))}
+          </div>
+          {hasNextPage && (
+            <div className="flex justify-center pt-4">
+              <Button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                variant="outline"
+                size="lg"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load More"
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

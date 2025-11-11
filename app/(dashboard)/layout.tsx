@@ -4,7 +4,15 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Home, BookOpen, Plus, Settings, Brain, BarChart3, Layers } from "lucide-react";
+import {
+  Home,
+  BookOpen,
+  Plus,
+  Settings,
+  Brain,
+  BarChart3,
+  Layers,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewNoteDialog } from "@/components/new-note-dialog";
 import { CreditDisplay } from "@/components/credit-display";
@@ -102,7 +110,10 @@ export default function DashboardLayout({
                     {item.name}
                   </div>
                   {item.badge && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] px-1.5 py-0 h-4"
+                    >
                       {item.badge}
                     </Badge>
                   )}

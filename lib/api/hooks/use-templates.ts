@@ -1,7 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { apiGet, apiPost, apiPatch, apiDelete } from "../client";
 
 export const TEMPLATES_QUERY_KEY = ["templates"] as const;
+export const TEMPLATES_INFINITE_QUERY_KEY = ["templates", "infinite"] as const;
 
 export interface NoteTemplate {
   id: string;
@@ -24,6 +25,30 @@ export function useTemplates() {
     queryKey: TEMPLATES_QUERY_KEY,
     queryFn: () => apiGet<{ templates: NoteTemplate[] }>("/api/templates"),
     select: (data) => data.templates,
+  });
+}
+
+const TEMPLATES_PAGE_SIZE = 6;
+
+export function useTemplatesInfinite() {
+  return useInfiniteQuery({
+    queryKey: TEMPLATES_INFINITE_QUERY_KEY,
+    queryFn: ({ pageParam = 0 }) =>
+      apiGet<{ templates: NoteTemplate[]; total: number }>(`/api/templates?limit=${TEMPLATES_PAGE_SIZE}&offset=${pageParam}`),
+    getNextPageParam: (lastPage, allPages) => {
+      const loadedCount = allPages.reduce((sum, page) => sum + page.templates.length, 0);
+      if (loadedCount >= lastPage.total) {
+        return undefined;
+      }
+      return loadedCount;
+    },
+    initialPageParam: 0,
+    select: (data) => ({
+      pages: data.pages,
+      pageParams: data.pageParams,
+      templates: data.pages.flatMap((page) => page.templates),
+      total: data.pages[0]?.total || 0,
+    }),
   });
 }
 
@@ -53,6 +78,7 @@ export function useCreateTemplate() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEMPLATES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: TEMPLATES_INFINITE_QUERY_KEY });
     },
   });
 }
@@ -85,6 +111,7 @@ export function useUpdateTemplate() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEMPLATES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: TEMPLATES_INFINITE_QUERY_KEY });
     },
   });
 }
@@ -97,6 +124,7 @@ export function useDeleteTemplate() {
       apiDelete(`/api/templates/${templateId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEMPLATES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: TEMPLATES_INFINITE_QUERY_KEY });
     },
   });
 }

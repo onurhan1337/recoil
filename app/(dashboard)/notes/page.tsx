@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { MessageCircle, Heart } from "lucide-react";
-import { useNotes, useUsage, useTags } from "@/lib/api/hooks";
+import { MessageCircle, Heart, Loader2 } from "lucide-react";
+import { useNotesInfinite, useUsage, useTags } from "@/lib/api/hooks";
 import { useNotesFilter } from "@/lib/api/hooks/use-notes-filter";
 import { useNotesAnalytics } from "@/lib/api/hooks/use-notes-analytics";
 import { NotesFilters } from "@/components/notes-filters";
 import { NotesAnalytics } from "@/components/notes-analytics";
 import { NotesGrid } from "@/components/notes-grid";
+import { Button } from "@/components/ui/button";
 import {
   Accordion,
   AccordionContent,
@@ -17,7 +18,15 @@ import {
 import { isProPlan } from "@/lib/utils";
 
 export default function NotesPage() {
-  const { data: allNotes = [], isLoading } = useNotes();
+  const {
+    data: infiniteData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useNotesInfinite();
+
+  const allNotes = infiniteData?.notes || [];
   const { data: usage } = useUsage();
   const { data: allTags = [] } = useTags();
   const isPro = isProPlan(usage?.plan);
@@ -37,6 +46,7 @@ export default function NotesPage() {
 
   const favoriteNotes = notes.filter((note) => note.favorite);
   const nonFavoriteNotes = notes.filter((note) => !note.favorite);
+  const pinnedCount = allNotes.filter((note) => note.pinned).length;
 
   return (
     <div className="space-y-8">
@@ -99,9 +109,14 @@ export default function NotesPage() {
           </p>
         </div>
       ) : (
-        <>
+        <div className="space-y-6 pb-8">
           {favoriteNotes.length > 0 && (
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion
+              type="single"
+              collapsible
+              defaultValue="favorites"
+              className="w-full"
+            >
               <AccordionItem value="favorites" className="border-none">
                 <AccordionTrigger className="text-base font-medium py-3 hover:no-underline">
                   <div className="flex items-center gap-2">
@@ -116,18 +131,41 @@ export default function NotesPage() {
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="pt-2">
-                    <NotesGrid notes={favoriteNotes} />
+                    <NotesGrid
+                      notes={favoriteNotes}
+                      pinnedCount={pinnedCount}
+                    />
                   </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           )}
           {nonFavoriteNotes.length > 0 && (
-            <div className={favoriteNotes.length > 0 ? "pt-4" : ""}>
-              <NotesGrid notes={nonFavoriteNotes} />
+            <div className={favoriteNotes.length > 0 ? "pt-2" : ""}>
+              <NotesGrid notes={nonFavoriteNotes} pinnedCount={pinnedCount} />
             </div>
           )}
-        </>
+          {hasNextPage && (
+            <div className="flex justify-center pt-4">
+              <Button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                variant="link"
+                size="lg"
+                className="cursor-pointer font-lora"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load More"
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

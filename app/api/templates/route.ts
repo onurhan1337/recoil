@@ -6,8 +6,8 @@ import {
   authenticateUser,
   getUserPlan,
 } from "@/lib/api/utils";
-import { validateRequest } from "@/lib/validation-utils";
-import { TemplateInput, templateSchema } from "@/lib/validations";
+import { validateRequest, validateQuery } from "@/lib/validation-utils";
+import { TemplateInput, templateSchema, paginationSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,17 +18,42 @@ export async function GET(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    const { data: templates, error } = await supabase
-      .from("note_templates")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get("limit");
+    const offsetParam = searchParams.get("offset");
 
-    if (error) {
-      throw error;
+    const validation = validateQuery(paginationSchema, {
+      limit: limitParam,
+      offset: offsetParam,
+    });
+
+    if (!validation.success) {
+      return validation.response;
     }
 
-    return successResponse({ templates });
+    const { limit, offset } = validation.data;
+
+    const [templatesResult, countResult] = await Promise.all([
+      supabase
+        .from("note_templates")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1),
+      supabase
+        .from("note_templates")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id),
+    ]);
+
+    if (templatesResult.error) {
+      throw templatesResult.error;
+    }
+
+    return successResponse({
+      templates: templatesResult.data,
+      total: countResult.count || 0,
+    });
   } catch (error) {
     console.error("Error fetching templates:", error);
     return errorResponse("Internal server error");
