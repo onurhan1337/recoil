@@ -99,6 +99,7 @@ export async function apiPatch<T>(
 
 export async function apiDelete<T>(
   url: string,
+  data?: unknown,
   options?: FetchOptions
 ): Promise<T> {
   const response = await fetchWithTimeout(url, {
@@ -107,6 +108,7 @@ export async function apiDelete<T>(
       "Content-Type": "application/json",
       ...options?.headers,
     },
+    body: data ? JSON.stringify(data) : undefined,
     ...options,
   });
   return handleResponse<T>(response);

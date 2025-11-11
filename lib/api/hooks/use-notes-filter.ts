@@ -52,6 +52,7 @@ export function useNotesFilter(allNotes: Note[]) {
     setFilters({
       category: defaults.category,
       tag: defaults.tag,
+      collection: defaults.collection,
       dateRange: defaults.dateRange,
       sortBy: defaults.sortBy,
       pinned: defaults.pinned,

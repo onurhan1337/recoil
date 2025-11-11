@@ -5,6 +5,7 @@ import { USAGE_QUERY_KEY } from "./use-usage";
 
 export const NOTES_QUERY_KEY = ["notes"] as const;
 export const NOTES_INFINITE_QUERY_KEY = ["notes", "infinite"] as const;
+export const NOTES_WITH_COLLECTIONS_QUERY_KEY = ["notes", "with-collections"] as const;
 
 export interface NotesFilters {
   search?: string;
@@ -19,6 +20,14 @@ export function useNotes() {
   return useQuery({
     queryKey: NOTES_QUERY_KEY,
     queryFn: () => apiGet<{ notes: Note[] }>("/api/notes"),
+    select: (data) => data.notes,
+  });
+}
+
+export function useNotesWithCollections() {
+  return useQuery({
+    queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY,
+    queryFn: () => apiGet<{ notes: Note[] }>("/api/notes/with-collections"),
     select: (data) => data.notes,
   });
 }
