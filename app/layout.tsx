@@ -47,7 +47,7 @@ function RootLayout({
         <RSCBoundary label="app-content">
           <Providers>
             {children}
-            <Toaster richColors />
+            <Toaster />
           </Providers>
         </RSCBoundary>
       </body>
