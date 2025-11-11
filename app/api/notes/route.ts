@@ -12,6 +12,8 @@ import {
 } from "@/lib/api/utils";
 import { validateRequest, validateQuery } from "@/lib/validation-utils";
 
+const ASYNC_PROCESSING_THRESHOLD = 5000;
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -44,10 +46,36 @@ export async function POST(request: NextRequest) {
       return errorResponse("Insufficient credits", 403);
     }
 
-    const [embedding, metadata] = await Promise.all([
-      generateEmbedding(content),
-      generateNoteMetadata(content),
-    ]);
+    const { data: remainingCredits, error: creditError } = await supabase.rpc(
+      "decrement_credits",
+      {
+        user_id: user.id,
+        amount: noteCost,
+      }
+    );
+
+    if (creditError) {
+      console.error("Failed to decrement credits:", creditError);
+      return errorResponse("Failed to process credits", 500);
+    }
+
+    const useAsyncProcessing = content.length > ASYNC_PROCESSING_THRESHOLD;
+
+    let embedding: number[] | null = null;
+    let metadata: { label: string; category: string } | null = null;
+
+    if (!useAsyncProcessing) {
+      [embedding, metadata] = await Promise.all([
+        generateEmbedding(content),
+        generateNoteMetadata(content),
+      ]);
+    } else {
+      embedding = await generateEmbedding(content);
+      metadata = {
+        label: content.slice(0, 60).trim() + (content.length > 60 ? "..." : ""),
+        category: "Processing",
+      };
+    }
 
     const { data: note, error: noteError } = await supabase
       .from("notes")
@@ -55,7 +83,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         content,
         title: title || null,
-        embedding: JSON.stringify(embedding),
+        embedding: embedding ? `[${embedding.join(",")}]` : null,
         label: metadata.label,
         category: metadata.category,
         tags: tags.length > 0 ? tags : null,
@@ -64,21 +92,32 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (noteError) {
+      await supabase
+        .from("usage")
+        .update({ credits: remainingCredits + noteCost })
+        .eq("user_id", user.id);
       throw noteError;
     }
 
-    const { error: creditError } = await supabase
-      .from("usage")
-      .update({ credits: usage.credits - noteCost })
-      .eq("user_id", user.id);
-
-    if (creditError) {
-      console.error("Failed to decrement credits:", creditError);
+    if (useAsyncProcessing && note.id) {
+      generateNoteMetadata(content)
+        .then(async (aiMetadata) => {
+          await supabase
+            .from("notes")
+            .update({
+              label: aiMetadata.label,
+              category: aiMetadata.category,
+            })
+            .eq("id", note.id);
+        })
+        .catch((error) => {
+          console.error("Background metadata generation failed:", error);
+        });
     }
 
     return successResponse({
       note,
-      credits_remaining: usage.credits - noteCost,
+      credits_remaining: remainingCredits,
     });
   } catch (error) {
     console.error("Error creating note:", error);

@@ -156,6 +156,20 @@ export async function PATCH(
       return errorResponse("Insufficient credits", 403);
     }
 
+    // Deduct credits FIRST using atomic RPC
+    const { data: remainingCredits, error: creditError } = await supabase.rpc(
+      "decrement_credits",
+      {
+        user_id: user.id,
+        amount: updateCost,
+      }
+    );
+
+    if (creditError) {
+      console.error("Failed to decrement credits:", creditError);
+      return errorResponse("Failed to process credits", 500);
+    }
+
     const [embedding, metadata] = await Promise.all([
       generateEmbedding(content),
       generateNoteMetadata(content),
@@ -164,7 +178,7 @@ export async function PATCH(
     const contentUpdateData: Record<string, unknown> = {
       content,
       title: title || null,
-      embedding: JSON.stringify(embedding),
+      embedding: `[${embedding.join(",")}]`, // pgvector format
       label: metadata.label,
       category: metadata.category,
       tags: tags && tags.length > 0 ? tags : null,
@@ -178,21 +192,17 @@ export async function PATCH(
       .single();
 
     if (updateError) {
+      // Refund credits if update fails
+      await supabase
+        .from("usage")
+        .update({ credits: remainingCredits + updateCost })
+        .eq("user_id", user.id);
       throw updateError;
-    }
-
-    const { error: creditError } = await supabase
-      .from("usage")
-      .update({ credits: usage.credits - updateCost })
-      .eq("user_id", user.id);
-
-    if (creditError) {
-      console.error("Failed to decrement credits:", creditError);
     }
 
     return successResponse({
       note: updatedNote,
-      credits_remaining: usage.credits - updateCost,
+      credits_remaining: remainingCredits,
     });
   } catch (error) {
     console.error("Error updating note:", error);

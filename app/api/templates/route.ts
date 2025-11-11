@@ -7,7 +7,12 @@ import {
   getUserPlan,
 } from "@/lib/api/utils";
 import { validateRequest, validateQuery } from "@/lib/validation-utils";
-import { TemplateInput, templateSchema, paginationSchema } from "@/lib/validations";
+import {
+  TemplateInput,
+  templateSchema,
+  paginationSchema,
+} from "@/lib/validations";
+import { isProPlan } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -78,21 +83,19 @@ export async function POST(request: NextRequest) {
 
     const { name, description, content, category, tags } = validation.data;
 
-    const { data: usage } = await supabase
-      .from("usage")
-      .select("plan")
-      .eq("user_id", user.id)
-      .single();
-
-    const userPlan = getUserPlan(usage?.plan);
-
-    if (userPlan === "free") {
-      const { count: templateCount } = await supabase
+    const [usageResult, templateCountResult] = await Promise.all([
+      supabase.from("usage").select("plan").eq("user_id", user.id).single(),
+      supabase
         .from("note_templates")
         .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("user_id", user.id),
+    ]);
 
-      if (templateCount !== null && templateCount >= 1) {
+    const isUserPro = isProPlan(usageResult.data?.plan);
+
+    if (!isUserPro) {
+      const templateCount = templateCountResult.count ?? 0;
+      if (templateCount >= 1) {
         return errorResponse(
           "Free plan allows only 1 custom template. Upgrade to Pro for unlimited templates.",
           403

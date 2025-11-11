@@ -64,6 +64,19 @@ export async function POST(
       return errorResponse("Insufficient credits", 403);
     }
 
+    const { data: remainingCredits, error: creditError } = await supabase.rpc(
+      "decrement_credits",
+      {
+        user_id: user.id,
+        amount: noteCost,
+      }
+    );
+
+    if (creditError) {
+      console.error("Failed to decrement credits:", creditError);
+      return errorResponse("Failed to process credits", 500);
+    }
+
     const metadata = await generateNoteMetadata(sourceNote.content);
 
     const { data: duplicatedNote, error: noteError } = await supabase
@@ -83,21 +96,16 @@ export async function POST(
       .single();
 
     if (noteError) {
+      await supabase
+        .from("usage")
+        .update({ credits: remainingCredits + noteCost })
+        .eq("user_id", user.id);
       throw noteError;
-    }
-
-    const { error: creditError } = await supabase
-      .from("usage")
-      .update({ credits: usage.credits - noteCost })
-      .eq("user_id", user.id);
-
-    if (creditError) {
-      console.error("Failed to decrement credits:", creditError);
     }
 
     return successResponse({
       note: duplicatedNote,
-      credits_remaining: usage.credits - noteCost,
+      credits_remaining: remainingCredits,
     });
   } catch (error) {
     console.error("Error duplicating note:", error);

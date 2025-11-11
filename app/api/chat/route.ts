@@ -90,6 +90,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { data: remainingCredits, error: creditError } = await supabase.rpc(
+      "decrement_credits",
+      {
+        user_id: user.id,
+        amount: chatCost,
+      }
+    );
+
+    if (creditError) {
+      console.error("Failed to decrement credits:", creditError);
+      return new Response(
+        JSON.stringify({ error: "Failed to process credits" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     let filteredResults: SearchNoteResult[] = [];
 
     if (isTimeBasedQuery(query)) {
@@ -123,7 +142,7 @@ export async function POST(request: NextRequest) {
       const { data: results, error: searchError } = await supabase.rpc(
         "search_notes",
         {
-          query_embedding: JSON.stringify(queryEmbedding),
+          query_embedding: `[${queryEmbedding.join(",")}]`,
           match_threshold: config.search.matchThreshold,
           match_count: config.search.matchCount,
         }
@@ -158,11 +177,6 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-
-    await supabase
-      .from("usage")
-      .update({ credits: usage.credits - chatCost })
-      .eq("user_id", user.id);
 
     const notesContext =
       filteredResults.length > 0
@@ -277,7 +291,7 @@ Only say "no notes found" if the search results section explicitly says "No rele
 
     return result.toUIMessageStreamResponse({
       headers: {
-        "X-Credits-Remaining": String(usage.credits - chatCost),
+        "X-Credits-Remaining": String(remainingCredits),
         "X-Conversation-Id": conversationId || "",
       },
     });
