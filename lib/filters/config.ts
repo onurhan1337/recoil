@@ -18,6 +18,7 @@ type FilterValues = {
   search: string;
   category: string | null;
   tag: string | null;
+  collection: string | null;
   dateRange: DateRange;
   sortBy: SortOption;
   pinned: boolean | null;
@@ -43,6 +44,13 @@ const filterByCategory = (notes: Note[], value: string | null): Note[] => {
 const filterByTag = (notes: Note[], value: string | null): Note[] => {
   if (!value) return notes;
   return notes.filter((note) => note.tags?.includes(value));
+};
+
+const filterByCollection = (notes: Note[], value: string | null): Note[] => {
+  if (!value) return notes;
+  return notes.filter((note) =>
+    note.collections?.some((collection) => collection.id === value)
+  );
 };
 
 const filterByPinned = (notes: Note[], value: boolean | null): Note[] => {
@@ -102,6 +110,13 @@ export const FILTER_CONFIG = {
     getLabel: (value: string | null) => value || null,
     defaultValue: null,
   },
+  collection: {
+    parser: parseAsString,
+    filter: filterByCollection,
+    isActive: (value: string | null) => !!value,
+    getLabel: (value: string | null) => value || null,
+    defaultValue: null,
+  },
   dateRange: {
     parser: parseAsStringEnum([...DATE_RANGE_OPTIONS]).withDefault("all"),
     filter: filterByDateRange,
@@ -141,6 +156,7 @@ export const FILTER_CONFIG = {
 export const notesFiltersParsers = {
   category: FILTER_CONFIG.category.parser,
   tag: FILTER_CONFIG.tag.parser,
+  collection: FILTER_CONFIG.collection.parser,
   dateRange: FILTER_CONFIG.dateRange.parser,
   sortBy: FILTER_CONFIG.sortBy.parser,
   pinned: FILTER_CONFIG.pinned.parser,
@@ -170,6 +186,7 @@ export const applyFilters = (notes: Note[], filters: FilterValues): Note[] => {
   result = FILTER_CONFIG.search.filter(result, filters.search);
   result = FILTER_CONFIG.category.filter(result, filters.category);
   result = FILTER_CONFIG.tag.filter(result, filters.tag);
+  result = FILTER_CONFIG.collection.filter(result, filters.collection);
   result = FILTER_CONFIG.pinned.filter(result, filters.pinned);
   result = FILTER_CONFIG.archived.filter(result, filters.archived);
   result = FILTER_CONFIG.dateRange.filter(result, filters.dateRange);
@@ -182,6 +199,7 @@ export const hasActiveFilters = (filters: FilterValues): boolean => {
     FILTER_CONFIG.search.isActive(filters.search) ||
     FILTER_CONFIG.category.isActive(filters.category) ||
     FILTER_CONFIG.tag.isActive(filters.tag) ||
+    FILTER_CONFIG.collection.isActive(filters.collection) ||
     FILTER_CONFIG.dateRange.isActive(filters.dateRange) ||
     FILTER_CONFIG.sortBy.isActive(filters.sortBy) ||
     FILTER_CONFIG.pinned.isActive(filters.pinned) ||
@@ -203,6 +221,9 @@ export const getActiveFilters = (
   const tagLabel = FILTER_CONFIG.tag.getLabel(filters.tag);
   if (tagLabel) results.push({ key: "tag", label: tagLabel });
 
+  const collectionLabel = FILTER_CONFIG.collection.getLabel(filters.collection);
+  if (collectionLabel) results.push({ key: "collection", label: collectionLabel });
+
   const dateRangeLabel = FILTER_CONFIG.dateRange.getLabel(filters.dateRange);
   if (dateRangeLabel) results.push({ key: "dateRange", label: dateRangeLabel });
 
@@ -223,6 +244,7 @@ export const getFilterDefaults = (): FilterValues => {
     search: FILTER_CONFIG.search.defaultValue,
     category: FILTER_CONFIG.category.defaultValue,
     tag: FILTER_CONFIG.tag.defaultValue,
+    collection: FILTER_CONFIG.collection.defaultValue,
     dateRange: FILTER_CONFIG.dateRange.defaultValue,
     sortBy: FILTER_CONFIG.sortBy.defaultValue,
     pinned: FILTER_CONFIG.pinned.defaultValue,

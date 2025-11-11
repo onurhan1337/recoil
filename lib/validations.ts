@@ -248,6 +248,33 @@ export const templateUpdateSchema = z.object({
   tags: z.array(z.string().trim().min(1)).optional().default([]),
 });
 
+export const addNoteSchema = z.object({
+  noteId: uuidSchema,
+});
+
+export const removeNoteSchema = z.object({
+  noteId: uuidSchema,
+});
+
+export const updateCollectionSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name must be less than 100 characters")
+    .trim()
+    .optional(),
+  description: z
+    .string()
+    .max(500, "Description must be less than 500 characters")
+    .trim()
+    .optional(),
+  color: z
+    .string()
+    .max(100, "Color must be less than 100 characters")
+    .trim()
+    .optional(),
+});
+
 export const signupSchema = emailSchema.extend(passwordSchema.shape);
 export const loginSchema = emailSchema.extend(passwordSchema.shape);
 
@@ -265,3 +292,6 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type ChatMessageInput = z.infer<typeof chatMessageSchema>;
 export type TemplateInput = z.infer<typeof templateSchema>;
 export type TemplateUpdateInput = z.infer<typeof templateUpdateSchema>;
+export type UpdateCollectionInput = z.infer<typeof updateCollectionSchema>;
+export type AddNoteInput = z.infer<typeof addNoteSchema>;
+export type RemoveNoteInput = z.infer<typeof removeNoteSchema>;

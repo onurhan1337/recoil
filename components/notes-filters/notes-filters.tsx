@@ -14,6 +14,7 @@ import {
 import { FilterBadge } from "./filter-badge";
 import { CategoryFilter } from "./filters/category-filter";
 import { TagFilter } from "./filters/tag-filter";
+import { CollectionFilter } from "./filters/collection-filter";
 import { DateFilter } from "./filters/date-filter";
 import { SortFilter } from "./filters/sort-filter";
 import { PinnedFilter } from "./filters/pinned-filter";
@@ -23,6 +24,7 @@ import { getActiveFilters } from "./filter-utils";
 import type { URLNotesFilters } from "@/lib/api/hooks/use-notes-filter";
 import type { NotesFiltersFromParsers } from "@/lib/filters/config";
 import { getFilterDefaults } from "@/lib/filters/config";
+import type { Collection } from "@/lib/api/types";
 
 interface NotesFiltersProps {
   filters: URLNotesFilters;
@@ -35,6 +37,7 @@ interface NotesFiltersProps {
   ) => void;
   availableCategories: string[];
   availableTags: string[];
+  availableCollections: Collection[];
   hasActiveFilters: boolean;
   onClearFilters: () => void;
 }
@@ -46,6 +49,7 @@ export function NotesFilters({
   onFiltersChange,
   availableCategories,
   availableTags,
+  availableCollections,
   hasActiveFilters,
   onClearFilters,
 }: NotesFiltersProps) {
@@ -126,6 +130,12 @@ export function NotesFilters({
               filters={filters}
               onFiltersChange={onFiltersChange}
               availableTags={availableTags}
+            />
+
+            <CollectionFilter
+              filters={filters}
+              onFiltersChange={onFiltersChange}
+              availableCollections={availableCollections}
             />
 
             <DateFilter filters={filters} onFiltersChange={onFiltersChange} />

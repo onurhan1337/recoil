@@ -1,10 +1,11 @@
-import { Calendar, Tag as TagIcon, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Tag as TagIcon, Pencil, Trash2, Library } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { NoteConnections } from "./note-connections";
 import { NoteActionsDropdown } from "./note-actions-dropdown";
+import { NoteCollectionsManager } from "./note-collections-manager";
 import { formatShortDate } from "@/lib/utils";
 import type { Note } from "@/lib/api/types";
 import type { NoteConnection } from "@/lib/api/hooks/use-note-connections";
@@ -77,6 +78,8 @@ export function NoteViewMode({
             </div>
           </div>
         )}
+
+        <NoteCollectionsManager noteId={note.id} />
 
         {isPro && (
           <NoteConnections
