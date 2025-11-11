@@ -12,6 +12,7 @@ import {
   Brain,
   BarChart3,
   Layers,
+  Library,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewNoteDialog } from "@/components/new-note-dialog";
@@ -23,6 +24,7 @@ import { useUser, useUsage } from "@/lib/api/hooks";
 const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Notes", href: "/notes", icon: BookOpen },
+  { name: "Collections", href: "/collections", icon: Library },
   { name: "Templates", href: "/templates", icon: Layers },
   { name: "Analytics", href: "/analytics", icon: BarChart3, badge: "PRO" },
   { name: "Settings", href: "/settings", icon: Settings },

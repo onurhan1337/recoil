@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { MessageCircle, Heart, Loader2 } from "lucide-react";
 import { useNotesInfinite, useUsage, useTags } from "@/lib/api/hooks";
+import { useCollections } from "@/lib/api/hooks/use-collections";
 import { useNotesFilter } from "@/lib/api/hooks/use-notes-filter";
 import { useNotesAnalytics } from "@/lib/api/hooks/use-notes-analytics";
 import { NotesFilters } from "@/components/notes-filters";
@@ -29,6 +30,7 @@ export default function NotesPage() {
   const allNotes = infiniteData?.notes || [];
   const { data: usage } = useUsage();
   const { data: allTags = [] } = useTags();
+  const { data: collections = [] } = useCollections();
   const isPro = isProPlan(usage?.plan);
 
   const {
@@ -71,6 +73,7 @@ export default function NotesPage() {
           onFiltersChange={setFilters}
           availableCategories={availableCategories as string[]}
           availableTags={allTags}
+          availableCollections={collections}
           hasActiveFilters={!!hasActiveFilters}
           onClearFilters={clearFilters}
         />
