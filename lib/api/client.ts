@@ -1,9 +1,5 @@
 export class APIError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public code?: string
-  ) {
+  constructor(message: string, public status: number, public code?: string) {
     super(message);
     this.name = "APIError";
   }
@@ -38,13 +34,10 @@ async function fetchWithTimeout(
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const error = await response.json().catch(() => ({
-      message: response.statusText,
+      error: response.statusText,
     }));
-    throw new APIError(
-      error.message || "Request failed",
-      response.status,
-      error.code
-    );
+    const errorMessage = error.error || error.message || "Request failed";
+    throw new APIError(errorMessage, response.status, error.code);
   }
 
   const contentType = response.headers.get("content-type");

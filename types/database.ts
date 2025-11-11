@@ -253,6 +253,13 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      decrement_credits: {
+        Args: {
+          user_id: string;
+          amount: number;
+        };
+        Returns: number;
+      };
       search_notes: {
         Args: {
           match_count: number;
