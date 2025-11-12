@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { apiGet, apiPost, apiDelete, apiPatch } from "../client";
-import type { Note, CreateNoteResponse, NoteCostEstimate } from "../types";
+import type { Note, CreateNoteResponse, NoteCostEstimate, BulkCreateNotesResponse, MarkdownImportResult, BulkNoteInput } from "../types";
 import { USAGE_QUERY_KEY } from "./use-usage";
 
 export const NOTES_QUERY_KEY = ["notes"] as const;
@@ -172,6 +172,52 @@ export function useDuplicateNote() {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
+    },
+  });
+}
+
+export function useBulkCreateNotes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notes: BulkNoteInput[]) =>
+      apiPost<BulkCreateNotesResponse>("/api/notes/bulk", { notes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+}
+
+export function useImportMarkdown() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (markdown: string) =>
+      apiPost<MarkdownImportResult>("/api/notes/import-markdown", { markdown }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+}
+
+export function useBulkDeleteNotes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (noteIds: string[]) =>
+      apiPost<{ success: boolean; deletedCount: number }>("/api/notes/bulk-delete", { noteIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY });
     },
   });
 }

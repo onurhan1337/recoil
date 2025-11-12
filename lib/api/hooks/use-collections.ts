@@ -94,3 +94,43 @@ export function useRemoveNoteFromCollection() {
     },
   });
 }
+
+export function useBulkAddNotesToCollection() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ collectionId, noteIds }: { collectionId: string; noteIds: string[] }) =>
+      apiPost<{
+        success: boolean;
+        addedCount: number;
+        skippedCount?: number;
+        message?: string;
+      }>("/api/collections/bulk-add-notes", {
+        collectionId,
+        noteIds,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY });
+    },
+  });
+}
+
+export function useBulkRemoveNotesFromCollection() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ collectionId, noteIds }: { collectionId: string; noteIds: string[] }) =>
+      apiPost<{ success: boolean; removedCount: number }>(
+        "/api/collections/bulk-remove-notes",
+        {
+          collectionId,
+          noteIds,
+        }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY });
+    },
+  });
+}
