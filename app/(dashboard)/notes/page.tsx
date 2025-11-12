@@ -1,8 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { MessageCircle, Heart, Loader2 } from "lucide-react";
-import { useNotesInfinite, useUsage, useTags } from "@/lib/api/hooks";
+import {
+  MessageCircle,
+  Heart,
+  Loader2,
+  FileUp,
+  Trash2,
+  FolderPlus,
+} from "lucide-react";
+import {
+  useNotesInfinite,
+  useUsage,
+  useTags,
+  useBulkDeleteNotes,
+} from "@/lib/api/hooks";
 import { useCollections } from "@/lib/api/hooks/use-collections";
 import { useNotesFilter } from "@/lib/api/hooks/use-notes-filter";
 import { useNotesAnalytics } from "@/lib/api/hooks/use-notes-analytics";
@@ -17,8 +30,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { isProPlan } from "@/lib/utils";
+import { MarkdownImportDialog } from "@/components/markdown-import-dialog";
+import { BulkCollectionDialog } from "@/components/bulk-collection-dialog";
+import { toast } from "sonner";
 
 export default function NotesPage() {
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
+  const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(
+    new Set()
+  );
+
+  const bulkDelete = useBulkDeleteNotes();
+
   const {
     data: infiniteData,
     isLoading,
@@ -50,20 +74,137 @@ export default function NotesPage() {
   const nonFavoriteNotes = notes.filter((note) => !note.favorite);
   const pinnedCount = allNotes.filter((note) => note.pinned).length;
 
+  const handleNoteSelect = (noteId: string, selected: boolean) => {
+    setSelectedNoteIds((prev) => {
+      const newSet = new Set(prev);
+      if (selected) {
+        newSet.add(noteId);
+      } else {
+        newSet.delete(noteId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    setSelectedNoteIds(new Set(notes.map((note) => note.id)));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedNoteIds(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedNoteIds.size === 0) return;
+
+    try {
+      await bulkDelete.mutateAsync(Array.from(selectedNoteIds));
+      toast.success(
+        `Deleted ${selectedNoteIds.size} note${
+          selectedNoteIds.size !== 1 ? "s" : ""
+        }`
+      );
+      setSelectedNoteIds(new Set());
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete notes"
+      );
+    }
+  };
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-lora font-semibold tracking-tight mb-2">
-          Notes
-        </h1>
-        <p className="text-muted-foreground tracking-wide font-lora text-sm">
-          {allNotes.length} {allNotes.length === 1 ? "note" : "notes"} in your
-          collection
-          {notes.length !== allNotes.length && (
-            <span className="ml-1">({notes.length} shown)</span>
-          )}
-        </p>
+      <MarkdownImportDialog
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+      />
+
+      <BulkCollectionDialog
+        open={isCollectionDialogOpen}
+        onOpenChange={setIsCollectionDialogOpen}
+        selectedNoteIds={Array.from(selectedNoteIds)}
+        onSuccess={() => setSelectedNoteIds(new Set())}
+      />
+
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-lora font-semibold tracking-tight mb-2">
+            Notes
+          </h1>
+          <p className="text-muted-foreground tracking-wide font-lora text-sm">
+            {allNotes.length} {allNotes.length === 1 ? "note" : "notes"} in your
+            collection
+            {notes.length !== allNotes.length && (
+              <span className="ml-1">({notes.length} shown)</span>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsImportDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <FileUp className="h-4 w-4" />
+            Import
+          </Button>
+        </div>
       </div>
+
+      {selectedNoteIds.size > 0 && (
+        <div className="rounded-md border bg-muted/50 p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium">
+                {selectedNoteIds.size} selected
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  disabled={selectedNoteIds.size === notes.length}
+                  className="cursor-pointer"
+                >
+                  Select All
+                </Button>
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={handleDeselectAll}
+                  disabled={selectedNoteIds.size === 0}
+                  className="cursor-pointer"
+                >
+                  Deselect All
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCollectionDialogOpen(true)}
+                disabled={selectedNoteIds.size === 0}
+                className="flex items-center gap-2"
+              >
+                <FolderPlus className="h-4 w-4" />
+                Collections
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBulkDelete}
+                disabled={selectedNoteIds.size === 0 || bulkDelete.isPending}
+                className="flex items-center gap-2 font-semibold cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete ({selectedNoteIds.size})
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {allNotes.length > 0 && (
         <NotesFilters
@@ -137,6 +278,8 @@ export default function NotesPage() {
                     <NotesGrid
                       notes={favoriteNotes}
                       pinnedCount={pinnedCount}
+                      selectedNoteIds={selectedNoteIds}
+                      onNoteSelect={handleNoteSelect}
                     />
                   </div>
                 </AccordionContent>
@@ -145,7 +288,12 @@ export default function NotesPage() {
           )}
           {nonFavoriteNotes.length > 0 && (
             <div className={favoriteNotes.length > 0 ? "pt-2" : ""}>
-              <NotesGrid notes={nonFavoriteNotes} pinnedCount={pinnedCount} />
+              <NotesGrid
+                notes={nonFavoriteNotes}
+                pinnedCount={pinnedCount}
+                selectedNoteIds={selectedNoteIds}
+                onNoteSelect={handleNoteSelect}
+              />
             </div>
           )}
           {hasNextPage && (
