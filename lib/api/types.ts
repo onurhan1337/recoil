@@ -123,3 +123,26 @@ export interface SearchNoteResult {
   category?: string | null;
   label?: string | null;
 }
+
+export interface BulkNoteInput {
+  content: string;
+  title?: string;
+  tags?: string[];
+}
+
+export interface BulkCreateNotesResponse {
+  success: boolean;
+  notes: Note[];
+  failedCount: number;
+  successCount: number;
+  totalCost: number;
+  creditsRemaining: number;
+  errors?: Array<{ index: number; error: string }>;
+}
+
+export interface MarkdownImportResult {
+  success: boolean;
+  notes: Note[];
+  creditsRemaining: number;
+  totalCost: number;
+}

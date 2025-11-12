@@ -275,6 +275,43 @@ export const updateCollectionSchema = z.object({
     .optional(),
 });
 
+export const bulkNoteInputSchema = z.object({
+  content: z
+    .string()
+    .min(1, "Note content is required")
+    .max(10000, "Note content must be less than 10,000 characters")
+    .trim(),
+  title: z
+    .preprocess(
+      (val) =>
+        val === null || val === undefined || val === "" ? undefined : val,
+      z.string()
+    )
+    .pipe(z.string().max(200, "Title must be less than 200 characters").trim())
+    .optional(),
+  tags: z
+    .preprocess(
+      (val) => (val === null ? undefined : val),
+      z.array(z.string().trim().min(1))
+    )
+    .optional()
+    .default([]),
+});
+
+export const bulkCreateNotesSchema = z.object({
+  notes: z
+    .array(bulkNoteInputSchema)
+    .min(1, "At least one note is required")
+    .max(50, "Cannot create more than 50 notes at once"),
+});
+
+export const markdownImportSchema = z.object({
+  markdown: z
+    .string()
+    .min(1, "Markdown content is required")
+    .max(100000, "Markdown content must be less than 100,000 characters"),
+});
+
 export const signupSchema = emailSchema.extend(passwordSchema.shape);
 export const loginSchema = emailSchema.extend(passwordSchema.shape);
 
@@ -295,3 +332,6 @@ export type TemplateUpdateInput = z.infer<typeof templateUpdateSchema>;
 export type UpdateCollectionInput = z.infer<typeof updateCollectionSchema>;
 export type AddNoteInput = z.infer<typeof addNoteSchema>;
 export type RemoveNoteInput = z.infer<typeof removeNoteSchema>;
+export type BulkNoteInput = z.infer<typeof bulkNoteInputSchema>;
+export type BulkCreateNotesInput = z.infer<typeof bulkCreateNotesSchema>;
+export type MarkdownImportInput = z.infer<typeof markdownImportSchema>;
