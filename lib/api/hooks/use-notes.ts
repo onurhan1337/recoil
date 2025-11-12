@@ -1,11 +1,26 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { apiGet, apiPost, apiDelete, apiPatch } from "../client";
-import type { Note, CreateNoteResponse, NoteCostEstimate, BulkCreateNotesResponse, MarkdownImportResult, BulkNoteInput } from "../types";
+import type {
+  Note,
+  CreateNoteResponse,
+  NoteCostEstimate,
+  BulkCreateNotesResponse,
+  MarkdownImportResult,
+  BulkNoteInput,
+} from "../types";
 import { USAGE_QUERY_KEY } from "./use-usage";
 
 export const NOTES_QUERY_KEY = ["notes"] as const;
 export const NOTES_INFINITE_QUERY_KEY = ["notes", "infinite"] as const;
-export const NOTES_WITH_COLLECTIONS_QUERY_KEY = ["notes", "with-collections"] as const;
+export const NOTES_WITH_COLLECTIONS_QUERY_KEY = [
+  "notes",
+  "with-collections",
+] as const;
 
 export interface NotesFilters {
   search?: string;
@@ -38,15 +53,21 @@ export function useNotesInfinite() {
   return useInfiniteQuery({
     queryKey: NOTES_INFINITE_QUERY_KEY,
     queryFn: ({ pageParam = 0 }) =>
-      apiGet<{ notes: Note[]; total: number }>(`/api/notes?limit=${NOTES_PAGE_SIZE}&offset=${pageParam}`),
+      apiGet<{ notes: Note[]; total: number }>(
+        `/api/notes?limit=${NOTES_PAGE_SIZE}&offset=${pageParam}`
+      ),
     getNextPageParam: (lastPage, allPages) => {
-      const loadedCount = allPages.reduce((sum, page) => sum + page.notes.length, 0);
+      const loadedCount = allPages.reduce(
+        (sum, page) => sum + page.notes.length,
+        0
+      );
       if (loadedCount >= lastPage.total) {
         return undefined;
       }
       return loadedCount;
     },
     initialPageParam: 0,
+    gcTime: 0,
     select: (data) => ({
       pages: data.pages,
       pageParams: data.pageParams,
@@ -60,8 +81,15 @@ export function useCreateNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ content, title, tags }: { content: string; title?: string; tags?: string[] }) =>
-      apiPost<CreateNoteResponse>("/api/notes", { content, title, tags }),
+    mutationFn: ({
+      content,
+      title,
+      tags,
+    }: {
+      content: string;
+      title?: string;
+      tags?: string[];
+    }) => apiPost<CreateNoteResponse>("/api/notes", { content, title, tags }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
@@ -98,7 +126,11 @@ export function useUpdateNote() {
       title?: string;
       tags?: string[];
     }) =>
-      apiPatch<CreateNoteResponse>(`/api/notes/${noteId}`, { content, title, tags }),
+      apiPatch<CreateNoteResponse>(`/api/notes/${noteId}`, {
+        content,
+        title,
+        tags,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
@@ -185,7 +217,9 @@ export function useBulkCreateNotes() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY,
+      });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
@@ -201,7 +235,9 @@ export function useImportMarkdown() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY,
+      });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
@@ -213,11 +249,16 @@ export function useBulkDeleteNotes() {
 
   return useMutation({
     mutationFn: (noteIds: string[]) =>
-      apiPost<{ success: boolean; deletedCount: number }>("/api/notes/bulk-delete", { noteIds }),
+      apiPost<{ success: boolean; deletedCount: number }>(
+        "/api/notes/bulk-delete",
+        { noteIds }
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY,
+      });
     },
   });
 }
