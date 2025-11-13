@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
       }
     );
 
+    // TIMEZONE HANDLING: Same logic as production cron
+    // Both reminder_date (from DB) and new Date().toISOString() are in UTC
+    // This comparison is timezone-agnostic and works correctly for all users
     const { data: dueReminders, error: remindersError } = await supabase
       .from("reminders")
       .select(

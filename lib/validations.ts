@@ -322,6 +322,9 @@ export const reminderSchema = z.object({
         .min(1, "Reminder date is required")
         .refine(
           (val) => {
+            // TIMEZONE HANDLING: Validates ISO string from frontend
+            // Frontend sends: "2024-11-13T18:15:00.000Z" (already in UTC)
+            // We validate it's parseable and in the future (server time = UTC)
             const date = new Date(val);
             return !isNaN(date.getTime()) && date > new Date();
           },
@@ -345,6 +348,8 @@ export const reminderUpdateSchema = z.object({
         .min(1, "Reminder date is required")
         .refine(
           (val) => {
+            // TIMEZONE HANDLING: Same as reminderSchema
+            // Validates UTC ISO string from frontend is parseable and in the future
             const date = new Date(val);
             return !isNaN(date.getTime()) && date > new Date();
           },

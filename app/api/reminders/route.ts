@@ -41,12 +41,14 @@ export async function POST(request: NextRequest) {
       return errorResponse("Forbidden", 403);
     }
 
+    // TIMEZONE HANDLING: reminder_date is already in UTC from frontend
+    // It's validated by reminderSchema and stored directly as timestamptz in Supabase
     const { data: reminder, error: reminderError } = await supabase
       .from("reminders")
       .insert({
         user_id: user.id,
         note_id,
-        reminder_date,
+        reminder_date, // UTC ISO string, e.g., "2024-11-13T18:15:00.000Z"
         email_enabled,
         in_app_enabled,
       })
@@ -79,6 +81,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const noteId = searchParams.get("note_id");
 
+    // TIMEZONE HANDLING: reminder_date is stored as UTC in database
+    // When fetched, it's returned as ISO string which frontend converts to local time
     let query = supabase
       .from("reminders")
       .select("*")
