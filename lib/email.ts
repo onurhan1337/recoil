@@ -34,7 +34,21 @@ export async function sendReminderEmail({
       timeStyle: "short",
     });
 
-    await resend.emails.send({
+    // Escape HTML to prevent XSS
+    const escapeHtml = (text: string) => {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    };
+
+    const safeNoteTitle = escapeHtml(noteTitle);
+    const safeNoteContent = escapeHtml(noteContent);
+    const safeFormattedDate = escapeHtml(formattedDate);
+
+    const { data, error } = await resend.emails.send({
       from: "Recoil <reminders@recoil.app>",
       to: userEmail,
       subject: `Reminder: ${noteTitle}`,
@@ -55,12 +69,12 @@ export async function sendReminderEmail({
               <p style="font-size: 16px; margin-bottom: 20px;">You set a reminder for:</p>
 
               <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin-bottom: 20px;">
-                <h2 style="margin: 0 0 10px 0; color: #333; font-size: 20px;">${noteTitle}</h2>
-                <p style="margin: 0; color: #666; white-space: pre-wrap;">${noteContent}</p>
+                <h2 style="margin: 0 0 10px 0; color: #333; font-size: 20px;">${safeNoteTitle}</h2>
+                <p style="margin: 0; color: #666; white-space: pre-wrap;">${safeNoteContent}</p>
               </div>
 
               <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
-                <strong>Reminder Date:</strong> ${formattedDate}
+                <strong>Reminder Date:</strong> ${safeFormattedDate}
               </p>
 
               <div style="text-align: center; margin-top: 30px;">
@@ -75,6 +89,11 @@ export async function sendReminderEmail({
         </html>
       `,
     });
+
+    if (error) {
+      console.error("Failed to send reminder email:", error);
+      throw new Error(error.message || "Failed to send email");
+    }
   } catch (error) {
     console.error("Failed to send reminder email:", error);
     throw error;
