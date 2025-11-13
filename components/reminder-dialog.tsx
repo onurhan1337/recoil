@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Bell, Loader2, Mail, Smartphone, ChevronDownIcon } from "lucide-react";
 import {
   Dialog,
@@ -25,7 +25,7 @@ import {
   useDeleteReminder,
 } from "@/lib/api/hooks";
 import { toast } from "sonner";
-import { format, isBefore, startOfToday, set, isValid } from "date-fns";
+import { format, isBefore, startOfToday, set, isValid, addHours } from "date-fns";
 import type { Reminder } from "@/lib/api/types";
 
 interface ReminderDialogProps {
@@ -35,6 +35,38 @@ interface ReminderDialogProps {
   onSuccess?: () => void;
 }
 
+const getDefaultDateTime = () => {
+  const defaultDate = addHours(new Date(), 1);
+  defaultDate.setMinutes(0, 0, 0);
+  return { date: defaultDate, time: format(defaultDate, "HH:mm") };
+};
+
+const getReminderDateTime = (reminder: Reminder) => {
+  const reminderDate = new Date(reminder.reminder_date);
+  return { date: reminderDate, time: format(reminderDate, "HH:mm") };
+};
+
+const validateDateTime = (date: Date | undefined, time: string) => {
+  if (!date) return { isValid: false, error: "Please select a reminder date" };
+  if (!time) return { isValid: false, error: "Please select a reminder time" };
+
+  const [hours, minutes] = time.split(":").map(Number);
+  if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    return { isValid: false, error: "Please enter a valid time" };
+  }
+
+  const selectedDateTime = set(date, { hours, minutes, seconds: 0, milliseconds: 0 });
+  if (!isValid(selectedDateTime)) {
+    return { isValid: false, error: "Invalid date or time selected" };
+  }
+
+  if (isBefore(selectedDateTime, new Date())) {
+    return { isValid: false, error: "Reminder date must be in the future" };
+  }
+
+  return { isValid: true, dateTime: selectedDateTime };
+};
+
 export function ReminderDialog({
   noteId,
   reminder,
@@ -43,67 +75,32 @@ export function ReminderDialog({
 }: ReminderDialogProps) {
   const [open, setOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [time, setTime] = useState("12:00");
-  const [emailEnabled, setEmailEnabled] = useState(true);
-  const [inAppEnabled, setInAppEnabled] = useState(true);
+
+  const initialDateTime = reminder ? getReminderDateTime(reminder) : getDefaultDateTime();
+  const [date, setDate] = useState<Date | undefined>(initialDateTime.date);
+  const [time, setTime] = useState(initialDateTime.time);
+  const [emailEnabled, setEmailEnabled] = useState(reminder?.email_enabled ?? true);
+  const [inAppEnabled, setInAppEnabled] = useState(reminder?.in_app_enabled ?? true);
 
   const createReminderMutation = useCreateReminder();
   const updateReminderMutation = useUpdateReminder();
   const deleteReminderMutation = useDeleteReminder();
 
-  useEffect(() => {
-    if (open) {
-      if (reminder) {
-        const reminderDate = new Date(reminder.reminder_date);
-        setDate(reminderDate);
-        setTime(format(reminderDate, "HH:mm"));
-        setEmailEnabled(reminder.email_enabled);
-        setInAppEnabled(reminder.in_app_enabled);
-      } else {
-        const defaultDate = new Date();
-        defaultDate.setHours(defaultDate.getHours() + 1);
-        defaultDate.setMinutes(0);
-        setDate(defaultDate);
-        setTime(format(defaultDate, "HH:mm"));
-        setEmailEnabled(true);
-        setInAppEnabled(true);
-      }
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      const newDateTime = reminder ? getReminderDateTime(reminder) : getDefaultDateTime();
+      setDate(newDateTime.date);
+      setTime(newDateTime.time);
+      setEmailEnabled(reminder?.email_enabled ?? true);
+      setInAppEnabled(reminder?.in_app_enabled ?? true);
     }
-  }, [reminder, open]);
+  };
 
   const handleSubmit = async () => {
-    if (!date) {
-      toast.error("Please select a reminder date");
-      return;
-    }
-
-    if (!time) {
-      toast.error("Please select a reminder time");
-      return;
-    }
-
-    const [hours, minutes] = time.split(":").map(Number);
-
-    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-      toast.error("Please enter a valid time");
-      return;
-    }
-
-    const selectedDateTime = set(date, {
-      hours,
-      minutes,
-      seconds: 0,
-      milliseconds: 0,
-    });
-
-    if (!isValid(selectedDateTime)) {
-      toast.error("Invalid date or time selected");
-      return;
-    }
-
-    if (isBefore(selectedDateTime, new Date())) {
-      toast.error("Reminder date must be in the future");
+    const validation = validateDateTime(date, time);
+    if (!validation.isValid) {
+      toast.error(validation.error);
       return;
     }
 
@@ -113,30 +110,24 @@ export function ReminderDialog({
     }
 
     try {
+      const payload = {
+        reminder_date: validation.dateTime!.toISOString(),
+        email_enabled: emailEnabled,
+        in_app_enabled: inAppEnabled,
+      };
+
       if (reminder) {
-        await updateReminderMutation.mutateAsync({
-          id: reminder.id,
-          reminder_date: selectedDateTime.toISOString(),
-          email_enabled: emailEnabled,
-          in_app_enabled: inAppEnabled,
-        });
+        await updateReminderMutation.mutateAsync({ id: reminder.id, ...payload });
         toast.success("Reminder updated successfully");
       } else {
-        await createReminderMutation.mutateAsync({
-          note_id: noteId,
-          reminder_date: selectedDateTime.toISOString(),
-          email_enabled: emailEnabled,
-          in_app_enabled: inAppEnabled,
-        });
+        await createReminderMutation.mutateAsync({ note_id: noteId, ...payload });
         toast.success("Reminder created successfully");
       }
 
       setOpen(false);
       onSuccess?.();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save reminder"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save reminder");
     }
   };
 
@@ -149,9 +140,7 @@ export function ReminderDialog({
       setOpen(false);
       onSuccess?.();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete reminder"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete reminder");
     }
   };
 
@@ -161,7 +150,7 @@ export function ReminderDialog({
     deleteReminderMutation.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm">
@@ -280,11 +269,7 @@ export function ReminderDialog({
                 )}
               </Button>
             )}
-            <Button
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className="flex-1"
-            >
+            <Button onClick={handleSubmit} disabled={isLoading} className="flex-1">
               {isLoading && !deleteReminderMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
