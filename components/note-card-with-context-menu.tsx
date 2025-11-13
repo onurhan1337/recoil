@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/context-menu";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { NoteDetailsDialog } from "@/components/note-details-dialog";
+import { ReminderDialog } from "@/components/reminder";
 import { formatShortDate } from "@/lib/utils";
 import {
   Pin,
@@ -22,6 +23,7 @@ import {
   Copy,
   Trash2,
   Loader2,
+  Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -241,6 +243,19 @@ function NoteCardWithContextMenu({
           {note.archived ? "Unarchive" : "Archive"}
         </ContextMenuItem>
         <ContextMenuSeparator />
+        <ReminderDialog
+          noteId={note.id}
+          trigger={
+            <ContextMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+              }}
+            >
+              <Bell className="h-4 w-4 mr-2" />
+              Set Reminder
+            </ContextMenuItem>
+          }
+        />
         <ContextMenuItem
           onClick={(e) => {
             e.stopPropagation();

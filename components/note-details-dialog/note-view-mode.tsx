@@ -1,4 +1,4 @@
-import { Calendar, Tag as TagIcon, Pencil, Trash2, Library, Bell } from "lucide-react";
+import { Tag as TagIcon, Pencil, Trash2, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -6,10 +6,9 @@ import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { NoteConnections } from "./note-connections";
 import { NoteActionsDropdown } from "./note-actions-dropdown";
 import { NoteCollectionsManager } from "./note-collections-manager";
-import { ReminderDialog } from "@/components/reminder-dialog";
+import { ReminderDialog } from "@/components/reminder";
 import { useReminders } from "@/lib/api/hooks";
-import { formatShortDate } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import type { Note } from "@/lib/api/types";
 import type { NoteConnection } from "@/lib/api/hooks/use-note-connections";
 
@@ -52,7 +51,9 @@ export function NoteViewMode({
   onSaveAsTemplate,
   onConnectionClick,
 }: NoteViewModeProps) {
-  const { data: remindersData, refetch: refetchReminders } = useReminders(note.id);
+  const { data: remindersData, refetch: refetchReminders } = useReminders(
+    note.id
+  );
   const reminders = remindersData || [];
   const activeReminder = reminders.find((r) => !r.sent);
 
@@ -97,7 +98,7 @@ export function NoteViewMode({
             <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
               <div className="flex-1">
                 <p className="text-sm font-medium">
-                  {new Date(activeReminder.reminder_date).toLocaleString()}
+                  {format(new Date(activeReminder.reminder_date), "PPP 'at' p")}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(activeReminder.reminder_date), {
@@ -106,12 +107,12 @@ export function NoteViewMode({
                 </p>
                 <div className="flex gap-2 mt-1">
                   {activeReminder.email_enabled && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="text-xs">
                       Email
                     </Badge>
                   )}
                   {activeReminder.in_app_enabled && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="text-xs">
                       In-App
                     </Badge>
                   )}
@@ -121,8 +122,12 @@ export function NoteViewMode({
                 noteId={note.id}
                 reminder={activeReminder}
                 trigger={
-                  <Button variant="ghost" size="sm">
-                    Edit
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-14 cursor-pointer"
+                  >
+                    <span className="tracking-wide text-xs">Edit</span>
                   </Button>
                 }
                 onSuccess={refetchReminders}
@@ -162,18 +167,6 @@ export function NoteViewMode({
           <Trash2 className="h-4 w-4 mr-2" />
           Delete
         </Button>
-        {!activeReminder && (
-          <ReminderDialog
-            noteId={note.id}
-            trigger={
-              <Button variant="outline">
-                <Bell className="h-4 w-4 mr-2" />
-                Set Reminder
-              </Button>
-            }
-            onSuccess={refetchReminders}
-          />
-        )}
         <NoteActionsDropdown
           isPinned={note.pinned || false}
           isFavorite={note.favorite || false}
@@ -183,11 +176,14 @@ export function NoteViewMode({
           isFavoritePending={isFavoritePending}
           isArchivePending={isArchivePending}
           isDuplicatePending={isDuplicatePending}
+          noteId={note.id}
+          activeReminder={activeReminder}
           onPinToggle={onPinToggle}
           onFavoriteToggle={onFavoriteToggle}
           onArchiveToggle={onArchiveToggle}
           onDuplicate={onDuplicate}
           onSaveAsTemplate={onSaveAsTemplate}
+          onReminderSuccess={refetchReminders}
         />
         <Button onClick={onEdit}>
           <Pencil className="h-4 w-4 mr-2" />
