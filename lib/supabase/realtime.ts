@@ -26,19 +26,25 @@ export function useRealtimeSubscription({
     const supabase = supabaseRef.current;
     const channelName = `${schema}:${table}:${event}`;
 
+    console.log(`[Realtime] Subscribing to ${channelName}`);
+
     channelRef.current = supabase
       .channel(channelName)
       .on(
         "postgres_changes",
         { event, schema, table },
-        () => {
+        (payload) => {
+          console.log(`[Realtime] Change detected in ${table}:`, payload);
           queryClient.invalidateQueries({ queryKey: invalidateQueryKey });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`[Realtime] Subscription status for ${channelName}:`, status);
+      });
 
     return () => {
       if (channelRef.current) {
+        console.log(`[Realtime] Unsubscribing from ${channelName}`);
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
