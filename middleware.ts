@@ -2,6 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // Skip auth in development for cron endpoints
+  if (process.env.NODE_ENV === "development") {
+    if (request.nextUrl.pathname.startsWith("/api/cron/")) {
+      return NextResponse.next();
+    }
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });

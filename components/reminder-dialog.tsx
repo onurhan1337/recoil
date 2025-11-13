@@ -10,7 +10,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
@@ -19,6 +18,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   useCreateReminder,
   useUpdateReminder,
@@ -35,9 +41,16 @@ interface ReminderDialogProps {
   onSuccess?: () => void;
 }
 
+const roundToNearest15Minutes = (date: Date) => {
+  const minutes = date.getMinutes();
+  const rounded = Math.ceil(minutes / 15) * 15;
+  const newDate = new Date(date);
+  newDate.setMinutes(rounded, 0, 0);
+  return newDate;
+};
+
 const getDefaultDateTime = () => {
-  const defaultDate = addHours(new Date(), 1);
-  defaultDate.setMinutes(0, 0, 0);
+  const defaultDate = roundToNearest15Minutes(addHours(new Date(), 1));
   return { date: defaultDate, time: format(defaultDate, "HH:mm") };
 };
 
@@ -53,6 +66,11 @@ const validateDateTime = (date: Date | undefined, time: string) => {
   const [hours, minutes] = time.split(":").map(Number);
   if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
     return { isValid: false, error: "Please enter a valid time" };
+  }
+
+  // Validate 15-minute intervals
+  if (minutes % 15 !== 0) {
+    return { isValid: false, error: "Please select a time in 15-minute intervals (00, 15, 30, 45)" };
   }
 
   const selectedDateTime = set(date, { hours, minutes, seconds: 0, milliseconds: 0 });
@@ -202,15 +220,28 @@ export function ReminderDialog({
               <Label htmlFor="time-picker" className="px-1">
                 Time
               </Label>
-              <Input
-                type="time"
-                id="time-picker"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                disabled={isLoading}
-                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-              />
+              <Select value={time} onValueChange={setTime} disabled={isLoading}>
+                <SelectTrigger id="time-picker">
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {Array.from({ length: 96 }, (_, i) => {
+                    const hours = Math.floor(i / 4);
+                    const minutes = (i % 4) * 15;
+                    const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+                    return (
+                      <SelectItem key={timeString} value={timeString}>
+                        {timeString}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+
+          <div className="text-xs text-muted-foreground px-1">
+            <p>Reminders are checked every 15 minutes. Choose a time in 15-minute intervals for best accuracy.</p>
           </div>
 
           <div className="space-y-4">

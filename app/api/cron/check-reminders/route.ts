@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { errorResponse, successResponse } from "@/lib/api/utils";
 import { sendReminderEmail } from "@/lib/email";
+import type { Database } from "@/types/database";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +18,17 @@ export async function GET(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    const supabase = await createClient();
+    // Use service role key to bypass RLS for cron job
+    const supabase = createSupabaseClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
 
     const { data: dueReminders, error: remindersError } = await supabase
       .from("reminders")
@@ -102,29 +113,32 @@ export async function GET(request: NextRequest) {
         }
 
         if (reminder.in_app_enabled) {
-          promises.push(
-            supabase
-              .from("notifications")
-              .insert({
+          const notificationPromise = (async () => {
+            try {
+              const { error } = await supabase.from("notifications").insert({
                 user_id: reminder.user_id,
                 reminder_id: reminder.id,
                 note_id: note.id,
                 title: "Note Reminder",
                 message: `Reminder for: ${note.title || "Untitled Note"}`,
-              })
-              .then(() => {
-                results.notificationsCreated++;
-              })
-              .catch((error) => {
-                console.error(
-                  `Failed to create notification for reminder ${reminder.id}:`,
-                  error
-                );
-                results.errors.push(
-                  `Notification failed for reminder ${reminder.id}: ${error.message}`
-                );
-              })
-          );
+              });
+
+              if (error) throw error;
+              results.notificationsCreated++;
+            } catch (error) {
+              console.error(
+                `Failed to create notification for reminder ${reminder.id}:`,
+                error
+              );
+              results.errors.push(
+                `Notification failed for reminder ${reminder.id}: ${
+                  error instanceof Error ? error.message : "Unknown error"
+                }`
+              );
+            }
+          })();
+
+          promises.push(notificationPromise);
         }
 
         await Promise.all(promises);
@@ -138,7 +152,9 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         console.error(`Error processing reminder ${reminder.id}:`, error);
         results.errors.push(
-          `Processing failed for reminder ${reminder.id}: ${error instanceof Error ? error.message : "Unknown error"}`
+          `Processing failed for reminder ${reminder.id}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
         );
       }
     }
