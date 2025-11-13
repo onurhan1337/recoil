@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Loader2, Mail, Smartphone, CalendarIcon, Clock } from "lucide-react";
+import { Bell, Loader2, Mail, Smartphone, ChevronDownIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,7 @@ import {
   useDeleteReminder,
 } from "@/lib/api/hooks";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, isBefore, startOfToday, set, isValid } from "date-fns";
 import type { Reminder } from "@/lib/api/types";
 
 interface ReminderDialogProps {
@@ -42,6 +42,7 @@ export function ReminderDialog({
   onSuccess,
 }: ReminderDialogProps) {
   const [open, setOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState("12:00");
   const [emailEnabled, setEmailEnabled] = useState(true);
@@ -56,19 +57,15 @@ export function ReminderDialog({
       if (reminder) {
         const reminderDate = new Date(reminder.reminder_date);
         setDate(reminderDate);
-        setTime(
-          `${String(reminderDate.getHours()).padStart(2, "0")}:${String(reminderDate.getMinutes()).padStart(2, "0")}`
-        );
+        setTime(format(reminderDate, "HH:mm"));
         setEmailEnabled(reminder.email_enabled);
         setInAppEnabled(reminder.in_app_enabled);
       } else {
-        const now = new Date();
-        now.setHours(now.getHours() + 1);
-        now.setMinutes(0);
-        setDate(now);
-        setTime(
-          `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
-        );
+        const defaultDate = new Date();
+        defaultDate.setHours(defaultDate.getHours() + 1);
+        defaultDate.setMinutes(0);
+        setDate(defaultDate);
+        setTime(format(defaultDate, "HH:mm"));
         setEmailEnabled(true);
         setInAppEnabled(true);
       }
@@ -87,12 +84,25 @@ export function ReminderDialog({
     }
 
     const [hours, minutes] = time.split(":").map(Number);
-    const selectedDate = new Date(date);
-    selectedDate.setHours(hours, minutes, 0, 0);
 
-    const now = new Date();
+    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      toast.error("Please enter a valid time");
+      return;
+    }
 
-    if (selectedDate <= now) {
+    const selectedDateTime = set(date, {
+      hours,
+      minutes,
+      seconds: 0,
+      milliseconds: 0,
+    });
+
+    if (!isValid(selectedDateTime)) {
+      toast.error("Invalid date or time selected");
+      return;
+    }
+
+    if (isBefore(selectedDateTime, new Date())) {
       toast.error("Reminder date must be in the future");
       return;
     }
@@ -106,7 +116,7 @@ export function ReminderDialog({
       if (reminder) {
         await updateReminderMutation.mutateAsync({
           id: reminder.id,
-          reminder_date: selectedDate.toISOString(),
+          reminder_date: selectedDateTime.toISOString(),
           email_enabled: emailEnabled,
           in_app_enabled: inAppEnabled,
         });
@@ -114,7 +124,7 @@ export function ReminderDialog({
       } else {
         await createReminderMutation.mutateAsync({
           note_id: noteId,
-          reminder_date: selectedDate.toISOString(),
+          reminder_date: selectedDateTime.toISOString(),
           email_enabled: emailEnabled,
           in_app_enabled: inAppEnabled,
         });
@@ -168,45 +178,49 @@ export function ReminderDialog({
         </DialogHeader>
 
         <div className="space-y-6 pt-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Date</Label>
-              <Popover>
+          <div className="flex gap-4">
+            <div className="flex flex-col gap-3 flex-1">
+              <Label htmlFor="date-picker" className="px-1">
+                Date
+              </Label>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left font-normal"
+                    id="date-picker"
+                    className="justify-between font-normal"
                     disabled={isLoading}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    {date ? format(date, "PPP") : "Select date"}
+                    <ChevronDownIcon className="h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto overflow-hidden p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={date}
-                    onSelect={setDate}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                    initialFocus
+                    captionLayout="dropdown"
+                    onSelect={(selectedDate) => {
+                      setDate(selectedDate);
+                      setCalendarOpen(false);
+                    }}
+                    disabled={(date) => isBefore(date, startOfToday())}
                   />
                 </PopoverContent>
               </Popover>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="time">Time</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="time"
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  disabled={isLoading}
-                  className="pl-9"
-                />
-              </div>
+            <div className="flex flex-col gap-3 w-32">
+              <Label htmlFor="time-picker" className="px-1">
+                Time
+              </Label>
+              <Input
+                type="time"
+                id="time-picker"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                disabled={isLoading}
+                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+              />
             </div>
           </div>
 
