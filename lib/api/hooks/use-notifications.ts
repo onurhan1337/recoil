@@ -1,14 +1,16 @@
-import { useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { apiGet, apiPatch, apiDelete } from "../client";
 import type { Notification, NotificationsListResponse } from "../types";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export const NOTIFICATIONS_QUERY_KEY = ["notifications"] as const;
 
 export function useNotifications(unreadOnly = false) {
   const queryClient = useQueryClient();
-  const supabase = createClient();
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const supabaseRef = useRef(createClient());
 
   const query = useQuery({
     queryKey: unreadOnly
@@ -23,8 +25,12 @@ export function useNotifications(unreadOnly = false) {
   });
 
   useEffect(() => {
-    const channel = supabase
-      .channel("notifications-changes")
+    if (channelRef.current) return;
+
+    const supabase = supabaseRef.current;
+
+    channelRef.current = supabase
+      .channel("notifications-realtime")
       .on(
         "postgres_changes",
         {
@@ -39,9 +45,12 @@ export function useNotifications(unreadOnly = false) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [supabase, queryClient]);
+  }, [queryClient]);
 
   return query;
 }
