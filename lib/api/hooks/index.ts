@@ -12,3 +12,5 @@ export * from "./use-notes-filter";
 export * from "./use-notes-analytics";
 export * from "./use-templates";
 export * from "./use-collections";
+export * from "./use-reminders";
+export * from "./use-notifications";

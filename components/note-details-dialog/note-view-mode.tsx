@@ -1,4 +1,4 @@
-import { Calendar, Tag as TagIcon, Pencil, Trash2, Library } from "lucide-react";
+import { Calendar, Tag as TagIcon, Pencil, Trash2, Library, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -6,7 +6,10 @@ import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { NoteConnections } from "./note-connections";
 import { NoteActionsDropdown } from "./note-actions-dropdown";
 import { NoteCollectionsManager } from "./note-collections-manager";
+import { ReminderDialog } from "@/components/reminder-dialog";
+import { useReminders } from "@/lib/api/hooks";
 import { formatShortDate } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 import type { Note } from "@/lib/api/types";
 import type { NoteConnection } from "@/lib/api/hooks/use-note-connections";
 
@@ -49,6 +52,10 @@ export function NoteViewMode({
   onSaveAsTemplate,
   onConnectionClick,
 }: NoteViewModeProps) {
+  const { data: remindersData, refetch: refetchReminders } = useReminders(note.id);
+  const reminders = remindersData || [];
+  const activeReminder = reminders.find((r) => !r.sent);
+
   return (
     <>
       <div className="space-y-6 py-4">
@@ -81,6 +88,49 @@ export function NoteViewMode({
 
         <NoteCollectionsManager noteId={note.id} />
 
+        {activeReminder && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <Bell className="h-4 w-4" />
+              <span>Reminder</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+              <div className="flex-1">
+                <p className="text-sm font-medium">
+                  {new Date(activeReminder.reminder_date).toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(activeReminder.reminder_date), {
+                    addSuffix: true,
+                  })}
+                </p>
+                <div className="flex gap-2 mt-1">
+                  {activeReminder.email_enabled && (
+                    <Badge variant="outline" className="text-xs">
+                      Email
+                    </Badge>
+                  )}
+                  {activeReminder.in_app_enabled && (
+                    <Badge variant="outline" className="text-xs">
+                      In-App
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <ReminderDialog
+                noteId={note.id}
+                reminder={activeReminder}
+                trigger={
+                  <Button variant="ghost" size="sm">
+                    Edit
+                  </Button>
+                }
+                onSuccess={refetchReminders}
+              />
+            </div>
+          </div>
+        )}
+
         {isPro && (
           <NoteConnections
             connections={connections}
@@ -112,6 +162,18 @@ export function NoteViewMode({
           <Trash2 className="h-4 w-4 mr-2" />
           Delete
         </Button>
+        {!activeReminder && (
+          <ReminderDialog
+            noteId={note.id}
+            trigger={
+              <Button variant="outline">
+                <Bell className="h-4 w-4 mr-2" />
+                Set Reminder
+              </Button>
+            }
+            onSuccess={refetchReminders}
+          />
+        )}
         <NoteActionsDropdown
           isPinned={note.pinned || false}
           isFavorite={note.favorite || false}
