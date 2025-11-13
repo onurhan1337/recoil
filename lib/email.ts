@@ -13,6 +13,7 @@ export async function sendReminderEmail({
 }: SendReminderEmailParams): Promise<void> {
   const resendApiKey = process.env.RESEND_API_KEY;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const fromAddress = process.env.NEXT_PUBLIC_RESEND_FROM_EMAIL || "";
 
   if (!resendApiKey) {
     console.error("RESEND_API_KEY is not configured");
@@ -49,7 +50,7 @@ export async function sendReminderEmail({
     const safeFormattedDate = escapeHtml(formattedDate);
 
     const { data, error } = await resend.emails.send({
-      from: "Recoil <reminders@recoil.app>",
+      from: fromAddress,
       to: userEmail,
       subject: `Reminder: ${noteTitle}`,
       html: `
