@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    // Use service role key to bypass RLS for cron job
     const supabase = createSupabaseClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -30,6 +29,10 @@ export async function GET(request: NextRequest) {
       }
     );
 
+    // TIMEZONE HANDLING:
+    // Both reminder_date (from DB) and new Date().toISOString() are in UTC
+    // This comparison is timezone-agnostic and works correctly for all users
+    // Example: PST user's "10:15 AM" is stored as "18:15 UTC" and triggers at 18:15 UTC
     const { data: dueReminders, error: remindersError } = await supabase
       .from("reminders")
       .select(
