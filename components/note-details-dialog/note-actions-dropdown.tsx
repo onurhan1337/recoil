@@ -9,6 +9,7 @@ import {
   Copy,
   FileText,
   Loader2,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ReminderDialog } from "@/components/reminder";
+import type { Reminder } from "@/lib/api/types";
 
 interface NoteActionsDropdownProps {
   isPinned: boolean;
@@ -27,11 +30,14 @@ interface NoteActionsDropdownProps {
   isFavoritePending: boolean;
   isArchivePending: boolean;
   isDuplicatePending: boolean;
+  noteId: string;
+  activeReminder: Reminder | undefined;
   onPinToggle: () => void;
   onFavoriteToggle: () => void;
   onArchiveToggle: () => void;
   onDuplicate: () => void;
   onSaveAsTemplate: () => void;
+  onReminderSuccess: () => void;
 }
 
 export function NoteActionsDropdown({
@@ -43,18 +49,26 @@ export function NoteActionsDropdown({
   isFavoritePending,
   isArchivePending,
   isDuplicatePending,
+  noteId,
+  activeReminder,
   onPinToggle,
   onFavoriteToggle,
   onArchiveToggle,
   onDuplicate,
   onSaveAsTemplate,
+  onReminderSuccess,
 }: NoteActionsDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          disabled={isPinPending || isFavoritePending || isArchivePending || isDuplicatePending}
+          disabled={
+            isPinPending ||
+            isFavoritePending ||
+            isArchivePending ||
+            isDuplicatePending
+          }
         >
           <MoreVertical className="h-4 w-4 mr-2" />
           <span className="text-sm text-muted-foreground font-normal tracking-tight">
@@ -110,6 +124,17 @@ export function NoteActionsDropdown({
           <FileText className="h-4 w-4 mr-2" />
           Save as Template
         </DropdownMenuItem>
+        <ReminderDialog
+          noteId={noteId}
+          reminder={activeReminder}
+          trigger={
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <Bell className="h-4 w-4 mr-2" />
+              {activeReminder ? "Edit Reminder" : "Set Reminder"}
+            </DropdownMenuItem>
+          }
+          onSuccess={onReminderSuccess}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

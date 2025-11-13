@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { NewNoteDialog } from "@/components/new-note-dialog";
 import { CreditDisplay } from "@/components/credit-display";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { NotificationsDropdown } from "@/components/notifications";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useUsage } from "@/lib/api/hooks";
 
@@ -72,7 +73,7 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <aside className="flex w-64 flex-col border-r">
-        <div className="flex h-14 items-center px-4 border-b">
+        <div className="flex h-14 items-center justify-between px-4 border-b">
           <Link
             href="/"
             className="flex items-center gap-2 font-semibold text-sm"
@@ -80,6 +81,7 @@ export default function DashboardLayout({
             <Brain className="h-5 w-5" />
             Recoil
           </Link>
+          <NotificationsDropdown />
         </div>
 
         <div className="p-3 border-b">

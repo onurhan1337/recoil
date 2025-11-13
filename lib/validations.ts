@@ -312,6 +312,55 @@ export const markdownImportSchema = z.object({
     .max(100000, "Markdown content must be less than 100,000 characters"),
 });
 
+export const reminderSchema = z.object({
+  note_id: uuidSchema,
+  reminder_date: z
+    .preprocess((val) => (val === null ? undefined : val), z.string())
+    .pipe(
+      z
+        .string()
+        .min(1, "Reminder date is required")
+        .refine(
+          (val) => {
+            // TIMEZONE HANDLING: Validates ISO string from frontend
+            // Frontend sends: "2024-11-13T18:15:00.000Z" (already in UTC)
+            // We validate it's parseable and in the future (server time = UTC)
+            const date = new Date(val);
+            return !isNaN(date.getTime()) && date > new Date();
+          },
+          { message: "Reminder date must be a valid future date" }
+        )
+    ),
+  email_enabled: z
+    .preprocess((val) => (val === null || val === undefined ? true : val), z.boolean())
+    .default(true),
+  in_app_enabled: z
+    .preprocess((val) => (val === null || val === undefined ? true : val), z.boolean())
+    .default(true),
+});
+
+export const reminderUpdateSchema = z.object({
+  reminder_date: z
+    .preprocess((val) => (val === null ? undefined : val), z.string())
+    .pipe(
+      z
+        .string()
+        .min(1, "Reminder date is required")
+        .refine(
+          (val) => {
+            // TIMEZONE HANDLING: Same as reminderSchema
+            // Validates UTC ISO string from frontend is parseable and in the future
+            const date = new Date(val);
+            return !isNaN(date.getTime()) && date > new Date();
+          },
+          { message: "Reminder date must be a valid future date" }
+        )
+    )
+    .optional(),
+  email_enabled: z.boolean().optional(),
+  in_app_enabled: z.boolean().optional(),
+});
+
 export const signupSchema = emailSchema.extend(passwordSchema.shape);
 export const loginSchema = emailSchema.extend(passwordSchema.shape);
 
@@ -335,3 +384,5 @@ export type RemoveNoteInput = z.infer<typeof removeNoteSchema>;
 export type BulkNoteInput = z.infer<typeof bulkNoteInputSchema>;
 export type BulkCreateNotesInput = z.infer<typeof bulkCreateNotesSchema>;
 export type MarkdownImportInput = z.infer<typeof markdownImportSchema>;
+export type ReminderInput = z.infer<typeof reminderSchema>;
+export type ReminderUpdateInput = z.infer<typeof reminderUpdateSchema>;

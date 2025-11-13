@@ -146,3 +146,40 @@ export interface MarkdownImportResult {
   creditsRemaining: number;
   totalCost: number;
 }
+
+export interface Reminder {
+  id: string;
+  note_id: string;
+  user_id: string;
+  reminder_date: string;
+  email_enabled: boolean;
+  in_app_enabled: boolean;
+  sent: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  reminder_id?: string | null;
+  note_id?: string | null;
+  title: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+}
+
+export interface CreateReminderResponse {
+  reminder: Reminder;
+  message: string;
+}
+
+export interface RemindersListResponse {
+  reminders: Reminder[];
+}
+
+export interface NotificationsListResponse {
+  notifications: Notification[];
+  unreadCount: number;
+}
