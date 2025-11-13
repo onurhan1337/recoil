@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Loader2, Mail, Smartphone } from "lucide-react";
+import { Bell, Loader2, Mail, Smartphone, CalendarIcon, Clock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +13,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   useCreateReminder,
   useUpdateReminder,
   useDeleteReminder,
 } from "@/lib/api/hooks";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import type { Reminder } from "@/lib/api/types";
 
 interface ReminderDialogProps {
@@ -35,7 +42,8 @@ export function ReminderDialog({
   onSuccess,
 }: ReminderDialogProps) {
   const [open, setOpen] = useState(false);
-  const [reminderDate, setReminderDate] = useState("");
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [time, setTime] = useState("12:00");
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [inAppEnabled, setInAppEnabled] = useState(true);
 
@@ -44,33 +52,44 @@ export function ReminderDialog({
   const deleteReminderMutation = useDeleteReminder();
 
   useEffect(() => {
-    if (reminder) {
-      const date = new Date(reminder.reminder_date);
-      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16);
-      setReminderDate(localDate);
-      setEmailEnabled(reminder.email_enabled);
-      setInAppEnabled(reminder.in_app_enabled);
-    } else {
-      const now = new Date();
-      now.setMinutes(now.getMinutes() + 60);
-      const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16);
-      setReminderDate(localDate);
-      setEmailEnabled(true);
-      setInAppEnabled(true);
+    if (open) {
+      if (reminder) {
+        const reminderDate = new Date(reminder.reminder_date);
+        setDate(reminderDate);
+        setTime(
+          `${String(reminderDate.getHours()).padStart(2, "0")}:${String(reminderDate.getMinutes()).padStart(2, "0")}`
+        );
+        setEmailEnabled(reminder.email_enabled);
+        setInAppEnabled(reminder.in_app_enabled);
+      } else {
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        now.setMinutes(0);
+        setDate(now);
+        setTime(
+          `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+        );
+        setEmailEnabled(true);
+        setInAppEnabled(true);
+      }
     }
   }, [reminder, open]);
 
   const handleSubmit = async () => {
-    if (!reminderDate) {
-      toast.error("Please select a reminder date and time");
+    if (!date) {
+      toast.error("Please select a reminder date");
       return;
     }
 
-    const selectedDate = new Date(reminderDate);
+    if (!time) {
+      toast.error("Please select a reminder time");
+      return;
+    }
+
+    const [hours, minutes] = time.split(":").map(Number);
+    const selectedDate = new Date(date);
+    selectedDate.setHours(hours, minutes, 0, 0);
+
     const now = new Date();
 
     if (selectedDate <= now) {
@@ -149,15 +168,46 @@ export function ReminderDialog({
         </DialogHeader>
 
         <div className="space-y-6 pt-4">
-          <div className="space-y-2">
-            <Label htmlFor="reminder-date">Date and Time</Label>
-            <Input
-              id="reminder-date"
-              type="datetime-local"
-              value={reminderDate}
-              onChange={(e) => setReminderDate(e.target.value)}
-              disabled={isLoading}
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                    disabled={isLoading}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="time">Time</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  disabled={isLoading}
+                  className="pl-9"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">
