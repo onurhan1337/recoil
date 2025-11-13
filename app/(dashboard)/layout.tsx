@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { NewNoteDialog } from "@/components/new-note-dialog";
 import { CreditDisplay } from "@/components/credit-display";
 import { FeedbackDialog } from "@/components/feedback-dialog";
-import { NotificationsDropdown } from "@/components/notifications-dropdown";
+import { NotificationsDropdown } from "@/components/notifications";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useUsage } from "@/lib/api/hooks";
 
