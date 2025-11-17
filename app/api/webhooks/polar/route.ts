@@ -309,8 +309,7 @@ async function handleOrderCreated(payload: any) {
       last_processed_order_id: orderId,
     })
     .eq("user_id", userId)
-    .eq("plan", "pro")
-    .neq("last_processed_order_id", orderId);
+    .eq("plan", "pro");
 
   if (error) throw error;
 }

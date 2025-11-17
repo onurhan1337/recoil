@@ -85,13 +85,20 @@ export async function ensureUserUsage(
       `[Usage] Subscription expired for user ${userId}, downgrading to free`
     );
 
+    const terminalStatuses = ["revoked", "canceled"];
+    const statusToWrite = terminalStatuses.includes(
+      usage.subscription_status || ""
+    )
+      ? usage.subscription_status
+      : "expired";
+
     const { data: updatedUsage, error: updateError } = await supabase
       .from("usage")
       .update({
         plan: "free",
         credits: config.plans.free.monthlyCredits,
         monthly_credits_limit: config.plans.free.monthlyCredits,
-        subscription_status: "expired",
+        subscription_status: statusToWrite,
       })
       .eq("user_id", userId)
       .eq("plan", "pro")
