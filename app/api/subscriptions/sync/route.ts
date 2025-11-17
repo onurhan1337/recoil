@@ -3,6 +3,7 @@ import {
   authenticateUser,
   errorResponse,
   successResponse,
+  ensureUserUsage,
 } from "@/lib/api/utils";
 import { polar } from "@/lib/polar/client";
 import { config } from "@/lib/config";
@@ -20,7 +21,7 @@ export async function POST() {
       return errorResponse("Unauthorized", 401);
     }
 
-    console.log("[Sync] Starting sync for user:", user.id);
+    await ensureUserUsage(supabase, user.id);
 
     // Use getStateExternal to get customer state by external_id (Supabase user ID)
     let customerState;
@@ -28,10 +29,6 @@ export async function POST() {
       customerState = await polar.customers.getStateExternal({
         externalId: user.id,
       });
-      console.log(
-        "[Sync] Customer state:",
-        JSON.stringify(customerState, null, 2)
-      );
     } catch (error: any) {
       console.error("[Sync] Error getting customer state:", error);
 
@@ -66,8 +63,6 @@ export async function POST() {
       customerState.activeSubscriptions.length > 0;
 
     if (!hasActiveSubscription) {
-      console.log("[Sync] No active subscriptions found");
-
       await supabase
         .from("usage")
         .update({
@@ -90,20 +85,6 @@ export async function POST() {
 
     // Get the first active subscription
     const subscription = customerState.activeSubscriptions[0];
-    console.log("[Sync] Found active subscription:", subscription.id);
-
-    // Get current state BEFORE sync
-    const { data: beforeState } = await supabase
-      .from("usage")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    console.log("[Sync] Current state:", {
-      plan: beforeState?.plan,
-      credits: beforeState?.credits,
-      subscription_id: beforeState?.polar_subscription_id,
-    });
 
     // Validate subscription data from Polar
     if (!subscription.id) {
@@ -129,8 +110,6 @@ export async function POST() {
       subscription_period_end: periodEnd,
     };
 
-    console.log("[Sync] Updating to:", updateData);
-
     // Update to pro plan
     const { data: afterState, error: updateError } = await supabase
       .from("usage")
@@ -144,21 +123,17 @@ export async function POST() {
       throw updateError;
     }
 
-    // Verify the sync
-    console.log("[Sync] After sync:", {
-      plan: afterState.plan,
-      credits: afterState.credits,
-      subscription_id: afterState.polar_subscription_id,
-      period_end: afterState.subscription_period_end,
-    });
-
     // Verify critical fields
     if (afterState.plan !== "pro") {
-      throw new Error(`[Sync] Verification failed: plan is ${afterState.plan}, expected pro`);
+      throw new Error(
+        `[Sync] Verification failed: plan is ${afterState.plan}, expected pro`
+      );
     }
 
     if (afterState.credits !== config.plans.pro.monthlyCredits) {
-      console.warn(`[Sync] Warning: credits is ${afterState.credits}, expected ${config.plans.pro.monthlyCredits}`);
+      console.warn(
+        `[Sync] Warning: credits is ${afterState.credits}, expected ${config.plans.pro.monthlyCredits}`
+      );
     }
 
     if (afterState.polar_subscription_id !== subscription.id) {
@@ -166,8 +141,6 @@ export async function POST() {
         `[Sync] Verification failed: subscription_id mismatch (${afterState.polar_subscription_id} vs ${subscription.id})`
       );
     }
-
-    console.log("[Sync] ✅ Successfully updated user to pro and verified");
 
     return successResponse({
       message: "Subscription synced successfully",

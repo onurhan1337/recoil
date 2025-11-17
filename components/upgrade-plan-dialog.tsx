@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Zap, Check, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useUsage } from "@/lib/api/hooks";
 import { isProPlan } from "@/lib/api/utils";
+import { config } from "@/lib/config";
 
 interface UpgradePlanDialogProps {
   trigger?: React.ReactNode;
@@ -23,7 +25,6 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
   const { data: usage } = useUsage();
   const isPro = isProPlan(usage?.plan);
 
-  // Handle checkout flow - redirects to Polar checkout page
   const handleUpgrade = async () => {
     try {
       setIsCheckoutLoading(true);
@@ -32,17 +33,25 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Server error:", errorData);
-        throw new Error(errorData.error || "Failed to create checkout session");
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error || "Failed to create checkout session";
+        toast.error("Checkout failed", {
+          description: errorMessage,
+        });
+        setIsCheckoutLoading(false);
+        return;
       }
 
       const { checkoutUrl } = await response.json();
 
-      // Redirect to Polar checkout
       window.location.href = checkoutUrl;
     } catch (error) {
-      console.error("Checkout error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      toast.error("Checkout failed", {
+        description: errorMessage,
+      });
       setIsCheckoutLoading(false);
     }
   };
@@ -87,23 +96,37 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
               <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>500 credits/month</span>
+                  <span>
+                    {config.plans.free.monthlyCredits.toLocaleString()}{" "}
+                    credits/month
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>2 credits per note</span>
+                  <span>
+                    {config.plans.free.costs.createNote} credits per note
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>5 credits per chat</span>
+                  <span>
+                    {config.plans.free.costs.chatMessage} credits per chat
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>1 custom template</span>
+                  <span>
+                    {config.plans.free.features.maxTemplates} custom template
+                    {config.plans.free.features.maxTemplates !== 1 ? "s" : ""}
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>In-app reminders only</span>
+                  <span>
+                    {config.plans.free.features.emailReminders
+                      ? "Email & in-app reminders"
+                      : "In-app reminders only"}
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -123,30 +146,55 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                   )}
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold">$4.99</span>
+                  <span className="text-3xl font-bold">
+                    {config.plans.pro.price?.split("/")[0] || "$4.99"}
+                  </span>
                   <span className="text-sm text-muted-foreground">/month</span>
                 </div>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">10,000 credits/month</span>
+                  <span className="font-medium">
+                    {config.plans.pro.monthlyCredits.toLocaleString()}{" "}
+                    credits/month
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">1 credit per note</span>
+                  <span className="font-medium">
+                    {config.plans.pro.costs.createNote} credit
+                    {config.plans.pro.costs.createNote !== 1 ? "s" : ""} per
+                    note
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">3 credits per chat</span>
+                  <span className="font-medium">
+                    {config.plans.pro.costs.chatMessage} credits per chat
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">Unlimited custom templates</span>
+                  <span className="font-medium">
+                    {config.plans.pro.features.maxTemplates === -1
+                      ? "Unlimited custom templates"
+                      : `${
+                          config.plans.pro.features.maxTemplates
+                        } custom template${
+                          config.plans.pro.features.maxTemplates !== 1
+                            ? "s"
+                            : ""
+                        }`}
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">Email & in-app reminders</span>
+                  <span className="font-medium">
+                    {config.plans.pro.features.emailReminders
+                      ? "Email & in-app reminders"
+                      : "In-app reminders only"}
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />

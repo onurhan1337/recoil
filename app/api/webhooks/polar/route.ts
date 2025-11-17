@@ -54,34 +54,22 @@ async function handleSubscriptionActivation(payload: any) {
 
   if (!userId) return;
 
-  console.log(`[Webhook Activation] Processing for user: ${userId}`);
-  console.log(`[Webhook Activation] Payload data:`, JSON.stringify(payload.data, null, 2));
-
-  // Get current state BEFORE activation
-  const { data: beforeState } = await supabase
-    .from("usage")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
-
-  console.log("[Webhook Activation] Current state:", {
-    plan: beforeState?.plan,
-    credits: beforeState?.credits,
-    subscription_id: beforeState?.polar_subscription_id,
-    subscription_status: beforeState?.subscription_status,
-  });
-
   // Validate payload data from Polar
   if (!payload.data.id) {
-    throw new Error("[Webhook Activation] Invalid payload: missing subscription ID");
+    throw new Error(
+      "[Webhook Activation] Invalid payload: missing subscription ID"
+    );
   }
 
   const customerId = payload.data.customerId || payload.data.customer_id;
   if (!customerId) {
-    throw new Error("[Webhook Activation] Invalid payload: missing customer ID");
+    throw new Error(
+      "[Webhook Activation] Invalid payload: missing customer ID"
+    );
   }
 
-  const currentPeriodEnd = payload.data.currentPeriodEnd || payload.data.current_period_end;
+  const currentPeriodEnd =
+    payload.data.currentPeriodEnd || payload.data.current_period_end;
 
   // Prepare update data
   const updateData = {
@@ -94,8 +82,6 @@ async function handleSubscriptionActivation(payload: any) {
     subscription_period_end: currentPeriodEnd,
   };
 
-  console.log("[Webhook Activation] Updating to:", updateData);
-
   // Perform update and get result
   const { data: afterState, error } = await supabase
     .from("usage")
@@ -105,18 +91,12 @@ async function handleSubscriptionActivation(payload: any) {
     .single();
 
   if (error) {
-    console.error(`[Webhook Activation] Database update error for user ${userId}:`, error);
+    console.error(
+      `[Webhook Activation] Database update error for user ${userId}:`,
+      error
+    );
     throw error;
   }
-
-  // Verify the update
-  console.log("[Webhook Activation] After activation:", {
-    plan: afterState.plan,
-    credits: afterState.credits,
-    subscription_id: afterState.polar_subscription_id,
-    subscription_status: afterState.subscription_status,
-    period_end: afterState.subscription_period_end,
-  });
 
   // Verify critical fields
   if (afterState.plan !== "pro") {
@@ -136,8 +116,6 @@ async function handleSubscriptionActivation(payload: any) {
       `[Webhook Activation] Verification failed: subscription_id mismatch (${afterState.polar_subscription_id} vs ${payload.data.id})`
     );
   }
-
-  console.log(`✅ [Webhook Activation] Successfully upgraded user ${userId} to pro and verified`);
 }
 
 /**
@@ -149,7 +127,8 @@ async function handleSubscriptionUpdate(payload: any) {
 
   if (!userId) return;
 
-  const currentPeriodEnd = payload.data.currentPeriodEnd || payload.data.current_period_end;
+  const currentPeriodEnd =
+    payload.data.currentPeriodEnd || payload.data.current_period_end;
   const updateData: any = {
     subscription_status: payload.data.status,
     subscription_period_end: currentPeriodEnd,
@@ -157,7 +136,10 @@ async function handleSubscriptionUpdate(payload: any) {
 
   // If subscription is canceled but still active (grace period)
   // Keep pro plan until period_end
-  if (payload.data.status === "canceled" || payload.data.status === "cancelled") {
+  if (
+    payload.data.status === "canceled" ||
+    payload.data.status === "cancelled"
+  ) {
     updateData.plan = "pro"; // Will be downgraded when revoked
   }
 
@@ -167,11 +149,9 @@ async function handleSubscriptionUpdate(payload: any) {
     .eq("user_id", userId);
 
   if (error) {
-    console.error(`❌ Error updating subscription for user ${userId}:`, error);
+    console.error(`[Webhook Update] Error updating subscription:`, error);
     throw error;
   }
-
-  console.log(`📝 Subscription updated for user ${userId}, status: ${payload.data.status}`);
 }
 
 /**
@@ -183,7 +163,8 @@ async function handleSubscriptionCancellation(payload: any) {
 
   if (!userId) return;
 
-  const currentPeriodEnd = payload.data.currentPeriodEnd || payload.data.current_period_end;
+  const currentPeriodEnd =
+    payload.data.currentPeriodEnd || payload.data.current_period_end;
 
   const { error } = await supabase
     .from("usage")
@@ -195,11 +176,12 @@ async function handleSubscriptionCancellation(payload: any) {
     .eq("user_id", userId);
 
   if (error) {
-    console.error(`❌ Error canceling subscription for user ${userId}:`, error);
+    console.error(
+      `[Webhook Cancellation] Error canceling subscription:`,
+      error
+    );
     throw error;
   }
-
-  console.log(`⏸️ Subscription canceled for user ${userId} (active until ${currentPeriodEnd})`);
 }
 
 /**
@@ -211,26 +193,11 @@ async function handleSubscriptionRevocation(payload: any) {
 
   if (!userId) return;
 
-  console.log(`[Webhook Revocation] Processing for user: ${userId}`);
-  console.log(`[Webhook Revocation] Payload data:`, JSON.stringify(payload.data, null, 2));
-
-  // Get current state BEFORE revocation
-  const { data: beforeState } = await supabase
-    .from("usage")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
-
-  console.log("[Webhook Revocation] Current state:", {
-    plan: beforeState?.plan,
-    credits: beforeState?.credits,
-    subscription_id: beforeState?.polar_subscription_id,
-    subscription_status: beforeState?.subscription_status,
-  });
-
   // Validate payload data from Polar
   if (!payload.data.id) {
-    throw new Error("[Webhook Revocation] Invalid payload: missing subscription ID");
+    throw new Error(
+      "[Webhook Revocation] Invalid payload: missing subscription ID"
+    );
   }
 
   // Prepare update data
@@ -243,8 +210,6 @@ async function handleSubscriptionRevocation(payload: any) {
     subscription_period_end: null,
   };
 
-  console.log("[Webhook Revocation] Updating to:", updateData);
-
   // Perform update and get result
   const { data: afterState, error } = await supabase
     .from("usage")
@@ -254,18 +219,12 @@ async function handleSubscriptionRevocation(payload: any) {
     .single();
 
   if (error) {
-    console.error(`[Webhook Revocation] Database update error for user ${userId}:`, error);
+    console.error(
+      `[Webhook Revocation] Database update error for user ${userId}:`,
+      error
+    );
     throw error;
   }
-
-  // Verify the update
-  console.log("[Webhook Revocation] After revocation:", {
-    plan: afterState.plan,
-    credits: afterState.credits,
-    subscription_id: afterState.polar_subscription_id,
-    subscription_status: afterState.subscription_status,
-    period_end: afterState.subscription_period_end,
-  });
 
   // Verify critical fields
   if (afterState.plan !== "free") {
@@ -285,14 +244,15 @@ async function handleSubscriptionRevocation(payload: any) {
       `[Webhook Revocation] Verification failed: subscription_id should be null but is ${afterState.polar_subscription_id}`
     );
   }
-
-  console.log(`✅ [Webhook Revocation] Successfully downgraded user ${userId} to free and verified`);
 }
 
 /**
  * Extract user ID from webhook payload
  */
-async function getUserIdFromPayload(payload: any, supabase: any): Promise<string | null> {
+async function getUserIdFromPayload(
+  payload: any,
+  supabase: any
+): Promise<string | null> {
   // First try to get user_id from metadata
   const userId = payload.data.metadata?.user_id;
   if (userId) return userId;
