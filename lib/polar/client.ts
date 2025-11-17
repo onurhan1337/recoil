@@ -8,7 +8,7 @@ if (!polarAccessToken) {
 
 const polar = new Polar({
   accessToken: polarAccessToken,
-  server: "production",
+  server: "sandbox",
 });
 /**
  * Create or get a Polar customer by external ID (Supabase user ID)
@@ -19,19 +19,16 @@ export async function getOrCreateCustomer(
   email: string
 ): Promise<string> {
   try {
-    // Try to get existing customer by external ID
     try {
       const customerState = await polar.customers.getStateExternal({
         externalId: userId,
       });
       return customerState.id;
     } catch (error: any) {
-      // Customer doesn't exist, create one
       if (error.statusCode === 404 || error.message?.includes("not found")) {
         const customer = await polar.customers.create({
           email,
           externalId: userId,
-          // organizationId is not needed when using an organization token
         });
         return customer.id;
       }
@@ -102,8 +99,6 @@ export function verifyWebhookSignature(
   signature: string,
   secret: string
 ): any {
-  // This is now handled by the @polar-sh/nextjs Webhooks component
-  // See app/api/webhooks/polar/route.ts for the implementation
   console.warn(
     "verifyWebhookSignature is deprecated. Use @polar-sh/nextjs Webhooks component instead"
   );
@@ -120,7 +115,6 @@ export async function getCustomerSubscriptions(customerId: string) {
   try {
     const subscriptionsIterator = await polar.subscriptions.list({
       customerId,
-      // organizationId is not needed when using an organization token
       limit: 100,
     });
 

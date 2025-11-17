@@ -71,6 +71,10 @@ export interface UsageResponse {
   credits: number;
   plan: UserPlan;
   monthly_credits_limit: number;
+  polar_customer_id?: string | null;
+  polar_subscription_id?: string | null;
+  subscription_status?: string | null;
+  subscription_period_end?: string | null;
 }
 
 export interface ConversationsResponse {

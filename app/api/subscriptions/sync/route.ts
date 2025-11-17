@@ -23,7 +23,6 @@ export async function POST() {
 
     await ensureUserUsage(supabase, user.id);
 
-    // Use getStateExternal to get customer state by external_id (Supabase user ID)
     let customerState;
     try {
       customerState = await polar.customers.getStateExternal({
@@ -32,7 +31,6 @@ export async function POST() {
     } catch (error: any) {
       console.error("[Sync] Error getting customer state:", error);
 
-      // If customer doesn't exist in Polar, set to free plan
       if (error.statusCode === 404 || error.message?.includes("not found")) {
         const { error: updateError } = await supabase
           .from("usage")
@@ -62,7 +60,6 @@ export async function POST() {
       throw error;
     }
 
-    // Check if customer has active subscriptions (field is activeSubscriptions, not subscriptions!)
     const hasActiveSubscription =
       customerState.activeSubscriptions &&
       customerState.activeSubscriptions.length > 0;
@@ -93,7 +90,6 @@ export async function POST() {
       });
     }
 
-    // Get the first active subscription
     const subscription = customerState.activeSubscriptions[0];
 
     // Validate subscription data from Polar
@@ -109,18 +105,49 @@ export async function POST() {
       ? new Date(subscription.currentPeriodEnd).toISOString()
       : null;
 
-    // Prepare update
-    const updateData = {
+    let actualStatus: string = subscription.status;
+    if (subscription.cancelAtPeriodEnd) {
+      actualStatus = "canceled";
+      console.log(
+        `[Sync] Subscription ${subscription.id} is scheduled for cancellation at ${periodEnd}, setting status to 'canceled'`
+      );
+    }
+
+    const { data: currentUsage } = await supabase
+      .from("usage")
+      .select("credits, subscription_status")
+      .eq("user_id", user.id)
+      .single();
+
+    const shouldResetCredits =
+      actualStatus === "active" &&
+      (currentUsage?.subscription_status === "canceled" ||
+        currentUsage?.subscription_status === "cancelled" ||
+        currentUsage?.subscription_status === "inactive" ||
+        currentUsage?.subscription_status === "revoked" ||
+        currentUsage?.subscription_status === "expired" ||
+        !currentUsage?.subscription_status);
+
+    const updateData: any = {
       plan: "pro" as const,
-      credits: config.plans.pro.monthlyCredits,
       monthly_credits_limit: config.plans.pro.monthlyCredits,
       polar_customer_id: customerState.id,
       polar_subscription_id: subscription.id,
-      subscription_status: subscription.status,
+      subscription_status: actualStatus,
       subscription_period_end: periodEnd,
     };
 
-    // Update to pro plan
+    if (shouldResetCredits) {
+      updateData.credits = config.plans.pro.monthlyCredits;
+      console.log(
+        `[Sync] Resetting credits for user ${user.id}: activating subscription`
+      );
+    } else {
+      console.log(
+        `[Sync] Preserving existing credits for user ${user.id}: current status=${currentUsage?.subscription_status}, new status=${actualStatus}`
+      );
+    }
+
     const { data: afterState, error: updateError } = await supabase
       .from("usage")
       .update(updateData)
@@ -133,7 +160,6 @@ export async function POST() {
       throw updateError;
     }
 
-    // Verify critical fields
     if (afterState.plan !== "pro") {
       throw new Error(
         `[Sync] Verification failed: plan is ${afterState.plan}, expected pro`
@@ -152,13 +178,24 @@ export async function POST() {
       );
     }
 
+    console.log(
+      `✓ [Sync] Successfully synced subscription for user ${user.id}:`,
+      {
+        plan: afterState.plan,
+        subscription_status: afterState.subscription_status,
+        subscription_period_end: afterState.subscription_period_end,
+        cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+      }
+    );
+
     return successResponse({
       message: "Subscription synced successfully",
       plan: "pro",
       subscription: {
         id: subscription.id,
-        status: subscription.status,
+        status: actualStatus,
         currentPeriodEnd: subscription.currentPeriodEnd,
+        cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
       },
       synced: true,
     });
