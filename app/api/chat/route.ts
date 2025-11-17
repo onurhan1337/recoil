@@ -93,7 +93,9 @@ export async function POST(request: NextRequest) {
       console.error("Failed to decrement credits:", creditError);
 
       if (isInsufficientCreditsError(creditError)) {
-        const availableMatch = creditError.message.match(/Available: (\d+)/);
+        const message =
+          typeof creditError.message === "string" ? creditError.message : "";
+        const availableMatch = message.match(/Available: (\d+)/);
         const available = availableMatch ? availableMatch[1] : "unknown";
         return errorResponse(
           `Insufficient credits. Required: ${chatCost}, Available: ${available}`,
