@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/check-reminders",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/check-expired-subscriptions",
+      "schedule": "0 0 * * *"
     }
   ]
 }

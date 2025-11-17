@@ -1,7 +1,7 @@
 import { Webhooks } from "@polar-sh/nextjs";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { config } from "@/lib/config";
-import { isProPlan, isSubscriptionActive } from "@/lib/api/utils";
+import { isProPlan } from "@/lib/api/utils";
 
 const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
 
@@ -168,16 +168,13 @@ async function handleSubscriptionCancellation(payload: any) {
 
   const periodEnd =
     payload.data.currentPeriodEnd || payload.data.current_period_end;
-  const status = payload.data.status;
-
-  const isActive = isSubscriptionActive(status, periodEnd);
-  const plan = isActive ? "pro" : "free";
+  const cancelAtPeriodEnd = payload.data.cancelAtPeriodEnd ?? false;
+  const statusToWrite = cancelAtPeriodEnd ? "canceled" : payload.data.status;
 
   const { error } = await supabase
     .from("usage")
     .update({
-      plan,
-      subscription_status: status,
+      subscription_status: statusToWrite,
       subscription_period_end: periodEnd,
     })
     .eq("user_id", userId);
