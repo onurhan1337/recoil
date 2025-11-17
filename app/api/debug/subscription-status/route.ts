@@ -4,13 +4,21 @@ import {
   errorResponse,
   successResponse,
 } from "@/lib/api/utils";
+import { NextRequest } from "next/server";
 
 /**
  * Debug endpoint to check current subscription status in database
  * GET /api/debug/subscription-status
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const debugToken = process.env.DEBUG_TOKEN!;
+    const authHeader = request.headers.get("authorization");
+
+    if (!debugToken || authHeader !== `Bearer ${debugToken}`) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const supabase = await createClient();
     const user = await authenticateUser(supabase);
 
@@ -30,7 +38,6 @@ export async function GET() {
 
     return successResponse({
       user_id: user.id,
-      email: user.email,
       current_status: {
         plan: usage.plan,
         credits: usage.credits,
@@ -40,10 +47,9 @@ export async function GET() {
         subscription_status: usage.subscription_status,
         subscription_period_end: usage.subscription_period_end,
       },
-      raw_database_record: usage,
     });
   } catch (error) {
     console.error("[Debug] Error fetching subscription status:", error);
-    return errorResponse("Internal server error");
+    return errorResponse("Internal server error", 500);
   }
 }

@@ -36,7 +36,6 @@ export async function POST() {
           .from("usage")
           .update({
             plan: "free",
-            credits: config.plans.free.monthlyCredits,
             monthly_credits_limit: config.plans.free.monthlyCredits,
             polar_customer_id: null,
             polar_subscription_id: null,
@@ -69,7 +68,6 @@ export async function POST() {
         .from("usage")
         .update({
           plan: "free",
-          credits: config.plans.free.monthlyCredits,
           monthly_credits_limit: config.plans.free.monthlyCredits,
           polar_customer_id: customerState.id || null,
           polar_subscription_id: null,
@@ -166,7 +164,10 @@ export async function POST() {
       );
     }
 
-    if (afterState.credits !== config.plans.pro.monthlyCredits) {
+    if (
+      shouldResetCredits &&
+      afterState.credits !== config.plans.pro.monthlyCredits
+    ) {
       console.warn(
         `[Sync] Warning: credits is ${afterState.credits}, expected ${config.plans.pro.monthlyCredits}`
       );

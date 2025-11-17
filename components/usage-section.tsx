@@ -45,6 +45,15 @@ export function UsageSection({ usage }: UsageSectionProps) {
       }
 
       const { url } = await response.json();
+
+      if (!url || typeof url !== "string" || !url.startsWith("https")) {
+        toast.error("Invalid portal URL", {
+          description: "Please try again later.",
+        });
+        setIsLoadingPortal(false);
+        return;
+      }
+
       window.location.href = url;
     } catch (error) {
       const errorMessage =

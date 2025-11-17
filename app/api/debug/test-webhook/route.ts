@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { successResponse } from "@/lib/api/utils";
+import { errorResponse, successResponse } from "@/lib/api/utils";
 
 /**
  * Test endpoint to verify webhooks can reach your server
@@ -7,6 +7,13 @@ import { successResponse } from "@/lib/api/utils";
  */
 export async function POST(request: NextRequest) {
   try {
+    const debugToken = process.env.DEBUG_TOKEN!;
+    const authHeader = request.headers.get("authorization");
+
+    if (!debugToken || authHeader !== `Bearer ${debugToken}`) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const body = await request.json();
     const headers = Object.fromEntries(request.headers.entries());
 
@@ -16,7 +23,8 @@ export async function POST(request: NextRequest) {
       headers: {
         "webhook-id": headers["webhook-id"],
         "webhook-timestamp": headers["webhook-timestamp"],
-        "webhook-signature": headers["webhook-signature"]?.substring(0, 20) + "...",
+        "webhook-signature":
+          headers["webhook-signature"]?.substring(0, 20) + "...",
       },
     });
 
@@ -28,9 +36,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("🧪 [Test Webhook] Error:", error);
-    return successResponse({
-      received: true,
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+    return errorResponse(
+      error instanceof Error ? error.message : "Unknown error"
+    );
   }
 }

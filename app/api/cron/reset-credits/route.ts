@@ -31,7 +31,11 @@ export async function GET(request: NextRequest) {
 
     const { data: allUsers, error: fetchError } = await supabase
       .from("usage")
-      .select("*");
+      .select("*")
+      .lt(
+        "last_reset",
+        new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
+      ); // -> Only users not reset today
 
     if (fetchError) {
       throw fetchError;
@@ -64,6 +68,7 @@ export async function GET(request: NextRequest) {
             .update({
               credits: config.plans.pro.monthlyCredits,
               monthly_credits_limit: config.plans.pro.monthlyCredits,
+              last_reset: new Date().toISOString(),
             })
             .eq("user_id", usage.user_id);
 

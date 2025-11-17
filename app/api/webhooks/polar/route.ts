@@ -41,12 +41,16 @@ async function ensureUsageExists(supabase: any, userId: string) {
     .single();
 
   if (error?.code === "PGRST116") {
-    await supabase.from("usage").insert({
+    const { error: insertError } = await supabase.from("usage").insert({
       user_id: userId,
       plan: "free",
       credits: config.plans.free.monthlyCredits,
       monthly_credits_limit: config.plans.free.monthlyCredits,
     });
+
+    if (insertError && insertError.code !== "23505") {
+      throw insertError;
+    }
   }
 }
 
@@ -72,7 +76,14 @@ async function getUserIdFromPayload(
 async function handleSubscriptionActivation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
-  if (!userId) return;
+  if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
+    return;
+  }
 
   await ensureUsageExists(supabase, userId);
 
@@ -96,7 +107,14 @@ async function handleSubscriptionActivation(payload: any) {
 async function handleSubscriptionUpdate(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
-  if (!userId) return;
+  if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
+    return;
+  }
 
   const { error } = await supabase
     .from("usage")
@@ -113,7 +131,14 @@ async function handleSubscriptionUpdate(payload: any) {
 async function handleSubscriptionCancellation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
-  if (!userId) return;
+  if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
+    return;
+  }
 
   const { error } = await supabase
     .from("usage")
@@ -131,7 +156,14 @@ async function handleSubscriptionCancellation(payload: any) {
 async function handleSubscriptionRevocation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
-  if (!userId) return;
+  if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
+    return;
+  }
 
   const { error } = await supabase
     .from("usage")
@@ -151,7 +183,14 @@ async function handleSubscriptionRevocation(payload: any) {
 async function handleSubscriptionReactivation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
-  if (!userId) return;
+  if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
+    return;
+  }
 
   await ensureUsageExists(supabase, userId);
 
@@ -175,11 +214,24 @@ async function handleSubscriptionReactivation(payload: any) {
 async function handleOrderCreated(payload: any) {
   const billingReason =
     payload.data.billingReason || payload.data.billing_reason;
-  if (billingReason !== "subscription_cycle") return;
+  if (billingReason !== "subscription_cycle") {
+    console.error("[Webhook] Order created but not a subscription cycle:", {
+      billingReason,
+      payload,
+    });
+    return;
+  }
 
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
-  if (!userId) return;
+  if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
+    return;
+  }
 
   const { error } = await supabase
     .from("usage")
