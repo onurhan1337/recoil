@@ -11,6 +11,7 @@ import {
   errorResponse,
   getUserPlan,
   isInsufficientCreditsError,
+  isUserNotFoundError,
 } from "@/lib/api/utils";
 import { chatRequestSchema } from "@/lib/validations";
 import { validateRequest } from "@/lib/validation-utils";
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (creditError.message?.includes("not found")) {
+      if (isUserNotFoundError(creditError)) {
         return errorResponse("User usage record not found", 404);
       }
 

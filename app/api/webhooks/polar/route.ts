@@ -3,7 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { config } from "@/lib/config";
 import { isProPlan, isSubscriptionActive } from "@/lib/api/utils";
 
-const webhookSecret = process.env.POLAR_WEBHOOK_SECRET!;
+const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
 
 if (!webhookSecret) {
   throw new Error("POLAR_WEBHOOK_SECRET is not configured");
@@ -86,16 +86,25 @@ async function handleSubscriptionActivation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
   if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
     return;
   }
 
   await ensureUsageExists(supabase, userId);
 
-  const { data: currentUsage } = await supabase
+  const { data: currentUsage, error: fetchError } = await supabase
     .from("usage")
     .select("plan")
     .eq("user_id", userId)
     .single();
+
+  if (fetchError && fetchError.code !== "PGRST116") {
+    throw fetchError;
+  }
 
   const isUpgrade = !isProPlan(currentUsage?.plan);
 
@@ -149,6 +158,11 @@ async function handleSubscriptionCancellation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
   if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
     return;
   }
 
@@ -202,16 +216,25 @@ async function handleSubscriptionReactivation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
   if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
     return;
   }
 
   await ensureUsageExists(supabase, userId);
 
-  const { data: currentUsage } = await supabase
+  const { data: currentUsage, error: fetchError } = await supabase
     .from("usage")
     .select("plan")
     .eq("user_id", userId)
     .single();
+
+  if (fetchError && fetchError.code !== "PGRST116") {
+    throw fetchError;
+  }
 
   const isUpgrade = !isProPlan(currentUsage?.plan);
 
@@ -247,6 +270,11 @@ async function handleOrderCreated(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
   if (!userId) {
+    console.error("[Webhook] Could not resolve user ID from payload:", {
+      customerId: payload.data?.customerId || payload.data?.customer_id,
+      subscriptionId: payload.data?.id,
+      metadata: payload.data?.metadata,
+    });
     return;
   }
 
@@ -255,11 +283,15 @@ async function handleOrderCreated(payload: any) {
     return;
   }
 
-  const { data: currentUsage } = await supabase
+  const { data: currentUsage, error: fetchError } = await supabase
     .from("usage")
     .select("last_processed_order_id, plan")
     .eq("user_id", userId)
     .single();
+
+  if (fetchError && fetchError.code !== "PGRST116") {
+    throw fetchError;
+  }
 
   if (!currentUsage || !isProPlan(currentUsage.plan)) {
     return;

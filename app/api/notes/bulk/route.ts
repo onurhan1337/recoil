@@ -137,6 +137,11 @@ export async function POST(request: NextRequest) {
     const refundAmount =
       errors.length > 0
         ? errors.reduce((sum, error) => {
+            if (error.index < 0 || error.index >= noteInputs.length) {
+              console.error(`Invalid error index: ${error.index}`);
+              return sum;
+            }
+
             const noteInput = noteInputs[error.index];
             const costCalc = calculateNoteCost(noteInput.content, userPlan);
             return sum + costCalc.totalCost;

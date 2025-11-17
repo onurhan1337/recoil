@@ -177,3 +177,7 @@ export function isInsufficientCreditsError(creditError: any): boolean {
       creditError.message?.includes("23514"))
   );
 }
+
+export function isUserNotFoundError(error: any): boolean {
+  return error?.code === "PGRST116" || error?.message?.includes("not found");
+}

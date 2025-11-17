@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { CreditDisplay } from "@/components/credit-display";
 import { config } from "@/lib/config";
 import type { UsageResponse, UserPlan } from "@/lib/api/types";
@@ -21,7 +21,7 @@ const SUBSCRIPTION_STATUS_CONFIG: Record<
   {
     label: string;
     variant: "default" | "secondary" | "destructive" | "outline";
-    icon: React.ReactNode;
+    icon: ReactNode;
   }
 > = {
   active: {
@@ -106,7 +106,11 @@ export function UsageSection({ usage }: UsageSectionProps) {
           return;
         }
 
-        if (!(config.polar.allowedPortalHostnames as readonly string[]).includes(parsedUrl.hostname)) {
+        if (
+          !(config.polar.allowedPortalHostnames as readonly string[]).includes(
+            parsedUrl.hostname
+          )
+        ) {
           toast.error("Invalid portal URL", {
             description: "Please try again later.",
           });
@@ -137,7 +141,7 @@ export function UsageSection({ usage }: UsageSectionProps) {
 
     const status = usage.subscription_status;
 
-    const config = SUBSCRIPTION_STATUS_CONFIG[status] ?? {
+    const statusConfig = SUBSCRIPTION_STATUS_CONFIG[status] ?? {
       label: status,
       variant: "secondary" as const,
       icon: null,
@@ -145,11 +149,11 @@ export function UsageSection({ usage }: UsageSectionProps) {
 
     return (
       <Badge
-        variant={config.variant}
+        variant={statusConfig.variant}
         className="flex items-center gap-1 text-xs"
       >
-        {config.icon}
-        {config.label}
+        {statusConfig.icon}
+        {statusConfig.label}
       </Badge>
     );
   };

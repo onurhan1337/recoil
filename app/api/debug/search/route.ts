@@ -7,6 +7,8 @@ import {
   errorResponse,
   successResponse,
 } from "@/lib/api/utils";
+import { validateQuery } from "@/lib/validation-utils";
+import { searchSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +27,17 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get("q") || "reading list";
+    const queryParam = searchParams.get("q") || "reading list";
+
+    const validation = validateQuery(searchSchema, {
+      query: queryParam,
+    });
+
+    if (!validation.success) {
+      return validation.response;
+    }
+
+    const { query } = validation.data;
 
     const queryEmbedding = await generateEmbedding(query);
 
