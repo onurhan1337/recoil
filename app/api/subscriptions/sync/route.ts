@@ -34,7 +34,7 @@ export async function POST() {
 
       // If customer doesn't exist in Polar, set to free plan
       if (error.statusCode === 404 || error.message?.includes("not found")) {
-        await supabase
+        const { error: updateError } = await supabase
           .from("usage")
           .update({
             plan: "free",
@@ -46,6 +46,11 @@ export async function POST() {
             subscription_period_end: null,
           })
           .eq("user_id", user.id);
+
+        if (updateError) {
+          console.error("[Sync] Database update error:", updateError);
+          return errorResponse("Failed to sync subscription", 500);
+        }
 
         return successResponse({
           message: "No customer found in Polar",
@@ -63,7 +68,7 @@ export async function POST() {
       customerState.activeSubscriptions.length > 0;
 
     if (!hasActiveSubscription) {
-      await supabase
+      const { error: updateError } = await supabase
         .from("usage")
         .update({
           plan: "free",
@@ -75,6 +80,11 @@ export async function POST() {
           subscription_period_end: null,
         })
         .eq("user_id", user.id);
+
+      if (updateError) {
+        console.error("[Sync] Database update error:", updateError);
+        return errorResponse("Failed to sync subscription", 500);
+      }
 
       return successResponse({
         message: "No active subscription found",

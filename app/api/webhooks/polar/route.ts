@@ -5,9 +5,22 @@ import { config } from "@/lib/config";
 /**
  * Handle Polar webhook events for subscription lifecycle
  * Using @polar-sh/nextjs Webhooks handler for automatic signature verification
+ *
+ * Idempotency Strategy:
+ * - All webhook handlers implement idempotency checks before processing
+ * - Duplicate webhook events are safely ignored based on current state
+ * - Activation: Checks subscription_id, plan, and status (active/trialing)
+ * - Cancellation: Checks subscription_id and status (canceled/cancelled)
+ * - Revocation: Checks subscription_id (null), plan (free), and status (revoked)
  */
+const webhookSecret = process.env.POLAR_WEBHOOK_SECRET!;
+
+if (!webhookSecret) {
+  throw new Error("POLAR_WEBHOOK_SECRET is not configured");
+}
+
 export const POST = Webhooks({
-  webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
+  webhookSecret,
 
   // Handle subscription created event
   onSubscriptionCreated: async (payload) => {
@@ -53,6 +66,30 @@ async function handleSubscriptionActivation(payload: any) {
   const userId = await getUserIdFromPayload(payload, supabase);
 
   if (!userId) return;
+
+  // Idempotency check: verify if this subscription is already active
+  const { data: currentState } = await supabase
+    .from("usage")
+    .select("polar_subscription_id, plan, subscription_status")
+    .eq("user_id", userId)
+    .single();
+
+  // Check if subscription is already activated with the same ID and pro plan
+  if (
+    currentState?.polar_subscription_id === payload.data.id &&
+    currentState?.plan === "pro" &&
+    (currentState?.subscription_status === "active" ||
+     currentState?.subscription_status === "trialing")
+  ) {
+    console.log(
+      `✓ [Webhook Activation] Idempotency: subscription ${payload.data.id} already processed for user ${userId}`,
+      {
+        current_plan: currentState.plan,
+        subscription_status: currentState.subscription_status
+      }
+    );
+    return;
+  }
 
   // Validate payload data from Polar
   if (!payload.data.id) {
@@ -163,6 +200,24 @@ async function handleSubscriptionCancellation(payload: any) {
 
   if (!userId) return;
 
+  // Idempotency check: verify if this cancellation is already processed
+  const { data: currentState } = await supabase
+    .from("usage")
+    .select("polar_subscription_id, subscription_status")
+    .eq("user_id", userId)
+    .single();
+
+  if (
+    currentState?.polar_subscription_id === payload.data.id &&
+    (currentState?.subscription_status === "canceled" ||
+     currentState?.subscription_status === "cancelled")
+  ) {
+    console.log(
+      `✓ [Webhook Cancellation] Idempotency: subscription ${payload.data.id} already canceled for user ${userId}`
+    );
+    return;
+  }
+
   const currentPeriodEnd =
     payload.data.currentPeriodEnd || payload.data.current_period_end;
 
@@ -198,6 +253,24 @@ async function handleSubscriptionRevocation(payload: any) {
     throw new Error(
       "[Webhook Revocation] Invalid payload: missing subscription ID"
     );
+  }
+
+  // Idempotency check: verify if this subscription is already revoked
+  const { data: currentState } = await supabase
+    .from("usage")
+    .select("polar_subscription_id, plan, subscription_status")
+    .eq("user_id", userId)
+    .single();
+
+  if (
+    currentState?.polar_subscription_id === null &&
+    currentState?.plan === "free" &&
+    currentState?.subscription_status === "revoked"
+  ) {
+    console.log(
+      `✓ [Webhook Revocation] Idempotency: subscription ${payload.data.id} already revoked for user ${userId}`
+    );
+    return;
   }
 
   // Prepare update data

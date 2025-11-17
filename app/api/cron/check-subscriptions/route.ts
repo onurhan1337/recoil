@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse, isSubscriptionActive } from "@/lib/api/utils";
+import {
+  errorResponse,
+  successResponse,
+  isSubscriptionActive,
+} from "@/lib/api/utils";
 import { NextRequest } from "next/server";
 import { config } from "@/lib/config";
 
@@ -10,9 +14,15 @@ import { config } from "@/lib/config";
 export async function GET(request: NextRequest) {
   try {
     // Verify cron secret
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      console.error("[Cron] CRON_SECRET is not configured");
+      return errorResponse("[Cron] Cron secret not configured", 500);
+    }
+
     const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return errorResponse("Unauthorized", 401);
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return errorResponse("[Cron] Unauthorized", 401);
     }
 
     const supabase = await createClient();
@@ -29,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     if (!proUsers || proUsers.length === 0) {
       return successResponse({
-        message: "No pro users to check",
+        message: "[Cron] No pro users to check",
         processed: 0,
         downgraded: 0,
       });
@@ -59,7 +69,10 @@ export async function GET(request: NextRequest) {
           .eq("user_id", usage.user_id);
 
         if (updateError) {
-          console.error(`[Cron] Error downgrading user ${usage.user_id}:`, updateError);
+          console.error(
+            `[Cron] Error downgrading user ${usage.user_id}:`,
+            updateError
+          );
         } else {
           downgraded++;
         }
@@ -67,12 +80,12 @@ export async function GET(request: NextRequest) {
     }
 
     return successResponse({
-      message: "Subscription check completed",
+      message: "[Cron] Subscription check completed",
       processed: proUsers.length,
       downgraded,
     });
   } catch (error) {
     console.error("[Cron] Error checking subscriptions:", error);
-    return errorResponse("Failed to check subscriptions", 500);
+    return errorResponse("[Cron] Failed to check subscriptions", 500);
   }
 }
