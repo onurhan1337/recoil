@@ -5,7 +5,7 @@ import { searchSchema } from "@/lib/validations";
 import { streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { validateRequest } from "@/lib/validation-utils";
-import { handleCreditError } from "@/lib/api/utils";
+import { isInsufficientCreditsError } from "@/lib/api/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     if (creditError) {
       console.error("Failed to decrement credits:", creditError);
 
-      if (handleCreditError(creditError)) {
+      if (isInsufficientCreditsError(creditError)) {
         return NextResponse.json(
           { error: "Insufficient credits" },
           { status: 403 }

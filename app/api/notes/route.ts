@@ -9,7 +9,7 @@ import {
   authenticateUser,
   getUserPlan,
   calculateNoteCost,
-  handleCreditError,
+  isInsufficientCreditsError,
 } from "@/lib/api/utils";
 import { validateRequest, validateQuery } from "@/lib/validation-utils";
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     if (creditError) {
       console.error("Failed to decrement credits:", creditError);
 
-      if (handleCreditError(creditError)) {
+      if (isInsufficientCreditsError(creditError)) {
         return errorResponse(
           `Insufficient credits. Required: ${noteCost}, Available: ${
             creditError.message.match(/Available: (\d+)/)?.[1] || "unknown"

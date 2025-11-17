@@ -6,7 +6,11 @@ import { google } from "@ai-sdk/google";
 import { config } from "@/lib/config";
 import type { SearchNoteResult } from "@/lib/api/types";
 import { isTimeBasedQuery, getDateRange } from "@/lib/utils/query-helpers";
-import { errorResponse, getUserPlan, handleCreditError } from "@/lib/api/utils";
+import {
+  errorResponse,
+  getUserPlan,
+  isInsufficientCreditsError,
+} from "@/lib/api/utils";
 import { chatRequestSchema } from "@/lib/validations";
 import { validateRequest } from "@/lib/validation-utils";
 
@@ -88,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (creditError) {
       console.error("Failed to decrement credits:", creditError);
 
-      if (handleCreditError(creditError)) {
+      if (isInsufficientCreditsError(creditError)) {
         const availableMatch = creditError.message.match(/Available: (\d+)/);
         const available = availableMatch ? availableMatch[1] : "unknown";
         return errorResponse(

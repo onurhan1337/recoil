@@ -8,7 +8,7 @@ import {
   authenticateUser,
   getUserPlan,
   calculateNoteCost,
-  handleCreditError,
+  isInsufficientCreditsError,
 } from "@/lib/api/utils";
 import { uuidSchema, noteUpdateSchema } from "@/lib/validations";
 import { validateParams, validateRequest } from "@/lib/validation-utils";
@@ -164,7 +164,7 @@ export async function PATCH(
     if (creditError) {
       console.error("Failed to decrement credits:", creditError);
 
-      if (handleCreditError(creditError)) {
+      if (isInsufficientCreditsError(creditError)) {
         return errorResponse(
           `Insufficient credits. Required: ${updateCost}, Available: ${
             creditError.message.match(/Available: (\d+)/)?.[1] || "unknown"

@@ -74,7 +74,6 @@ export async function ensureUserUsage(
 
   if (error) throw error;
 
-  // Check if pro subscription has expired
   if (
     usage.plan === "pro" &&
     !isSubscriptionActive(
@@ -86,8 +85,7 @@ export async function ensureUserUsage(
       `[Usage] Subscription expired for user ${userId}, downgrading to free`
     );
 
-    // Downgrade to free
-    const { data: updatedUsage } = await supabase
+    const { data: updatedUsage, error: updateError } = await supabase
       .from("usage")
       .update({
         plan: "free",
@@ -96,10 +94,24 @@ export async function ensureUserUsage(
         subscription_status: "expired",
       })
       .eq("user_id", userId)
+      .eq("plan", "pro")
       .select()
       .single();
 
-    return updatedUsage || usage;
+    if (updatedUsage) {
+      return updatedUsage;
+    }
+
+    if (updateError?.code === "PGRST116") {
+      const { data: currentUsage } = await supabase
+        .from("usage")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+      return currentUsage || usage;
+    }
+
+    return usage;
   }
 
   return usage;
@@ -153,15 +165,15 @@ export function isSubscriptionActive(
   return subscriptionStatus === "active" || subscriptionStatus === "canceled";
 }
 
-export function handleCreditError(creditError: any) {
-  console.error("Failed to decrement credits:", creditError);
-
-  if (
+/**
+ * Check if a credit error is due to insufficient credits
+ * Returns true if it's an insufficient credits error, false otherwise
+ */
+export function isInsufficientCreditsError(creditError: any): boolean {
+  return (
     creditError.message?.includes("Insufficient credits") ||
     creditError.code === "23514" ||
     (creditError.message?.includes("ERRCODE") &&
       creditError.message?.includes("23514"))
-  ) {
-    return errorResponse("Insufficient credits", 403);
-  }
+  );
 }
