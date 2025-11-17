@@ -1,0 +1,249 @@
+# CodeRabbit Configuration for Recoil
+# See https://docs.coderabbit.ai/reference/configuration for full documentation
+
+language: en-US
+
+reviews:
+  # Enable automatic reviews for new and updated pull requests
+  auto_review:
+    enabled: true
+    # Review draft pull requests (default: false)
+    drafts: false
+    # Only review PRs with these labels (empty = review all PRs)
+    labels: []
+
+  # General review instructions for CodeRabbit
+  review_instructions: |
+    Please review the code changes with focus on:
+    - TypeScript strict mode compliance and type safety
+    - Next.js 16 App Router patterns and conventions
+    - React 19 best practices and component structure
+    - Zod schema validation for all user inputs
+    - Proper error handling using the project's errorResponse pattern
+    - Supabase RLS (Row Level Security) policy considerations
+    - Credit system logic correctness and atomic operations
+    - Environment variable security (never expose secrets)
+    - API route authentication using authenticateUser helper
+    - Code consistency with existing patterns in the codebase
+    - Accessibility (a11y) best practices for UI components
+    - Performance considerations (async processing, chunking)
+
+  # Path-specific review instructions
+  path_instructions:
+    # API Routes - Focus on validation, auth, and error handling
+    - path: "app/api/**/*.ts"
+      instructions: |
+        Review API routes with emphasis on:
+        - All inputs must be validated using Zod schemas from lib/validations.ts
+        - Authentication must use authenticateUser() helper from lib/api/utils.ts
+        - Error responses must use errorResponse() helper with appropriate status codes
+        - Success responses must use successResponse() helper
+        - Credit checks and decrements must be atomic (use RPC functions)
+        - Environment variables must be checked before use (never assume they exist)
+        - Async processing for expensive operations (embeddings, AI calls)
+        - Proper Supabase client usage (server vs client)
+        - No sensitive data in error messages
+        - Rate limiting considerations for public endpoints
+
+    # API Route Handlers - Cron jobs
+    - path: "app/api/cron/**/*.ts"
+      instructions: |
+        Review cron job routes with emphasis on:
+        - CRON_SECRET authentication must be verified
+        - Proper error handling and logging
+        - Idempotency considerations
+        - Batch processing efficiency
+        - Database transaction safety
+
+    # API Route Handlers - Webhooks
+    - path: "app/api/webhooks/**/*.ts"
+      instructions: |
+        Review webhook routes with emphasis on:
+        - Webhook signature verification
+        - Idempotency handling
+        - Proper error responses for webhook providers
+        - Transaction safety for database operations
+
+    # React Components
+    - path: "components/**/*.tsx"
+      instructions: |
+        Review React components with emphasis on:
+        - TypeScript props interfaces/types
+        - Proper use of React hooks (useState, useEffect, etc.)
+        - TanStack Query (React Query) usage patterns
+        - Error boundary considerations
+        - Loading and error states
+        - Accessibility (ARIA labels, keyboard navigation)
+        - Performance (memoization, lazy loading where appropriate)
+        - shadcn/ui component usage consistency
+        - Client component vs server component boundaries
+
+    # Page Components (App Router)
+    - path: "app/**/page.tsx"
+      instructions: |
+        Review page components with emphasis on:
+        - Server components by default (use 'use client' only when needed)
+        - Proper data fetching patterns
+        - Loading.tsx and error.tsx patterns
+        - Metadata exports for SEO
+        - Route group organization
+
+    # Layout Components
+    - path: "app/**/layout.tsx"
+      instructions: |
+        Review layout components with emphasis on:
+        - Proper nesting and structure
+        - Metadata configuration
+        - Provider wrapping (React Query, Theme, etc.)
+        - Authentication checks where needed
+
+    # Library Code - API Utilities
+    - path: "lib/api/**/*.ts"
+      instructions: |
+        Review API utility code with emphasis on:
+        - Type safety and generic types
+        - Error handling patterns
+        - Timeout handling in fetchWithTimeout
+        - Consistent API client patterns
+        - Credit calculation logic correctness
+
+    # Library Code - Supabase
+    - path: "lib/supabase/**/*.ts"
+      instructions: |
+        Review Supabase client code with emphasis on:
+        - Proper client vs server client usage
+        - Cookie handling for SSR
+        - Realtime subscription cleanup
+        - Error handling for auth failures
+
+    # Library Code - Validations
+    - path: "lib/validations.ts"
+      instructions: |
+        Review validation schemas with emphasis on:
+        - Comprehensive input validation
+        - Proper use of Zod transforms and preprocess
+        - String length limits matching database constraints
+        - UUID validation patterns
+        - Email and password validation rules
+        - Optional field handling with proper defaults
+
+    # Library Code - AI
+    - path: "lib/ai.ts"
+      instructions: |
+        Review AI code with emphasis on:
+        - Error handling for API failures
+        - Fallback mechanisms
+        - Token/character limits
+        - Cost considerations
+        - Async processing patterns
+
+    # Library Code - Embeddings
+    - path: "lib/embeddings.ts"
+      instructions: |
+        Review embedding code with emphasis on:
+        - Error handling for API failures
+        - Fallback mechanisms (local vs OpenAI)
+        - Chunk size and overlap calculations
+        - Cost considerations
+        - Async processing patterns
+
+    # Configuration Files
+    - path: "lib/config.ts"
+      instructions: |
+        Review configuration with emphasis on:
+        - Type safety with 'as const'
+        - Consistent structure
+        - Plan and credit configuration accuracy
+
+    # Database Migrations
+    - path: "supabase/migrations/**/*.sql"
+      instructions: |
+        Review database migrations with emphasis on:
+        - RLS (Row Level Security) policies
+        - Proper indexes for performance
+        - Foreign key constraints
+        - Migration idempotency
+        - Data type consistency
+        - pgvector extension usage for embeddings
+
+    # Type Definitions
+    - path: "types/**/*.ts"
+      instructions: |
+        Review type definitions with emphasis on:
+        - Type accuracy and completeness
+        - Proper use of Supabase generated types
+        - Export consistency
+
+    # Next.js Configuration
+    - path: "next.config.ts"
+      instructions: |
+        Review Next.js configuration with emphasis on:
+        - Correct settings for Next.js 16
+        - Server actions body size limits
+        - Experimental features usage
+
+    # TypeScript Configuration
+    - path: "tsconfig.json"
+      instructions: |
+        Review TypeScript configuration with emphasis on:
+        - Strict mode enabled
+        - Proper path aliases (@/*)
+        - Module resolution settings
+        - Include/exclude patterns
+
+    # Vercel Configuration
+    - path: "vercel.json"
+      instructions: |
+        Review Vercel configuration with emphasis on:
+        - Cron job schedules and paths
+        - Correct API route paths
+        - Environment variable requirements
+
+    # Environment Variable Usage (applies to all TS/TSX files)
+    - path: "**/*.{ts,tsx}"
+      instructions: |
+        When reviewing code that uses environment variables:
+        - Always check for existence before use (use ! only when absolutely certain)
+        - Never expose secrets in client-side code
+        - Use NEXT_PUBLIC_ prefix only for public variables
+        - Provide fallback values where appropriate
+        - Document required environment variables
+
+  # Paths to include/exclude from review
+  # Use ! prefix to exclude paths
+  path_filters:
+    # Include source directories
+    - "app/**"
+    - "components/**"
+    - "lib/**"
+    - "types/**"
+    - "supabase/migrations/**"
+    - "*.ts"
+    - "*.tsx"
+    - "*.json"
+    - "*.md"
+    # Exclude build artifacts, dependencies, and generated files
+    - "!**/node_modules/**"
+    - "!**/.next/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/*.lock"
+    - "!**/package-lock.json"
+    - "!**/yarn.lock"
+    - "!**/pnpm-lock.yaml"
+    - "!**/*.min.js"
+    - "!**/*.min.css"
+    - "!**/tsconfig.tsbuildinfo"
+    - "!**/.cursor/**"
+    - "!**/.git/**"
+    - "!**/coverage/**"
+    - "!**/*.test.ts"
+    - "!**/*.test.tsx"
+    - "!**/*.spec.ts"
+    - "!**/*.spec.tsx"
+
+# Tools configuration
+tools:
+  ast-grep:
+    # Enable essential security rules
+    essential_rules: true

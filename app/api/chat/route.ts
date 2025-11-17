@@ -4,9 +4,15 @@ import { generateEmbedding } from "@/lib/embeddings";
 import { streamText, convertToModelMessages } from "ai";
 import { google } from "@ai-sdk/google";
 import { config } from "@/lib/config";
-import type { ChatMessage, SearchNoteResult } from "@/lib/api/types";
+import type { SearchNoteResult } from "@/lib/api/types";
 import { isTimeBasedQuery, getDateRange } from "@/lib/utils/query-helpers";
-import { getUserPlan } from "@/lib/api/utils";
+import {
+  authenticateUser,
+  errorResponse,
+  getUserPlan,
+  isInsufficientCreditsError,
+  isUserNotFoundError,
+} from "@/lib/api/utils";
 import { chatRequestSchema } from "@/lib/validations";
 import { validateRequest } from "@/lib/validation-utils";
 
@@ -15,17 +21,10 @@ export const maxDuration = 30;
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!user) {
+      return errorResponse("Unauthorized", 401);
     }
 
     const body = await request.json();
@@ -69,26 +68,16 @@ export async function POST(request: NextRequest) {
 
     const { data: usage, error: usageError } = await supabase
       .from("usage")
-      .select("credits, plan")
+      .select("plan")
       .eq("user_id", user.id)
       .single();
 
-    const userPlan = getUserPlan(usage?.plan);
-    const chatCost = config.plans[userPlan].costs.chatMessage;
-
-    if (usageError || !usage || usage.credits < chatCost) {
-      return new Response(
-        JSON.stringify({
-          error: "Insufficient credits",
-          required: chatCost,
-          available: usage?.credits || 0,
-        }),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+    if (usageError || !usage) {
+      return errorResponse("User usage record not found", 404);
     }
+
+    const userPlan = getUserPlan(usage.plan);
+    const chatCost = config.plans[userPlan].costs.chatMessage;
 
     const { data: remainingCredits, error: creditError } = await supabase.rpc(
       "decrement_credits",
@@ -100,13 +89,23 @@ export async function POST(request: NextRequest) {
 
     if (creditError) {
       console.error("Failed to decrement credits:", creditError);
-      return new Response(
-        JSON.stringify({ error: "Failed to process credits" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+
+      if (isInsufficientCreditsError(creditError)) {
+        const message =
+          typeof creditError.message === "string" ? creditError.message : "";
+        const availableMatch = message.match(/Available: (\d+)/);
+        const available = availableMatch ? availableMatch[1] : "unknown";
+        return errorResponse(
+          `Insufficient credits. Required: ${chatCost}, Available: ${available}`,
+          403
+        );
+      }
+
+      if (isUserNotFoundError(creditError)) {
+        return errorResponse("User usage record not found", 404);
+      }
+
+      return errorResponse("Failed to process credits", 500);
     }
 
     let filteredResults: SearchNoteResult[] = [];
@@ -297,9 +296,6 @@ Only say "no notes found" if the search results section explicitly says "No rele
     });
   } catch (error) {
     console.error("Error in chat:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return errorResponse("Internal server error", 500);
   }
 }

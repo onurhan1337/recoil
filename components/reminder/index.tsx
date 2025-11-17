@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { DateTimePicker } from "./date-time-picker";
 import { NotificationMethods } from "./notification-methods";
 import { useReminderForm } from "./use-reminder-form";
+import { useUsage } from "@/lib/api/hooks";
+import { isProPlan } from "@/lib/api/utils";
 import type { ReminderDialogProps } from "./types";
 
 export function ReminderDialog({
@@ -22,6 +24,8 @@ export function ReminderDialog({
   onSuccess,
 }: ReminderDialogProps) {
   const [open, setOpen] = useState(false);
+  const { data: usage } = useUsage();
+  const isPro = isProPlan(usage?.plan);
 
   const {
     formState,
@@ -91,6 +95,7 @@ export function ReminderDialog({
             onEmailChange={(emailEnabled) => updateFormState({ emailEnabled })}
             onInAppChange={(inAppEnabled) => updateFormState({ inAppEnabled })}
             disabled={isLoading}
+            isPro={isPro}
           />
 
           <div className="flex gap-2 pt-2">

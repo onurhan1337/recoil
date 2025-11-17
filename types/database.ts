@@ -378,9 +378,14 @@ export type Database = {
           created_at: string
           credits: number
           id: string
+          last_processed_order_id: string | null
           last_reset: string
           monthly_credits_limit: number | null
           plan: string | null
+          polar_customer_id: string | null
+          polar_subscription_id: string | null
+          subscription_period_end: string | null
+          subscription_status: string | null
           updated_at: string
           user_id: string
         }
@@ -388,9 +393,14 @@ export type Database = {
           created_at?: string
           credits?: number
           id?: string
+          last_processed_order_id?: string | null
           last_reset?: string
           monthly_credits_limit?: number | null
           plan?: string | null
+          polar_customer_id?: string | null
+          polar_subscription_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -398,9 +408,14 @@ export type Database = {
           created_at?: string
           credits?: number
           id?: string
+          last_processed_order_id?: string | null
           last_reset?: string
           monthly_credits_limit?: number | null
           plan?: string | null
+          polar_customer_id?: string | null
+          polar_subscription_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -431,6 +446,7 @@ export type Database = {
           similarity: number
         }[]
       }
+      process_due_reminders: { Args: never; Returns: undefined }
       search_notes: {
         Args: {
           match_count: number

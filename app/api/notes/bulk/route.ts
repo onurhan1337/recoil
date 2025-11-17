@@ -9,6 +9,7 @@ import {
   authenticateUser,
   getUserPlan,
   calculateNoteCost,
+  isInsufficientCreditsError,
 } from "@/lib/api/utils";
 import { validateRequest } from "@/lib/validation-utils";
 import { Note } from "@/lib/api/types";
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     const { data: usage } = await supabase
       .from("usage")
-      .select("credits, plan")
+      .select("plan")
       .eq("user_id", user.id)
       .single();
 
@@ -48,13 +49,6 @@ export async function POST(request: NextRequest) {
       return sum + costCalc.totalCost;
     }, 0);
 
-    if (usage.credits < totalCost) {
-      return errorResponse(
-        `Insufficient credits. Required: ${totalCost}, Available: ${usage.credits}`,
-        403
-      );
-    }
-
     const { data: remainingCredits, error: creditError } = await supabase.rpc(
       "decrement_credits",
       {
@@ -65,6 +59,22 @@ export async function POST(request: NextRequest) {
 
     if (creditError) {
       console.error("Failed to decrement credits:", creditError);
+
+      if (isInsufficientCreditsError(creditError)) {
+        const message =
+          typeof creditError.message === "string" ? creditError.message : "";
+        const availableMatch = message.match(/Available: (\d+)/);
+        const available = availableMatch ? availableMatch[1] : "unknown";
+        return errorResponse(
+          `Insufficient credits. Required: ${totalCost}, Available: ${available}`,
+          403
+        );
+      }
+
+      if (creditError.message?.includes("not found")) {
+        return errorResponse("User usage record not found", 404);
+      }
+
       return errorResponse("Failed to process credits", 500);
     }
 
@@ -89,7 +99,10 @@ export async function POST(request: NextRequest) {
             embedding: embedding ? `[${embedding.join(",")}]` : null,
             label: metadata.label,
             category: metadata.category,
-            tags: noteInput.tags && noteInput.tags.length > 0 ? noteInput.tags : null,
+            tags:
+              noteInput.tags && noteInput.tags.length > 0
+                ? noteInput.tags
+                : null,
           })
           .select()
           .single();
@@ -121,13 +134,19 @@ export async function POST(request: NextRequest) {
       return errorResponse("Failed to create any notes", 500);
     }
 
-    const refundAmount = errors.length > 0
-      ? errors.reduce((sum, _, index) => {
-          const noteInput = noteInputs[index];
-          const costCalc = calculateNoteCost(noteInput.content, userPlan);
-          return sum + costCalc.totalCost;
-        }, 0)
-      : 0;
+    const refundAmount =
+      errors.length > 0
+        ? errors.reduce((sum, error) => {
+            if (error.index < 0 || error.index >= noteInputs.length) {
+              console.error(`Invalid error index: ${error.index}`);
+              return sum;
+            }
+
+            const noteInput = noteInputs[error.index];
+            const costCalc = calculateNoteCost(noteInput.content, userPlan);
+            return sum + costCalc.totalCost;
+          }, 0)
+        : 0;
 
     let finalCredits = remainingCredits;
     if (refundAmount > 0) {

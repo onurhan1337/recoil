@@ -1,30 +1,53 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { generateEmbedding } from '@/lib/embeddings';
-import { config } from '@/lib/config';
+import { NextRequest } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { generateEmbedding } from "@/lib/embeddings";
+import { config } from "@/lib/config";
+import {
+  authenticateUser,
+  errorResponse,
+  successResponse,
+} from "@/lib/api/utils";
+import { validateQuery } from "@/lib/validation-utils";
+import { searchSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   try {
+    const debugToken = process.env.DEBUG_TOKEN;
+    const authHeader = request.headers.get("authorization");
+
+    if (!debugToken || authHeader !== `Bearer ${debugToken}`) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const supabase = await createClient();
+    const user = await authenticateUser(supabase);
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      return errorResponse("Unauthorized", 401);
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get('q') || 'reading list';
+    const queryParam = searchParams.get("q") || "reading list";
+
+    const validation = validateQuery(searchSchema, {
+      query: queryParam,
+    });
+
+    if (!validation.success) {
+      return validation.response;
+    }
+
+    const { query } = validation.data;
 
     const queryEmbedding = await generateEmbedding(query);
 
-    console.log('Query:', query);
-    console.log('Embedding length:', queryEmbedding.length);
-    console.log('First 10 values:', queryEmbedding.slice(0, 10));
+    console.log("Query:", query);
+    console.log("Embedding length:", queryEmbedding.length);
+    console.log("First 10 values:", queryEmbedding.slice(0, 10));
 
     // Search notes
     const { data: results, error: searchError } = await supabase.rpc(
-      'search_notes',
+      "search_notes",
       {
         query_embedding: JSON.stringify(queryEmbedding),
         match_threshold: config.search.matchThreshold,
@@ -33,14 +56,11 @@ export async function GET(request: NextRequest) {
     );
 
     if (searchError) {
-      console.error('Search error:', searchError);
-      return NextResponse.json({
-        error: searchError.message,
-        details: searchError
-      }, { status: 500 });
+      console.error("Search error:", searchError);
+      return errorResponse(searchError?.message || "Search error", 500);
     }
 
-    return NextResponse.json({
+    return successResponse({
       query,
       threshold: config.search.matchThreshold,
       match_count: config.search.matchCount,
@@ -50,15 +70,11 @@ export async function GET(request: NextRequest) {
         id: r.id,
         content: r.content.substring(0, 200),
         similarity: r.similarity,
-        similarity_percent: (r.similarity * 100).toFixed(2) + '%'
-      }))
+        similarity_percent: (r.similarity * 100).toFixed(2) + "%",
+      })),
     });
   } catch (error: any) {
-    console.error('Error in search debug:', error);
-    return NextResponse.json({
-      error: 'Internal server error',
-      message: error.message,
-      stack: error.stack
-    }, { status: 500 });
+    console.error("Error in search debug:", error);
+    return errorResponse("Internal server error", 500);
   }
 }

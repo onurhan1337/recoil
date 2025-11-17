@@ -9,6 +9,7 @@ import {
   authenticateUser,
   getUserPlan,
   calculateNoteCost,
+  isInsufficientCreditsError,
 } from "@/lib/api/utils";
 import { validateRequest, validateQuery } from "@/lib/validation-utils";
 
@@ -34,17 +35,13 @@ export async function POST(request: NextRequest) {
 
     const { data: usage } = await supabase
       .from("usage")
-      .select("credits, plan")
+      .select("plan")
       .eq("user_id", user.id)
       .single();
 
     const userPlan = getUserPlan(usage?.plan);
     const costCalculation = calculateNoteCost(content, userPlan);
     const noteCost = costCalculation.totalCost;
-
-    if (!usage || usage.credits < noteCost) {
-      return errorResponse("Insufficient credits", 403);
-    }
 
     const { data: remainingCredits, error: creditError } = await supabase.rpc(
       "decrement_credits",
@@ -56,6 +53,20 @@ export async function POST(request: NextRequest) {
 
     if (creditError) {
       console.error("Failed to decrement credits:", creditError);
+
+      if (isInsufficientCreditsError(creditError)) {
+        return errorResponse(
+          `Insufficient credits. Required: ${noteCost}, Available: ${
+            creditError.message.match(/Available: (\d+)/)?.[1] || "unknown"
+          }`,
+          403
+        );
+      }
+
+      if (creditError.message?.includes("not found")) {
+        return errorResponse("User usage record not found", 404);
+      }
+
       return errorResponse("Failed to process credits", 500);
     }
 

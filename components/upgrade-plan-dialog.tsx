@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Check } from "lucide-react";
+import { Zap, Check, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useUsage } from "@/lib/api/hooks";
 import { isProPlan } from "@/lib/api/utils";
+import { config } from "@/lib/config";
 
 interface UpgradePlanDialogProps {
   trigger?: React.ReactNode;
@@ -19,8 +21,41 @@ interface UpgradePlanDialogProps {
 
 export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
   const [open, setOpen] = useState(false);
-  const { data: usage } = useUsage();
-  const isPro = isProPlan(usage?.plan);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const { data: usage, isLoading, isError } = useUsage();
+  const isPro =
+    !isLoading && !isError && usage ? isProPlan(usage.plan) : undefined;
+
+  const handleUpgrade = async () => {
+    try {
+      setIsCheckoutLoading(true);
+      const response = await fetch("/api/subscriptions/checkout", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error || "Failed to create checkout session";
+        toast.error("Checkout failed", {
+          description: errorMessage,
+        });
+        setIsCheckoutLoading(false);
+        return;
+      }
+
+      const { checkoutUrl } = await response.json();
+
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      toast.error("Checkout failed", {
+        description: errorMessage,
+      });
+      setIsCheckoutLoading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -48,10 +83,13 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Free</h3>
-                  {!isPro && (
+                  {isPro === false && (
                     <Badge variant="secondary" className="text-xs">
                       Current
                     </Badge>
+                  )}
+                  {(isLoading || isError) && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   )}
                 </div>
                 <div className="flex items-baseline gap-1">
@@ -62,15 +100,37 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
               <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>500 credits/month</span>
+                  <span>
+                    {config.plans.free.monthlyCredits.toLocaleString()}{" "}
+                    credits/month
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>2 credits per note</span>
+                  <span>
+                    {config.plans.free.costs.createNote} credits per note
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>5 credits per chat</span>
+                  <span>
+                    {config.plans.free.costs.chatMessage} credits per chat
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <span>
+                    {config.plans.free.features.maxTemplates} custom template
+                    {config.plans.free.features.maxTemplates !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <span>
+                    {config.plans.free.features.emailReminders
+                      ? "Email & in-app reminders"
+                      : "In-app reminders only"}
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -83,29 +143,65 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Pro</h3>
-                  {isPro && (
+                  {isPro === true && (
                     <Badge variant="secondary" className="text-xs">
                       Current
                     </Badge>
                   )}
+                  {(isLoading || isError) && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold">$9</span>
+                  <span className="text-3xl font-bold">
+                    {config.plans.pro.price?.split("/")[0] || "$4.99"}
+                  </span>
                   <span className="text-sm text-muted-foreground">/month</span>
                 </div>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">10,000 credits/month</span>
+                  <span className="font-medium">
+                    {config.plans.pro.monthlyCredits.toLocaleString()}{" "}
+                    credits/month
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">1 credit per note</span>
+                  <span className="font-medium">
+                    {config.plans.pro.costs.createNote} credit
+                    {config.plans.pro.costs.createNote !== 1 ? "s" : ""} per
+                    note
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
-                  <span className="font-medium">3 credits per chat</span>
+                  <span className="font-medium">
+                    {config.plans.pro.costs.chatMessage} credits per chat
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
+                  <span className="font-medium">
+                    {config.plans.pro.features.maxTemplates === -1
+                      ? "Unlimited custom templates"
+                      : `${
+                          config.plans.pro.features.maxTemplates
+                        } custom template${
+                          config.plans.pro.features.maxTemplates !== 1
+                            ? "s"
+                            : ""
+                        }`}
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
+                  <span className="font-medium">
+                    {config.plans.pro.features.emailReminders
+                      ? "Email & in-app reminders"
+                      : "In-app reminders only"}
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
@@ -130,9 +226,20 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                   <span className="font-medium">Share analysis insights</span>
                 </div>
               </div>
-              {!isPro && (
-                <button className="w-full py-2.5 px-4 rounded-md text-sm font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors">
-                  Upgrade to Pro
+              {isPro === false && (
+                <button
+                  onClick={handleUpgrade}
+                  disabled={isCheckoutLoading}
+                  className="w-full py-2.5 px-4 rounded-md text-sm font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isCheckoutLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Upgrade to Pro"
+                  )}
                 </button>
               )}
             </div>

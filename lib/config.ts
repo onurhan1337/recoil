@@ -3,6 +3,14 @@ export const config = {
     name: "Recoil",
     description: "Personal memory app with semantic search",
   },
+  polar: {
+    allowedPortalHostnames: [
+      "polar.sh",
+      "api.polar.sh",
+      "portal.polar.sh",
+      "sandbox.polar.sh",
+    ],
+  },
   plans: {
     free: {
       name: "Free",
@@ -12,14 +20,25 @@ export const config = {
         chatMessage: 5,
         embedding: 1,
       },
+      features: {
+        maxTemplates: 1,
+        emailReminders: false,
+        analytics: false,
+      },
     },
     pro: {
       name: "Pro",
+      price: "$4.99/month",
       monthlyCredits: 10000,
       costs: {
         createNote: 1,
         chatMessage: 3,
         embedding: 0,
+      },
+      features: {
+        maxTemplates: -1, // -1 means unlimited
+        emailReminders: true,
+        analytics: true,
       },
     },
   },

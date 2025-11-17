@@ -73,13 +73,17 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <aside className="flex w-64 flex-col border-r">
-        <div className="flex h-14 items-center justify-between px-4 border-b">
+        <div className="flex h-14 items-center justify-between px-2 border-b bg-stone-100">
           <Link
             href="/"
-            className="flex items-center gap-2 font-semibold text-sm"
+            className="flex items-center gap-1 font-semibold text-sm"
           >
-            <Brain className="h-5 w-5" />
-            Recoil
+            <img
+              src="/logo.svg"
+              alt="Recoil"
+              className="h-12 w-12 object-cover"
+            />
+            <span className="text-xl font-lora">Recoil</span>
           </Link>
           <NotificationsDropdown />
         </div>

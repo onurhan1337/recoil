@@ -48,11 +48,11 @@ export async function authenticateUser(supabase: SupabaseClient) {
 export async function ensureUserUsage(
   supabase: SupabaseClient,
   userId: string,
-  defaultCredits: number = 500
+  defaultCredits: number = config.plans.free.monthlyCredits
 ) {
   const { data: usage, error } = await supabase
     .from("usage")
-    .select("credits, plan, monthly_credits_limit, last_reset")
+    .select("*")
     .eq("user_id", userId)
     .single();
 
@@ -63,7 +63,7 @@ export async function ensureUserUsage(
         user_id: userId,
         credits: defaultCredits,
         plan: "free",
-        monthly_credits_limit: 500,
+        monthly_credits_limit: config.plans.free.monthlyCredits,
       })
       .select()
       .single();
@@ -73,6 +73,54 @@ export async function ensureUserUsage(
   }
 
   if (error) throw error;
+
+  if (
+    usage.plan === "pro" &&
+    !isSubscriptionActive(
+      usage.subscription_status,
+      usage.subscription_period_end
+    )
+  ) {
+    console.log(
+      `[Usage] Subscription expired for user ${userId}, downgrading to free`
+    );
+
+    const terminalStatuses = ["revoked", "canceled"];
+    const statusToWrite = terminalStatuses.includes(
+      usage.subscription_status || ""
+    )
+      ? usage.subscription_status
+      : "expired";
+
+    const { data: updatedUsage, error: updateError } = await supabase
+      .from("usage")
+      .update({
+        plan: "free",
+        credits: config.plans.free.monthlyCredits,
+        monthly_credits_limit: config.plans.free.monthlyCredits,
+        subscription_status: statusToWrite,
+      })
+      .eq("user_id", userId)
+      .eq("plan", "pro")
+      .select()
+      .single();
+
+    if (updatedUsage) {
+      return updatedUsage;
+    }
+
+    if (updateError?.code === "PGRST116") {
+      const { data: currentUsage } = await supabase
+        .from("usage")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+      return currentUsage || usage;
+    }
+
+    return usage;
+  }
+
   return usage;
 }
 
@@ -96,4 +144,47 @@ export function getUserPlan(plan: string | undefined | null): UserPlan {
 
 export function isProPlan(plan: string | undefined | null): boolean {
   return plan === "pro";
+}
+
+/**
+ * Check if a subscription is actually active based on status and period end
+ */
+export function isSubscriptionActive(
+  subscriptionStatus: string | null,
+  periodEnd: string | null
+): boolean {
+  if (
+    !subscriptionStatus ||
+    subscriptionStatus === "inactive" ||
+    subscriptionStatus === "revoked"
+  ) {
+    return false;
+  }
+
+  // If there's a period end, check if it's in the future
+  if (periodEnd) {
+    const endDate = new Date(periodEnd);
+    const now = new Date();
+    return endDate > now;
+  }
+
+  // If status is active/canceled but no period end, consider it active
+  return subscriptionStatus === "active" || subscriptionStatus === "canceled";
+}
+
+/**
+ * Check if a credit error is due to insufficient credits
+ * Returns true if it's an insufficient credits error, false otherwise
+ */
+export function isInsufficientCreditsError(creditError: any): boolean {
+  return (
+    creditError.message?.includes("Insufficient credits") ||
+    creditError.code === "23514" ||
+    (creditError.message?.includes("ERRCODE") &&
+      creditError.message?.includes("23514"))
+  );
+}
+
+export function isUserNotFoundError(error: any): boolean {
+  return error?.code === "PGRST116" || error?.message?.includes("not found");
 }

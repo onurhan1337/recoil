@@ -5,6 +5,7 @@ import {
   errorResponse,
   successResponse,
   authenticateUser,
+  isProPlan,
 } from "@/lib/api/utils";
 import { validateRequest } from "@/lib/validation-utils";
 
@@ -41,6 +42,17 @@ export async function POST(request: NextRequest) {
       return errorResponse("Forbidden", 403);
     }
 
+    // Check user plan for email reminders - Pro only feature
+    const { data: usage } = await supabase
+      .from("usage")
+      .select("plan")
+      .eq("user_id", user.id)
+      .single();
+
+    const isPro = isProPlan(usage?.plan);
+
+    const finalEmailEnabled = isPro ? email_enabled : false;
+
     // TIMEZONE HANDLING: reminder_date is already in UTC from frontend
     // It's validated by reminderSchema and stored directly as timestamptz in Supabase
     const { data: reminder, error: reminderError } = await supabase
@@ -49,7 +61,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         note_id,
         reminder_date, // UTC ISO string, e.g., "2024-11-13T18:15:00.000Z"
-        email_enabled,
+        email_enabled: finalEmailEnabled,
         in_app_enabled,
       })
       .select()

@@ -21,6 +21,7 @@ export interface NotificationMethodsProps {
   onEmailChange: (enabled: boolean) => void;
   onInAppChange: (enabled: boolean) => void;
   disabled: boolean;
+  isPro?: boolean;
 }
 
 export interface ReminderFormState {
