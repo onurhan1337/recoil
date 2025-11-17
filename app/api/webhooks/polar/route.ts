@@ -144,7 +144,7 @@ async function handleSubscriptionCancellation(payload: any) {
     .from("usage")
     .update({
       plan: "pro",
-      subscription_status: "canceled",
+      subscription_status: payload.data.status,
       subscription_period_end:
         payload.data.currentPeriodEnd || payload.data.current_period_end,
     })
@@ -172,7 +172,7 @@ async function handleSubscriptionRevocation(payload: any) {
       credits: config.plans.free.monthlyCredits,
       monthly_credits_limit: config.plans.free.monthlyCredits,
       polar_subscription_id: null,
-      subscription_status: "revoked",
+      subscription_status: payload.data.status,
       subscription_period_end: null,
     })
     .eq("user_id", userId);
@@ -202,7 +202,7 @@ async function handleSubscriptionReactivation(payload: any) {
       monthly_credits_limit: config.plans.pro.monthlyCredits,
       polar_customer_id: payload.data.customerId || payload.data.customer_id,
       polar_subscription_id: payload.data.id,
-      subscription_status: "active",
+      subscription_status: payload.data.status,
       subscription_period_end:
         payload.data.currentPeriodEnd || payload.data.current_period_end,
     })

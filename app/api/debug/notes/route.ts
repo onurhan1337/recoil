@@ -1,10 +1,14 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse } from "@/lib/api/utils";
+import {
+  errorResponse,
+  successResponse,
+  authenticateUser,
+} from "@/lib/api/utils";
 
 export async function GET(request: NextRequest) {
   try {
-    const debugToken = process.env.DEBUG_TOKEN!;
+    const debugToken = process.env.DEBUG_TOKEN;
     const authHeader = request.headers.get("authorization");
 
     if (!debugToken || authHeader !== `Bearer ${debugToken}`) {
@@ -12,13 +16,9 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!user) {
       return errorResponse("Unauthorized", 401);
     }
 

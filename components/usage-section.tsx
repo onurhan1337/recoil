@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CreditDisplay } from "@/components/credit-display";
 import { config } from "@/lib/config";
-import type { UsageResponse } from "@/lib/api/types";
+import type { UsageResponse, UserPlan } from "@/lib/api/types";
 import {
   Settings,
   Loader2,
@@ -16,13 +16,20 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { isProPlan } from "@/lib/utils";
 
+const POLAR_PORTAL_ALLOWED_HOSTNAMES = [
+  "polar.sh",
+  "api.polar.sh",
+  "portal.polar.sh",
+  "sandbox.polar.sh",
+];
+
 interface UsageSectionProps {
   usage: UsageResponse | undefined;
 }
 
 export function UsageSection({ usage }: UsageSectionProps) {
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
-  const planConfig = config.plans[usage?.plan as "free" | "pro"];
+  const planConfig = config.plans[usage?.plan as UserPlan] ?? config.plans.free;
   const isPro = isProPlan(usage?.plan);
   const hasSubscription = !!usage?.polar_subscription_id;
 
@@ -46,7 +53,7 @@ export function UsageSection({ usage }: UsageSectionProps) {
 
       const { url } = await response.json();
 
-      if (!url || typeof url !== "string" || !url.startsWith("https")) {
+      if (!url || typeof url !== "string") {
         toast.error("Invalid portal URL", {
           description: "Please try again later.",
         });
@@ -54,7 +61,33 @@ export function UsageSection({ usage }: UsageSectionProps) {
         return;
       }
 
-      window.location.href = url;
+      try {
+        const parsedUrl = new URL(url);
+
+        if (parsedUrl.protocol !== "https:") {
+          toast.error("Invalid portal URL", {
+            description: "Please try again later.",
+          });
+          setIsLoadingPortal(false);
+          return;
+        }
+
+        if (!POLAR_PORTAL_ALLOWED_HOSTNAMES.includes(parsedUrl.hostname)) {
+          toast.error("Invalid portal URL", {
+            description: "Please try again later.",
+          });
+          setIsLoadingPortal(false);
+          return;
+        }
+
+        window.location.href = url;
+      } catch {
+        toast.error("Invalid portal URL", {
+          description: "Please try again later.",
+        });
+        setIsLoadingPortal(false);
+        return;
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";
@@ -129,6 +162,8 @@ export function UsageSection({ usage }: UsageSectionProps) {
   const formatPeriodEnd = (dateString: string | null | undefined) => {
     if (!dateString) return null;
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",

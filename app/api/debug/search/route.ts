@@ -6,7 +6,7 @@ import { errorResponse, successResponse } from "@/lib/api/utils";
 
 export async function GET(request: NextRequest) {
   try {
-    const debugToken = process.env.DEBUG_TOKEN!;
+    const debugToken = process.env.DEBUG_TOKEN;
     const authHeader = request.headers.get("authorization");
 
     if (!debugToken || authHeader !== `Bearer ${debugToken}`) {
