@@ -1,6 +1,8 @@
 # CodeRabbit Configuration for Recoil
 # See https://docs.coderabbit.ai/reference/configuration for full documentation
 
+language: en-US
+
 reviews:
   # Enable automatic reviews for new and updated pull requests
   auto_review:
@@ -208,44 +210,37 @@ reviews:
         - Document required environment variables
 
   # Paths to include/exclude from review
+  # Use ! prefix to exclude paths
   path_filters:
-    # Include all source files
-    included_paths:
-      - "app/**"
-      - "components/**"
-      - "lib/**"
-      - "types/**"
-      - "supabase/migrations/**"
-      - "*.{ts,tsx,json,md}"
+    # Include source directories
+    - "app/**"
+    - "components/**"
+    - "lib/**"
+    - "types/**"
+    - "supabase/migrations/**"
+    - "*.ts"
+    - "*.tsx"
+    - "*.json"
+    - "*.md"
     # Exclude build artifacts, dependencies, and generated files
-    excluded_paths:
-      - "**/node_modules/**"
-      - "**/.next/**"
-      - "**/dist/**"
-      - "**/build/**"
-      - "**/*.lock"
-      - "**/package-lock.json"
-      - "**/yarn.lock"
-      - "**/pnpm-lock.yaml"
-      - "**/*.min.js"
-      - "**/*.min.css"
-      - "**/tsconfig.tsbuildinfo"
-      - "**/.cursor/**"
-      - "**/.git/**"
-      - "**/coverage/**"
-      - "**/*.test.ts"
-      - "**/*.test.tsx"
-      - "**/*.spec.ts"
-      - "**/*.spec.tsx"
-
-# Language-specific settings
-language:
-  typescript:
-    # Focus on strict type safety (matches tsconfig.json)
-    strict: true
-  javascript:
-    # Use modern ES6+ patterns
-    modern: true
+    - "!**/node_modules/**"
+    - "!**/.next/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/*.lock"
+    - "!**/package-lock.json"
+    - "!**/yarn.lock"
+    - "!**/pnpm-lock.yaml"
+    - "!**/*.min.js"
+    - "!**/*.min.css"
+    - "!**/tsconfig.tsbuildinfo"
+    - "!**/.cursor/**"
+    - "!**/.git/**"
+    - "!**/coverage/**"
+    - "!**/*.test.ts"
+    - "!**/*.test.tsx"
+    - "!**/*.spec.ts"
+    - "!**/*.spec.tsx"
 
 # Tools configuration
 tools:
