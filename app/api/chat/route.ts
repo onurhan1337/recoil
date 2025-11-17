@@ -7,6 +7,7 @@ import { config } from "@/lib/config";
 import type { SearchNoteResult } from "@/lib/api/types";
 import { isTimeBasedQuery, getDateRange } from "@/lib/utils/query-helpers";
 import {
+  authenticateUser,
   errorResponse,
   getUserPlan,
   isInsufficientCreditsError,
@@ -19,13 +20,9 @@ export const maxDuration = 30;
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!user) {
       return errorResponse("Unauthorized", 401);
     }
 

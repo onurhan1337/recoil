@@ -16,12 +16,45 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { isProPlan } from "@/lib/utils";
 
-const POLAR_PORTAL_ALLOWED_HOSTNAMES = [
-  "polar.sh",
-  "api.polar.sh",
-  "portal.polar.sh",
-  "sandbox.polar.sh",
-];
+const SUBSCRIPTION_STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+    icon: React.ReactNode;
+  }
+> = {
+  active: {
+    label: "Active",
+    variant: "default",
+    icon: <CheckCircle2 className="h-3 w-3" />,
+  },
+  trialing: {
+    label: "Trial",
+    variant: "secondary",
+    icon: <Clock className="h-3 w-3" />,
+  },
+  canceled: {
+    label: "Canceled",
+    variant: "outline",
+    icon: <Calendar className="h-3 w-3" />,
+  },
+  cancelled: {
+    label: "Canceled",
+    variant: "outline",
+    icon: <Calendar className="h-3 w-3" />,
+  },
+  expired: {
+    label: "Expired",
+    variant: "destructive",
+    icon: <XCircle className="h-3 w-3" />,
+  },
+  revoked: {
+    label: "Revoked",
+    variant: "destructive",
+    icon: <XCircle className="h-3 w-3" />,
+  },
+};
 
 interface UsageSectionProps {
   usage: UsageResponse | undefined;
@@ -29,8 +62,9 @@ interface UsageSectionProps {
 
 export function UsageSection({ usage }: UsageSectionProps) {
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
-  const planConfig = config.plans[usage?.plan as UserPlan] ?? config.plans.free;
-  const isPro = isProPlan(usage?.plan);
+  const plan: UserPlan = usage?.plan ?? "free";
+  const planConfig = config.plans[plan];
+  const isPro = isProPlan(plan);
   const hasSubscription = !!usage?.polar_subscription_id;
 
   const handleManageSubscription = async () => {
@@ -72,7 +106,7 @@ export function UsageSection({ usage }: UsageSectionProps) {
           return;
         }
 
-        if (!POLAR_PORTAL_ALLOWED_HOSTNAMES.includes(parsedUrl.hostname)) {
+        if (!(config.polar.allowedPortalHostnames as readonly string[]).includes(parsedUrl.hostname)) {
           toast.error("Invalid portal URL", {
             description: "Please try again later.",
           });
@@ -102,47 +136,8 @@ export function UsageSection({ usage }: UsageSectionProps) {
     if (!isPro || !usage?.subscription_status) return null;
 
     const status = usage.subscription_status;
-    const statusConfig: Record<
-      string,
-      {
-        label: string;
-        variant: "default" | "secondary" | "destructive" | "outline";
-        icon: React.ReactNode;
-      }
-    > = {
-      active: {
-        label: "Active",
-        variant: "default",
-        icon: <CheckCircle2 className="h-3 w-3" />,
-      },
-      trialing: {
-        label: "Trial",
-        variant: "secondary",
-        icon: <Clock className="h-3 w-3" />,
-      },
-      canceled: {
-        label: "Canceled",
-        variant: "outline",
-        icon: <Calendar className="h-3 w-3" />,
-      },
-      cancelled: {
-        label: "Canceled",
-        variant: "outline",
-        icon: <Calendar className="h-3 w-3" />,
-      },
-      expired: {
-        label: "Expired",
-        variant: "destructive",
-        icon: <XCircle className="h-3 w-3" />,
-      },
-      revoked: {
-        label: "Revoked",
-        variant: "destructive",
-        icon: <XCircle className="h-3 w-3" />,
-      },
-    };
 
-    const config = statusConfig[status] || {
+    const config = SUBSCRIPTION_STATUS_CONFIG[status] ?? {
       label: status,
       variant: "secondary" as const,
       icon: null,
@@ -178,7 +173,7 @@ export function UsageSection({ usage }: UsageSectionProps) {
         <div className="flex items-center justify-between">
           <CreditDisplay
             credits={usage?.credits ?? 0}
-            plan={usage?.plan as "free" | "pro"}
+            plan={plan}
             monthlyLimit={usage?.monthly_credits_limit ?? 500}
             showUpgrade={false}
           />
@@ -203,7 +198,7 @@ export function UsageSection({ usage }: UsageSectionProps) {
           )}
         </div>
 
-        {isPro && (
+        {isPro && usage?.subscription_status && (
           <div className="pt-3 border-t space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground font-medium">
@@ -211,18 +206,22 @@ export function UsageSection({ usage }: UsageSectionProps) {
               </p>
               {getSubscriptionStatusBadge()}
             </div>
-            {usage?.subscription_period_end && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                <span>
-                  {usage.subscription_status === "canceled" ||
-                  usage.subscription_status === "cancelled"
-                    ? "Active until"
-                    : "Renews on"}{" "}
-                  {formatPeriodEnd(usage.subscription_period_end)}
-                </span>
-              </div>
-            )}
+            {(() => {
+              const formatted = formatPeriodEnd(usage?.subscription_period_end);
+              if (!formatted) return null;
+              return (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  <span>
+                    {usage?.subscription_status === "canceled" ||
+                    usage?.subscription_status === "cancelled"
+                      ? "Active until"
+                      : "Renews on"}{" "}
+                    {formatted}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
         )}
 

@@ -75,6 +75,7 @@ export interface UsageResponse {
   polar_subscription_id?: string | null;
   subscription_status?: string | null;
   subscription_period_end?: string | null;
+  last_processed_order_id?: string | null;
 }
 
 export interface ConversationsResponse {

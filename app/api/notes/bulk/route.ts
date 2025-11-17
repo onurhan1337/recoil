@@ -136,8 +136,8 @@ export async function POST(request: NextRequest) {
 
     const refundAmount =
       errors.length > 0
-        ? errors.reduce((sum, _, index) => {
-            const noteInput = noteInputs[index];
+        ? errors.reduce((sum, error) => {
+            const noteInput = noteInputs[error.index];
             const costCalc = calculateNoteCost(noteInput.content, userPlan);
             return sum + costCalc.totalCost;
           }, 0)

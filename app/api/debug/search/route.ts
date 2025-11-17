@@ -2,7 +2,11 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
 import { config } from "@/lib/config";
-import { errorResponse, successResponse } from "@/lib/api/utils";
+import {
+  authenticateUser,
+  errorResponse,
+  successResponse,
+} from "@/lib/api/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,13 +18,9 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!user) {
       return errorResponse("Unauthorized", 401);
     }
 

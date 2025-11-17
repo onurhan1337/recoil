@@ -1,6 +1,7 @@
 import { Webhooks } from "@polar-sh/nextjs";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { config } from "@/lib/config";
+import { isProPlan, isSubscriptionActive } from "@/lib/api/utils";
 
 const webhookSecret = process.env.POLAR_WEBHOOK_SECRET!;
 
@@ -40,6 +41,10 @@ async function ensureUsageExists(supabase: any, userId: string) {
     .eq("user_id", userId)
     .single();
 
+  if (error && error.code !== "PGRST116") {
+    throw error;
+  }
+
   if (error?.code === "PGRST116") {
     const { error: insertError } = await supabase.from("usage").insert({
       user_id: userId,
@@ -64,11 +69,15 @@ async function getUserIdFromPayload(
   const customerId = payload.data.customerId || payload.data.customer_id;
   if (!customerId) return null;
 
-  const { data: usage } = await supabase
+  const { data: usage, error } = await supabase
     .from("usage")
     .select("user_id")
     .eq("polar_customer_id", customerId)
     .single();
+
+  if (error && error.code !== "PGRST116") {
+    throw error;
+  }
 
   return usage?.user_id || null;
 }
@@ -77,28 +86,36 @@ async function handleSubscriptionActivation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
   if (!userId) {
-    console.error("[Webhook] Could not resolve user ID from payload:", {
-      customerId: payload.data?.customerId || payload.data?.customer_id,
-      subscriptionId: payload.data?.id,
-      metadata: payload.data?.metadata,
-    });
     return;
   }
 
   await ensureUsageExists(supabase, userId);
 
+  const { data: currentUsage } = await supabase
+    .from("usage")
+    .select("plan")
+    .eq("user_id", userId)
+    .single();
+
+  const isUpgrade = !isProPlan(currentUsage?.plan);
+
+  const updateData: any = {
+    plan: "pro",
+    monthly_credits_limit: config.plans.pro.monthlyCredits,
+    polar_customer_id: payload.data.customerId || payload.data.customer_id,
+    polar_subscription_id: payload.data.id,
+    subscription_status: payload.data.status,
+    subscription_period_end:
+      payload.data.currentPeriodEnd || payload.data.current_period_end,
+  };
+
+  if (isUpgrade) {
+    updateData.credits = config.plans.pro.monthlyCredits;
+  }
+
   const { error } = await supabase
     .from("usage")
-    .update({
-      plan: "pro",
-      credits: config.plans.pro.monthlyCredits,
-      monthly_credits_limit: config.plans.pro.monthlyCredits,
-      polar_customer_id: payload.data.customerId || payload.data.customer_id,
-      polar_subscription_id: payload.data.id,
-      subscription_status: payload.data.status,
-      subscription_period_end:
-        payload.data.currentPeriodEnd || payload.data.current_period_end,
-    })
+    .update(updateData)
     .eq("user_id", userId);
 
   if (error) throw error;
@@ -132,21 +149,22 @@ async function handleSubscriptionCancellation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
   if (!userId) {
-    console.error("[Webhook] Could not resolve user ID from payload:", {
-      customerId: payload.data?.customerId || payload.data?.customer_id,
-      subscriptionId: payload.data?.id,
-      metadata: payload.data?.metadata,
-    });
     return;
   }
+
+  const periodEnd =
+    payload.data.currentPeriodEnd || payload.data.current_period_end;
+  const status = payload.data.status;
+
+  const isActive = isSubscriptionActive(status, periodEnd);
+  const plan = isActive ? "pro" : "free";
 
   const { error } = await supabase
     .from("usage")
     .update({
-      plan: "pro",
-      subscription_status: payload.data.status,
-      subscription_period_end:
-        payload.data.currentPeriodEnd || payload.data.current_period_end,
+      plan,
+      subscription_status: status,
+      subscription_period_end: periodEnd,
     })
     .eq("user_id", userId);
 
@@ -184,28 +202,36 @@ async function handleSubscriptionReactivation(payload: any) {
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
   if (!userId) {
-    console.error("[Webhook] Could not resolve user ID from payload:", {
-      customerId: payload.data?.customerId || payload.data?.customer_id,
-      subscriptionId: payload.data?.id,
-      metadata: payload.data?.metadata,
-    });
     return;
   }
 
   await ensureUsageExists(supabase, userId);
 
+  const { data: currentUsage } = await supabase
+    .from("usage")
+    .select("plan")
+    .eq("user_id", userId)
+    .single();
+
+  const isUpgrade = !isProPlan(currentUsage?.plan);
+
+  const updateData: any = {
+    plan: "pro",
+    monthly_credits_limit: config.plans.pro.monthlyCredits,
+    polar_customer_id: payload.data.customerId || payload.data.customer_id,
+    polar_subscription_id: payload.data.id,
+    subscription_status: payload.data.status,
+    subscription_period_end:
+      payload.data.currentPeriodEnd || payload.data.current_period_end,
+  };
+
+  if (isUpgrade) {
+    updateData.credits = config.plans.pro.monthlyCredits;
+  }
+
   const { error } = await supabase
     .from("usage")
-    .update({
-      plan: "pro",
-      credits: config.plans.pro.monthlyCredits,
-      monthly_credits_limit: config.plans.pro.monthlyCredits,
-      polar_customer_id: payload.data.customerId || payload.data.customer_id,
-      polar_subscription_id: payload.data.id,
-      subscription_status: payload.data.status,
-      subscription_period_end:
-        payload.data.currentPeriodEnd || payload.data.current_period_end,
-    })
+    .update(updateData)
     .eq("user_id", userId);
 
   if (error) throw error;
@@ -215,21 +241,31 @@ async function handleOrderCreated(payload: any) {
   const billingReason =
     payload.data.billingReason || payload.data.billing_reason;
   if (billingReason !== "subscription_cycle") {
-    console.error("[Webhook] Order created but not a subscription cycle:", {
-      billingReason,
-      payload,
-    });
     return;
   }
 
   const supabase = createServiceRoleClient();
   const userId = await getUserIdFromPayload(payload, supabase);
   if (!userId) {
-    console.error("[Webhook] Could not resolve user ID from payload:", {
-      customerId: payload.data?.customerId || payload.data?.customer_id,
-      subscriptionId: payload.data?.id,
-      metadata: payload.data?.metadata,
-    });
+    return;
+  }
+
+  const orderId = payload.data.id;
+  if (!orderId) {
+    return;
+  }
+
+  const { data: currentUsage } = await supabase
+    .from("usage")
+    .select("last_processed_order_id, plan")
+    .eq("user_id", userId)
+    .single();
+
+  if (!currentUsage || !isProPlan(currentUsage.plan)) {
+    return;
+  }
+
+  if (currentUsage.last_processed_order_id === orderId) {
     return;
   }
 
@@ -238,9 +274,11 @@ async function handleOrderCreated(payload: any) {
     .update({
       credits: config.plans.pro.monthlyCredits,
       monthly_credits_limit: config.plans.pro.monthlyCredits,
+      last_processed_order_id: orderId,
     })
     .eq("user_id", userId)
-    .eq("plan", "pro");
+    .eq("plan", "pro")
+    .neq("last_processed_order_id", orderId);
 
   if (error) throw error;
 }

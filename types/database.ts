@@ -378,6 +378,7 @@ export type Database = {
           created_at: string
           credits: number
           id: string
+          last_processed_order_id: string | null
           last_reset: string
           monthly_credits_limit: number | null
           plan: string | null
@@ -392,6 +393,7 @@ export type Database = {
           created_at?: string
           credits?: number
           id?: string
+          last_processed_order_id?: string | null
           last_reset?: string
           monthly_credits_limit?: number | null
           plan?: string | null
@@ -406,6 +408,7 @@ export type Database = {
           created_at?: string
           credits?: number
           id?: string
+          last_processed_order_id?: string | null
           last_reset?: string
           monthly_credits_limit?: number | null
           plan?: string | null
@@ -443,6 +446,7 @@ export type Database = {
           similarity: number
         }[]
       }
+      process_due_reminders: { Args: never; Returns: undefined }
       search_notes: {
         Args: {
           match_count: number

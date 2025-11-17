@@ -3,6 +3,14 @@ export const config = {
     name: "Recoil",
     description: "Personal memory app with semantic search",
   },
+  polar: {
+    allowedPortalHostnames: [
+      "polar.sh",
+      "api.polar.sh",
+      "portal.polar.sh",
+      "sandbox.polar.sh",
+    ],
+  },
   plans: {
     free: {
       name: "Free",
