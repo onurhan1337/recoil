@@ -1,10 +1,15 @@
 import { Polar } from "@polar-sh/sdk";
 
+const polarAccessToken = process.env.POLAR_ACCESS_TOKEN!;
+
+if (!polarAccessToken) {
+  throw new Error("POLAR_ACCESS_TOKEN is not configured");
+}
+
 const polar = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN!,
+  accessToken: polarAccessToken,
   server: "production",
 });
-
 /**
  * Create or get a Polar customer by external ID (Supabase user ID)
  * Note: When using an organization token, organizationId is automatically set

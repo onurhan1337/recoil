@@ -22,8 +22,9 @@ interface UpgradePlanDialogProps {
 export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
   const [open, setOpen] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-  const { data: usage } = useUsage();
-  const isPro = isProPlan(usage?.plan);
+  const { data: usage, isLoading, isError } = useUsage();
+  const isPro =
+    !isLoading && !isError && usage ? isProPlan(usage.plan) : undefined;
 
   const handleUpgrade = async () => {
     try {
@@ -82,10 +83,13 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Free</h3>
-                  {!isPro && (
+                  {isPro === false && (
                     <Badge variant="secondary" className="text-xs">
                       Current
                     </Badge>
+                  )}
+                  {(isLoading || isError) && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   )}
                 </div>
                 <div className="flex items-baseline gap-1">
@@ -139,10 +143,13 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Pro</h3>
-                  {isPro && (
+                  {isPro === true && (
                     <Badge variant="secondary" className="text-xs">
                       Current
                     </Badge>
+                  )}
+                  {(isLoading || isError) && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   )}
                 </div>
                 <div className="flex items-baseline gap-1">
@@ -219,7 +226,7 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                   <span className="font-medium">Share analysis insights</span>
                 </div>
               </div>
-              {!isPro && (
+              {isPro === false && (
                 <button
                   onClick={handleUpgrade}
                   disabled={isCheckoutLoading}
