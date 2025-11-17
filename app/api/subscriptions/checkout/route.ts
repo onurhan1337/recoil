@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { authenticateUser } from "@/lib/api/utils";
+import {
+  authenticateUser,
+  errorResponse,
+  successResponse,
+} from "@/lib/api/utils";
 import { polar } from "@/lib/polar/client";
 
 const baseUrl =
@@ -13,25 +17,16 @@ export async function POST() {
     const user = await authenticateUser(supabase);
 
     if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return errorResponse("Unauthorized", 401);
     }
 
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user?.email) {
-      return new Response(JSON.stringify({ error: "User email not found" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return errorResponse("User email not found", 400);
     }
 
     if (!process.env.POLAR_PRODUCT_PRICE_ID) {
-      return new Response(
-        JSON.stringify({ error: "Product price ID not configured" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      return errorResponse("Product price ID not configured", 500);
     }
 
     console.log(`[Checkout] Creating checkout for user ${user.id}`);
@@ -82,10 +77,7 @@ export async function POST() {
 
     console.log(`[Checkout] Created checkout session: ${checkout.id}`);
 
-    return new Response(
-      JSON.stringify({ checkoutUrl: checkout.url }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return successResponse({ checkoutUrl: checkout.url });
   } catch (error: any) {
     console.error("[Checkout] Error creating checkout:", error);
     console.error("[Checkout] Error details:", {
@@ -95,13 +87,6 @@ export async function POST() {
       stack: error?.stack,
     });
 
-    return new Response(
-      JSON.stringify({
-        error: "Failed to create checkout session",
-        details: error?.message || "Unknown error",
-        statusCode: error?.statusCode
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return errorResponse("Failed to create checkout session", 500);
   }
 }

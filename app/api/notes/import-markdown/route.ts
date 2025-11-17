@@ -9,9 +9,13 @@ import {
   authenticateUser,
   getUserPlan,
   calculateNoteCost,
+  handleCreditError,
 } from "@/lib/api/utils";
 import { validateRequest } from "@/lib/validation-utils";
-import { parseMarkdownToNotes, validateMarkdownSize } from "@/lib/markdown-parser";
+import {
+  parseMarkdownToNotes,
+  validateMarkdownSize,
+} from "@/lib/markdown-parser";
 import { Note } from "@/lib/api/types";
 
 export async function POST(request: NextRequest) {
@@ -43,9 +47,10 @@ export async function POST(request: NextRequest) {
       return errorResponse("No valid notes found in markdown", 400);
     }
 
+    // Get user plan for cost calculation (no need to check credits here)
     const { data: usage } = await supabase
       .from("usage")
-      .select("credits, plan")
+      .select("plan")
       .eq("user_id", user.id)
       .single();
 
@@ -60,13 +65,6 @@ export async function POST(request: NextRequest) {
       return sum + costCalc.totalCost;
     }, 0);
 
-    if (usage.credits < totalCost) {
-      return errorResponse(
-        `Insufficient credits. Required: ${totalCost}, Available: ${usage.credits}`,
-        403
-      );
-    }
-
     const { data: remainingCredits, error: creditError } = await supabase.rpc(
       "decrement_credits",
       {
@@ -77,6 +75,20 @@ export async function POST(request: NextRequest) {
 
     if (creditError) {
       console.error("Failed to decrement credits:", creditError);
+
+      if (handleCreditError(creditError)) {
+        const availableMatch = creditError.message.match(/Available: (\d+)/);
+        const available = availableMatch ? availableMatch[1] : "unknown";
+        return errorResponse(
+          `Insufficient credits. Required: ${totalCost}, Available: ${available}`,
+          403
+        );
+      }
+
+      if (creditError.message?.includes("not found")) {
+        return errorResponse("User usage record not found", 404);
+      }
+
       return errorResponse("Failed to process credits", 500);
     }
 
@@ -98,7 +110,10 @@ export async function POST(request: NextRequest) {
             embedding: embedding ? `[${embedding.join(",")}]` : null,
             label: metadata.label,
             category: metadata.category,
-            tags: noteInput.tags && noteInput.tags.length > 0 ? noteInput.tags : null,
+            tags:
+              noteInput.tags && noteInput.tags.length > 0
+                ? noteInput.tags
+                : null,
           })
           .select()
           .single();

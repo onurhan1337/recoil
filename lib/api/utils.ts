@@ -152,3 +152,16 @@ export function isSubscriptionActive(
   // If status is active/canceled but no period end, consider it active
   return subscriptionStatus === "active" || subscriptionStatus === "canceled";
 }
+
+export function handleCreditError(creditError: any) {
+  console.error("Failed to decrement credits:", creditError);
+
+  if (
+    creditError.message?.includes("Insufficient credits") ||
+    creditError.code === "23514" ||
+    (creditError.message?.includes("ERRCODE") &&
+      creditError.message?.includes("23514"))
+  ) {
+    return errorResponse("Insufficient credits", 403);
+  }
+}

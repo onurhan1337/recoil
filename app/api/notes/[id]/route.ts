@@ -8,6 +8,7 @@ import {
   authenticateUser,
   getUserPlan,
   calculateNoteCost,
+  handleCreditError,
 } from "@/lib/api/utils";
 import { uuidSchema, noteUpdateSchema } from "@/lib/validations";
 import { validateParams, validateRequest } from "@/lib/validation-utils";
@@ -144,7 +145,7 @@ export async function PATCH(
 
     const { data: usage } = await supabase
       .from("usage")
-      .select("credits, plan")
+      .select("plan")
       .eq("user_id", user.id)
       .single();
 
@@ -152,11 +153,6 @@ export async function PATCH(
     const costCalculation = calculateNoteCost(content, userPlan);
     const updateCost = costCalculation.totalCost;
 
-    if (!usage || usage.credits < updateCost) {
-      return errorResponse("Insufficient credits", 403);
-    }
-
-    // Deduct credits FIRST using atomic RPC
     const { data: remainingCredits, error: creditError } = await supabase.rpc(
       "decrement_credits",
       {
@@ -167,6 +163,20 @@ export async function PATCH(
 
     if (creditError) {
       console.error("Failed to decrement credits:", creditError);
+
+      if (handleCreditError(creditError)) {
+        return errorResponse(
+          `Insufficient credits. Required: ${updateCost}, Available: ${
+            creditError.message.match(/Available: (\d+)/)?.[1] || "unknown"
+          }`,
+          403
+        );
+      }
+
+      if (creditError.message?.includes("not found")) {
+        return errorResponse("User usage record not found", 404);
+      }
+
       return errorResponse("Failed to process credits", 500);
     }
 
