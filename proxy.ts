@@ -2,6 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
+  // Skip auth for webhooks and cron endpoints
+  if (request.nextUrl.pathname.startsWith("/api/webhooks/")) {
+    return NextResponse.next();
+  }
+
   // Skip auth in development for cron endpoints
   if (process.env.NODE_ENV === "development") {
     if (request.nextUrl.pathname.startsWith("/api/cron/")) {

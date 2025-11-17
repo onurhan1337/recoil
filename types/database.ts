@@ -381,6 +381,10 @@ export type Database = {
           last_reset: string
           monthly_credits_limit: number | null
           plan: string | null
+          polar_customer_id: string | null
+          polar_subscription_id: string | null
+          subscription_period_end: string | null
+          subscription_status: string | null
           updated_at: string
           user_id: string
         }
@@ -391,6 +395,10 @@ export type Database = {
           last_reset?: string
           monthly_credits_limit?: number | null
           plan?: string | null
+          polar_customer_id?: string | null
+          polar_subscription_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -401,6 +409,10 @@ export type Database = {
           last_reset?: string
           monthly_credits_limit?: number | null
           plan?: string | null
+          polar_customer_id?: string | null
+          polar_subscription_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id?: string
         }

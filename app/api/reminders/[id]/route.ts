@@ -5,6 +5,7 @@ import {
   errorResponse,
   successResponse,
   authenticateUser,
+  isProPlan,
 } from "@/lib/api/utils";
 import { validateParams, validateRequest } from "@/lib/validation-utils";
 
@@ -48,9 +49,23 @@ export async function PATCH(
       return errorResponse("Forbidden", 403);
     }
 
+    // Check user plan for email reminders - Pro only feature
+    const { data: usage } = await supabase
+      .from("usage")
+      .select("plan")
+      .eq("user_id", user.id)
+      .single();
+
+    const isPro = isProPlan(usage?.plan);
+
+    const updateData = { ...validation.data };
+    if (updateData.email_enabled !== undefined && !isPro) {
+      updateData.email_enabled = false;
+    }
+
     const { data: updatedReminder, error: updateError } = await supabase
       .from("reminders")
-      .update(validation.data)
+      .update(updateData)
       .eq("id", idValidation.data)
       .select()
       .single();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Check } from "lucide-react";
+import { Zap, Check, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +19,33 @@ interface UpgradePlanDialogProps {
 
 export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const { data: usage } = useUsage();
   const isPro = isProPlan(usage?.plan);
+
+  // Handle checkout flow - redirects to Polar checkout page
+  const handleUpgrade = async () => {
+    try {
+      setIsCheckoutLoading(true);
+      const response = await fetch("/api/subscriptions/checkout", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Server error:", errorData);
+        throw new Error(errorData.error || "Failed to create checkout session");
+      }
+
+      const { checkoutUrl } = await response.json();
+
+      // Redirect to Polar checkout
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error("Checkout error:", error);
+      setIsCheckoutLoading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -74,6 +99,14 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <span>1 custom template</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <span>In-app reminders only</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                   <span>Basic features</span>
                 </div>
               </div>
@@ -90,7 +123,7 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                   )}
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold">$9</span>
+                  <span className="text-3xl font-bold">$4.99</span>
                   <span className="text-sm text-muted-foreground">/month</span>
                 </div>
               </div>
@@ -106,6 +139,14 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
                   <span className="font-medium">3 credits per chat</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
+                  <span className="font-medium">Unlimited custom templates</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
+                  <span className="font-medium">Email & in-app reminders</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
@@ -131,8 +172,19 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
                 </div>
               </div>
               {!isPro && (
-                <button className="w-full py-2.5 px-4 rounded-md text-sm font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors">
-                  Upgrade to Pro
+                <button
+                  onClick={handleUpgrade}
+                  disabled={isCheckoutLoading}
+                  className="w-full py-2.5 px-4 rounded-md text-sm font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isCheckoutLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Upgrade to Pro"
+                  )}
                 </button>
               )}
             </div>
