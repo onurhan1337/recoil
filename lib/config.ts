@@ -56,6 +56,12 @@ export const config = {
     embeddingModel: "local",
     temperature: 0.7,
     maxTokens: 2048,
+    provider: (process.env.AI_PROVIDER || "auto") as "google" | "ollama" | "auto",
+    fallbackEnabled: process.env.AI_FALLBACK_ENABLED !== "false",
+    ollama: {
+      baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+      model: process.env.OLLAMA_MODEL || "llama3.2",
+    },
   },
   search: {
     matchThreshold: 0.1,

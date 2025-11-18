@@ -1,6 +1,7 @@
 import { generateText } from "ai";
-import { google } from "@ai-sdk/google";
 import { config } from "./config";
+import { getAIModel } from "./ai/provider";
+import { AI_PROMPTS } from "./ai/prompts";
 
 function extractKeywordLabel(content: string): string {
   const lines = content.split("\n").filter(line => line.trim().length > 0);
@@ -38,16 +39,17 @@ export async function generateNoteMetadata(content: string): Promise<{
   const label = extractKeywordLabel(content);
 
   try {
+    const { model } = getAIModel({
+      model: config.ai.model,
+      provider: config.ai.provider,
+      fallbackEnabled: config.ai.fallbackEnabled,
+      ollamaModel: config.ai.ollama.model,
+    });
+
     const result = await generateText({
-      model: google(config.ai.model),
+      model,
       temperature: 0.1,
-      prompt: `Categorize this note with a single keyword category.
-
-Note: ${content.slice(0, 300)}
-
-Choose ONE category that best fits: work, personal, idea, project, learning, book, finance, health, travel, goal, task, reminder, recipe, quote, code, design, meeting, shopping, other
-
-Respond with just the category word, nothing else.`,
+      prompt: AI_PROMPTS.noteMetadata.categorize(content),
     });
 
     const category = result.text.trim().toLowerCase();

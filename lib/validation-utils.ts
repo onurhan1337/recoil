@@ -8,6 +8,10 @@ export function validateRequest<T>(
   const result = schema.safeParse(data);
 
   if (!result.success) {
+    console.error("[Validation] Request validation failed:", {
+      errors: z.treeifyError(result.error),
+      data: JSON.stringify(data, null, 2),
+    });
     return {
       success: false,
       response: errorResponse("Invalid request", 400),
