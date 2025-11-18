@@ -138,78 +138,60 @@ export function ChatBox() {
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-6">
-            {messages.map((message) => (
-              <div key={message.id} className="group">
-                <div
-                  className={cn(
-                    "flex items-start gap-3",
-                    message.role === "user" && "justify-end"
-                  )}
-                >
-                  {message.role === "assistant" && (
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-background text-xs font-medium mt-1">
-                      A
-                    </div>
-                  )}
+            {messages.map((message, index) => {
+              const isLastMessage = index === messages.length - 1;
+              const isMessageStreaming =
+                isLastMessage &&
+                message.role === "assistant" &&
+                status === "streaming";
+
+              return (
+                <div key={message.id} className="group">
                   <div
                     className={cn(
-                      "flex-1 space-y-1",
-                      message.role === "user" && "flex flex-col items-end"
+                      "flex items-start gap-3",
+                      message.role === "user" && "justify-end"
                     )}
                   >
+                    {message.role === "assistant" && (
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-background text-xs font-medium mt-1">
+                        A
+                      </div>
+                    )}
                     <div
                       className={cn(
-                        "inline-block rounded-lg px-4 py-2.5 max-w-[85%]",
-                        message.role === "user"
-                          ? "bg-foreground text-background"
-                          : "bg-muted/50"
+                        "flex-1 space-y-1",
+                        message.role === "user" && "flex flex-col items-end"
                       )}
                     >
-                      <ChatMessage
-                        content={message.parts
-                          .filter((part) => part.type === "text")
-                          .map((part) => part.text)
-                          .join("")}
-                        role={message.role as "user" | "assistant"}
-                      />
-                    </div>
-                  </div>
-                  {message.role === "user" && (
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-background text-xs font-medium mt-1">
-                      U
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex items-start gap-3">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-background text-xs font-medium mt-1">
-                  A
-                </div>
-                <div className="inline-block rounded-lg px-4 py-3 bg-muted/50">
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
                       <div
-                        className="w-2 h-2 rounded-full bg-foreground/60 animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <div
-                        className="w-2 h-2 rounded-full bg-foreground/60 animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <div
-                        className="w-2 h-2 rounded-full bg-foreground/60 animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
+                        className={cn(
+                          "inline-block rounded-lg px-4 py-2.5 max-w-[85%]",
+                          message.role === "user"
+                            ? "bg-foreground text-background"
+                            : "bg-muted/50"
+                        )}
+                      >
+                        <ChatMessage
+                          content={message.parts
+                            .filter((part) => part.type === "text")
+                            .map((part) => part.text)
+                            .join("")}
+                          role={message.role as "user" | "assistant"}
+                          parts={message.parts}
+                          isStreaming={isMessageStreaming}
+                        />
+                      </div>
                     </div>
-                    <span className="text-xs text-muted-foreground ml-1">
-                      Searching notes...
-                    </span>
+                    {message.role === "user" && (
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-background text-xs font-medium mt-1">
+                        U
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
         )}

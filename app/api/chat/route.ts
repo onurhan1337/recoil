@@ -1,9 +1,15 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
-import { streamText, convertToModelMessages } from "ai";
-import { google } from "@ai-sdk/google";
+import {
+  streamText,
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+} from "ai";
 import { config } from "@/lib/config";
+import { getAIModel } from "@/lib/ai/provider";
+import { AI_PROMPTS } from "@/lib/ai/prompts";
 import type { SearchNoteResult } from "@/lib/api/types";
 import { isTimeBasedQuery, getDateRange } from "@/lib/utils/query-helpers";
 import {
@@ -28,9 +34,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = validateRequest(chatRequestSchema, body);
+
+    const normalizedBody = {
+      ...body,
+      messages: body.messages?.map((msg: any) => {
+        if (msg.content && !msg.parts) {
+          return {
+            role: msg.role,
+            parts: [{ type: "text", text: msg.content }],
+          };
+        }
+        return msg;
+      }),
+    };
+
+    const validation = validateRequest(chatRequestSchema, normalizedBody);
 
     if (!validation.success) {
+      console.error("[Chat API] Validation failed:", validation.response);
       return validation.response;
     }
 
@@ -180,115 +201,84 @@ export async function POST(request: NextRequest) {
     const notesContext =
       filteredResults.length > 0
         ? filteredResults
-            .map((note) => {
+            .map((note, index) => {
               const category = note.category || "Note";
               const label = note.label || "";
-              return `[${category}${label ? `: ${label}` : ""}] ID: ${
-                note.id
-              } | Similarity: ${(note.similarity * 100).toFixed(
-                1
-              )}%\nContent:\n${note.content}`;
+              return `Note ${index + 1} [${category}${
+                label ? `: ${label}` : ""
+              }]:\n${note.content}\n(Reference ID: ${note.id})`;
             })
             .join("\n\n---\n\n")
         : "No relevant notes found in the collection.";
 
-    const notesJsonForAI =
-      filteredResults.length > 0
-        ? JSON.stringify(
-            filteredResults.map((note) => ({
-              id: note.id,
-              category: note.category || "Note",
-              label: note.label || "",
-              content: note.content,
-              similarity: note.similarity,
-            }))
-          )
-        : "[]";
+    const { model } = getAIModel({
+      model: config.ai.model,
+      provider: config.ai.provider,
+      fallbackEnabled: config.ai.fallbackEnabled,
+      ollamaModel: config.ai.ollama.model,
+    });
 
     const modelMessages = convertToModelMessages(
       messages.slice(0, -1) as Parameters<typeof convertToModelMessages>[0]
     );
-    const result = streamText({
-      model: google(config.ai.model),
-      temperature: config.ai.temperature,
-      system: `You are a helpful AI assistant that helps users find and recall information from their personal notes.
 
-USER PLAN: ${userPlan.toUpperCase()}
-${
-  userPlan === "pro"
-    ? "- This user has PRO access with advanced analytics and insights capabilities\n- You can provide deeper analysis, thinking patterns, connections between notes, and personalized insights\n- Proactively offer to analyze their notes for patterns, trends, or connections when relevant"
-    : "- This user is on the FREE plan\n- You can ONLY help them find and recall specific notes\n- DO NOT provide analysis, insights, patterns, trends, or connections between notes\n- If they ask for analysis/insights/patterns, politely say: 'I can help you find specific notes, but analysis and insights are available with the Pro plan. Would you like to search for something specific instead?'"
-}
+    const stream = createUIMessageStream({
+      execute: async ({ writer }) => {
+        const result = streamText({
+          model,
+          temperature: config.ai.temperature,
+          system: AI_PROMPTS.chat.system(userPlan),
+          messages: [
+            ...modelMessages,
+            {
+              role: "user" as const,
+              content: AI_PROMPTS.chat.userMessage(query, notesContext),
+            },
+          ],
+          async onFinish({ text }) {
+            if (conversationId) {
+              const supabase = await createClient();
 
-RESPONSE FORMAT:
-- Use markdown formatting (bold, italic, lists, etc.)
-- When referencing notes, use this EXACT format: [NOTE_REF:note_id]
-- Be conversational and helpful
-- The note cards will be displayed automatically by the UI, you just need to mention which notes are relevant
-- At the very END of your response, you MUST include a hidden metadata block in this format:
-  <!--NOTES_METADATA:${notesJsonForAI}-->
+              await supabase.from("messages").insert({
+                conversation_id: conversationId,
+                role: "user",
+                content: query,
+              });
 
-CRITICAL INSTRUCTIONS:
-1. ALWAYS check if notes are provided in the search results section below
-2. Notes may come from semantic search (similarity >=55%) or time-based queries (summaries, this week, etc.)
-3. If ANY notes are provided, you MUST include [NOTE_REF:note_id] markers
-4. Include the note reference marker where you want the note card to appear in your response
-5. After the note markers, provide a brief summary or answer based on the note contents
-6. Be direct - if notes match the query, say "I found X relevant notes:" or "Here are your notes from [time period]:"
-7. ALWAYS include the <!--NOTES_METADATA:--> block at the end (even if empty array)
-${
-  userPlan === "pro"
-    ? "8. For PRO users: Offer insights about patterns, connections between notes, thinking trends, or suggest related areas to explore based on their notes"
-    : "8. For FREE users: NEVER analyze, summarize across multiple notes, identify patterns, or provide insights. Only show matching notes and basic info about what's in them. Redirect analysis requests to Pro upgrade."
-}
+              await supabase.from("messages").insert({
+                conversation_id: conversationId,
+                role: "assistant",
+                content: text,
+              });
 
-EXAMPLE RESPONSE:
-I found your reading list! Here's what I found:
+              await supabase
+                .from("conversations")
+                .update({ updated_at: new Date().toISOString() })
+                .eq("id", conversationId);
+            }
 
-[NOTE_REF:123e4567-e89b-12d3-a456-426614174000]
+            filteredResults.forEach((note) => {
+              writer.write({
+                type: "data-note",
+                id: note.id,
+                data: {
+                  id: note.id,
+                  category: note.category || "Note",
+                  label: note.label || "",
+                  content: note.content,
+                  similarity: note.similarity,
+                },
+              });
+            });
+          },
+        });
 
-You have several biographies by Walter Isaacson on your list, including books about Elon Musk and Steve Jobs.
-${
-  userPlan === "pro"
-    ? "\n\n**Pro Insight:** I notice you're interested in tech innovators. You might want to explore connections between these figures and their impact on modern technology."
-    : ""
-}
-
-<!--NOTES_METADATA:${notesJsonForAI}-->
-
-Only say "no notes found" if the search results section explicitly says "No relevant notes found".`,
-      messages: [
-        ...modelMessages,
-        {
-          role: "user" as const,
-          content: `User query: "${query}"\n\n=== SEARCH RESULTS FROM USER'S NOTES ===\n\n${notesContext}\n\n=== END OF SEARCH RESULTS ===\n\nBased on these search results, please help the user with their query.`,
-        },
-      ],
-      async onFinish({ text }) {
-        if (conversationId) {
-          const supabase = await createClient();
-
-          await supabase.from("messages").insert({
-            conversation_id: conversationId,
-            role: "user",
-            content: query,
-          });
-
-          await supabase.from("messages").insert({
-            conversation_id: conversationId,
-            role: "assistant",
-            content: text,
-          });
-
-          await supabase
-            .from("conversations")
-            .update({ updated_at: new Date().toISOString() })
-            .eq("id", conversationId);
-        }
+        writer.merge(result.toUIMessageStream());
       },
     });
 
-    return result.toUIMessageStreamResponse({
+    return createUIMessageStreamResponse({
+      stream,
       headers: {
         "X-Credits-Remaining": String(remainingCredits),
         "X-Conversation-Id": conversationId || "",
