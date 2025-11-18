@@ -1,6 +1,7 @@
 export * from "./use-usage";
 export * from "./use-notes";
 export * from "./use-note-connections";
+export * from "./use-note-links";
 export * from "./use-tags";
 export * from "./use-conversations";
 export * from "./use-user";
