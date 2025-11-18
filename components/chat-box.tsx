@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 import { ChatHistorySidebar } from "./chat-history-sidebar";
 import { ChatMessage } from "./chat-message";
 import { ProTips } from "./pro-tips";
-import { useUsage } from "@/lib/api/hooks";
+import { useDashboard } from "@/lib/contexts/dashboard-context";
 
 export function ChatBox() {
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [input, setInput] = useState("");
-  const { data: usage } = useUsage();
+  const { usage } = useDashboard();
   const isPro = usage?.plan === "pro";
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({

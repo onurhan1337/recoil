@@ -12,13 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   useThinkingPatterns,
-  useUsage,
   useNotes,
   useAnalyses,
   useShareAnalysis,
   useUnshareAnalysis,
 } from "@/lib/api/hooks";
 import { isProPlan } from "@/lib/utils";
+import { useDashboard } from "@/lib/contexts/dashboard-context";
 import { Separator } from "@/components/ui/separator";
 import { calculateAnalyticsData } from "@/lib/utils/analytics";
 import { MetricsCards } from "@/components/analytics/metrics-cards";
@@ -34,7 +34,7 @@ import { TopCategoriesChart } from "@/components/analytics/top-categories-chart"
 import { InsightsDisplay } from "@/components/analytics/insights-display";
 
 export default function AnalyticsPage() {
-  const { data: usage } = useUsage();
+  const { usage } = useDashboard();
   const { data: notes = [] } = useNotes();
   const { data: analyses = [] } = useAnalyses();
   const isPro = isProPlan(usage?.plan);
