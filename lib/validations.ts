@@ -157,7 +157,9 @@ export const chatMessagePartSchema = z.object({
     .pipe(z.string()),
   text: z
     .preprocess((val) => (val === null ? undefined : val), z.string())
-    .pipe(z.string()),
+    .pipe(z.string())
+    .optional(),
+  state: z.string().optional(),
 });
 
 export const chatMessageSchema = z.object({

@@ -8,9 +8,9 @@ import {
   useCreateTemplate,
   useUpdateTemplate,
   useDeleteTemplate,
-  useUsage,
 } from "@/lib/api/hooks";
 import { isProPlan } from "@/lib/api/utils";
+import { useDashboard } from "@/lib/contexts/dashboard-context";
 import { toast } from "sonner";
 import { TemplateDialog } from "./template-dialog";
 import { TemplateCard } from "@/components/template-card";
@@ -25,7 +25,7 @@ export default function TemplatesPage() {
   } = useTemplatesInfinite();
 
   const templates = infiniteData?.templates || [];
-  const { data: usage } = useUsage();
+  const { usage } = useDashboard();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
   const createTemplateMutation = useCreateTemplate();

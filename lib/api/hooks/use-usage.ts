@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export const USAGE_QUERY_KEY = ["usage"] as const;
 
-export function useUsage() {
+export function useUsage(options?: { userId?: string | null }) {
   const queryClient = useQueryClient();
   const supabase = useMemo(() => createClient(), []);
 
@@ -16,42 +16,28 @@ export function useUsage() {
   });
 
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    if (!options?.userId) return;
 
-    const setupRealtimeSubscription = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      channel = supabase.channel("usage-changes").on(
+    const channel = supabase
+      .channel("usage-changes")
+      .on(
         "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
           table: "usage",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${options.userId}`,
         },
-        (payload) => {
-          const oldStatus = payload.old?.subscription_status;
-          const newStatus = payload.new?.subscription_status;
-
-          if (oldStatus !== newStatus) {
-          }
-
+        () => {
           queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
         }
-      );
-    };
-
-    setupRealtimeSubscription();
+      )
+      .subscribe();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [supabase, queryClient]);
+  }, [options?.userId, supabase, queryClient]);
 
   return query;
 }

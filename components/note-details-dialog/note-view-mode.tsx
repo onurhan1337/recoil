@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { NoteConnections } from "./note-connections";
+import { NoteManualLinks } from "./note-manual-links";
 import { NoteActionsDropdown } from "./note-actions-dropdown";
 import { NoteCollectionsManager } from "./note-collections-manager";
 import { ReminderDialog } from "@/components/reminder";
@@ -137,11 +138,15 @@ export function NoteViewMode({
         )}
 
         {isPro && (
-          <NoteConnections
-            connections={connections}
-            isLoading={connectionsLoading}
-            onConnectionClick={onConnectionClick}
-          />
+          <>
+            <NoteManualLinks noteId={note.id} onLinkClick={onConnectionClick} />
+
+            <NoteConnections
+              connections={connections}
+              isLoading={connectionsLoading}
+              onConnectionClick={onConnectionClick}
+            />
+          </>
         )}
 
         <div className="space-y-2 pt-4 border-t">

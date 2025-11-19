@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateText } from "ai";
-import { google } from "@ai-sdk/google";
 import { config } from "@/lib/config";
+import { getAIModel } from "@/lib/ai/provider";
+import { AI_PROMPTS } from "@/lib/ai/prompts";
 import { authenticateUser, errorResponse, successResponse, isProPlan } from "@/lib/api/utils";
 
 export async function POST(request: NextRequest) {
@@ -52,24 +53,17 @@ export async function POST(request: NextRequest) {
       })
       .join("\n\n---\n\n");
 
+    const { model } = getAIModel({
+      model: config.ai.model,
+      provider: config.ai.provider,
+      fallbackEnabled: config.ai.fallbackEnabled,
+      ollamaModel: config.ai.ollama.model,
+    });
+
     const result = await generateText({
-      model: google(config.ai.model),
+      model,
       temperature: 0.3,
-      prompt: `You are an AI analyst tasked with analyzing a user's note-taking patterns and providing insights about their thinking patterns, focus areas, and mental state.
-
-Below are notes from the last 10 days:
-
-${notesContext}
-
-Analyze these notes and provide:
-1. Main themes or focus areas (2-3 key topics)
-2. Thinking patterns (e.g., problem-solving, planning, learning, reflection)
-3. A brief insight about their mental state or productivity
-
-Keep your response concise (3-4 sentences max), insightful, and actionable. Use a friendly, encouraging tone.
-
-Response format:
-Your main focus has been on [themes]. You're showing [pattern type] thinking with [observation]. [Insight or recommendation].`,
+      prompt: AI_PROMPTS.thinkingPatterns.analyze(notesContext),
     });
 
     const { error: insertError } = await supabase

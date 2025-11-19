@@ -1,4 +1,4 @@
-import { LinkIcon, Loader2 } from "lucide-react";
+import { LinkIcon, Loader2, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatShortDate } from "@/lib/utils";
 import type { NoteConnection } from "@/lib/api/hooks/use-note-connections";
@@ -35,13 +35,18 @@ export function NoteConnections({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-        <LinkIcon className="h-4 w-4" />
-        <span>Connected Notes</span>
+        <Sparkles className="h-4 w-4" />
+        <span>Similar Notes</span>
+        {connections.length > 0 && (
+          <Badge variant="secondary" className="text-[10px] h-5">
+            {connections.length}
+          </Badge>
+        )}
       </div>
       {connections.length === 0 ? (
         <div className="rounded-lg border bg-muted/30 p-4 text-center">
           <p className="text-xs text-muted-foreground">
-            No connected notes found
+            No similar notes found
           </p>
         </div>
       ) : (
@@ -56,8 +61,8 @@ export function NoteConnections({
                 <div className="text-xs text-muted-foreground line-clamp-2 flex-1 min-w-0">
                   <MarkdownRenderer content={connection.content} />
                 </div>
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {Math.round(connection.similarity * 100)}% match
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium shrink-0">
+                  {Math.round(connection.similarity * 100)}%
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-2">

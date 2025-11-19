@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/check-reminders",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/check-expired-subscriptions",

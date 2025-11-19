@@ -194,6 +194,48 @@ export type Database = {
           },
         ]
       }
+      note_links: {
+        Row: {
+          id: string
+          user_id: string
+          source_note_id: string
+          target_note_id: string
+          link_type: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          source_note_id: string
+          target_note_id: string
+          link_type?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          source_note_id?: string
+          target_note_id?: string
+          link_type?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_links_source_note_id_fkey"
+            columns: ["source_note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_links_target_note_id_fkey"
+            columns: ["target_note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_templates: {
         Row: {
           category: string | null

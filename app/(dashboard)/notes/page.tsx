@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import {
   useNotesInfinite,
-  useUsage,
   useTags,
   useBulkDeleteNotes,
 } from "@/lib/api/hooks";
@@ -33,6 +32,7 @@ import { isProPlan } from "@/lib/utils";
 import { MarkdownImportDialog } from "@/components/markdown-import-dialog";
 import { BulkCollectionDialog } from "@/components/bulk-collection-dialog";
 import { toast } from "sonner";
+import { useDashboard } from "@/lib/contexts/dashboard-context";
 
 export default function NotesPage() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -52,7 +52,7 @@ export default function NotesPage() {
   } = useNotesInfinite();
 
   const allNotes = infiniteData?.notes || [];
-  const { data: usage } = useUsage();
+  const { usage } = useDashboard();
   const { data: allTags = [] } = useTags();
   const { data: collections = [] } = useCollections();
   const isPro = isProPlan(usage?.plan);

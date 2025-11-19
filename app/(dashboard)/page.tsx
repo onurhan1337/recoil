@@ -2,12 +2,12 @@
 
 import { ChatBox } from "@/components/chat-box";
 import { CheckoutSuccessToast } from "@/components/checkout-success-toast";
-import { useUser } from "@/lib/api/hooks";
+import { useDashboard } from "@/lib/contexts/dashboard-context";
 import { getTimeBasedGreeting } from "@/lib/utils";
 
 export default function DashboardPage() {
-  const { data: user } = useUser();
-  const { text } = getTimeBasedGreeting(user || null);
+  const { user } = useDashboard();
+  const { text } = getTimeBasedGreeting(user);
 
   return (
     <>

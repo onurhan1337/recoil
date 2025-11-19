@@ -3,9 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
 import { searchSchema } from "@/lib/validations";
 import { streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
 import { validateRequest } from "@/lib/validation-utils";
 import { isInsufficientCreditsError } from "@/lib/api/utils";
+import { getAIModel } from "@/lib/ai/provider";
+import { config } from "@/lib/config";
+import { AI_PROMPTS } from "@/lib/ai/prompts";
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,13 +85,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({
-        results,
-        credits_remaining: remainingCredits,
-      });
-    }
-
     const notesContext = results
       .map(
         (note: any, idx: number) =>
@@ -99,17 +94,23 @@ export async function POST(request: NextRequest) {
       )
       .join("\n\n");
 
+    const { model } = getAIModel({
+      model: config.ai.model,
+      provider: config.ai.provider,
+      fallbackEnabled: config.ai.fallbackEnabled,
+      ollamaModel: config.ai.ollama.model,
+    });
+
     const result = streamText({
-      model: openai("gpt-4o-mini"),
+      model,
       messages: [
         {
           role: "system",
-          content:
-            "You are a helpful assistant that summarizes and analyzes notes based on semantic search results. Be concise and relevant.",
+          content: AI_PROMPTS.noteSearch.system(),
         },
         {
           role: "user",
-          content: `Based on the search query "${query}", here are the most relevant notes:\n\n${notesContext}\n\nPlease provide a brief summary and highlight the key insights.`,
+          content: AI_PROMPTS.noteSearch.userMessage(query, notesContext),
         },
       ],
     });
