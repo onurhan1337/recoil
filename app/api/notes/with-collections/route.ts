@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
 
     const notesWithCollections: NoteWithCollections[] = notes.map((note) => ({
       ...note,
+      canvas_position: (note.canvas_position as { x: number; y: number } | null) || undefined,
       collections:
         noteCollections
           ?.filter((nc) => nc.note_id === note.id)

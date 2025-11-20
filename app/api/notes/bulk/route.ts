@@ -114,7 +114,10 @@ export async function POST(request: NextRequest) {
             error: noteError.message || "Failed to create note",
           });
         } else if (note) {
-          createdNotes.push(note);
+          createdNotes.push({
+            ...note,
+            canvas_position: (note.canvas_position as { x: number; y: number } | null) || undefined,
+          });
         }
       } catch (error) {
         console.error(`Error processing note ${i + 1}:`, error);

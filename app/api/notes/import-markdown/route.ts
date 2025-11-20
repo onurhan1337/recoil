@@ -123,7 +123,10 @@ export async function POST(request: NextRequest) {
         if (noteError) {
           console.error("Failed to create note:", noteError);
         } else if (note) {
-          createdNotes.push(note);
+          createdNotes.push({
+            ...note,
+            canvas_position: (note.canvas_position as { x: number; y: number } | null) || undefined,
+          });
         }
       } catch (error) {
         console.error("Error processing note:", error);
