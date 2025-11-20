@@ -275,6 +275,7 @@ export type Database = {
       notes: {
         Row: {
           archived: boolean
+          canvas_position: Json | null
           category: string | null
           content: string
           created_at: string
@@ -291,6 +292,7 @@ export type Database = {
         }
         Insert: {
           archived?: boolean
+          canvas_position?: Json | null
           category?: string | null
           content: string
           created_at?: string
@@ -307,6 +309,7 @@ export type Database = {
         }
         Update: {
           archived?: boolean
+          canvas_position?: Json | null
           category?: string | null
           content?: string
           created_at?: string
