@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useRef } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -57,13 +57,15 @@ const edgeHoverColor = "#c2410c";
 const DEBOUNCE_SAVE_MS = 1000;
 const GRID_SPACING = 400;
 
-function createInitialNodes(notes: CanvasData["notes"], selectedNoteId: string | null, connectedNodeIds: Set<string>, hasHoveredNode: boolean): CanvasNode[] {
+function createInitialNodes(notes: CanvasData["notes"], selectedNoteId: string | null, connectedNodeIds: Set<string>, hasHoveredNode: boolean, hoveredNoteId: string | null): CanvasNode[] {
   return notes.map((note, index) => {
     const gridSize = Math.ceil(Math.sqrt(notes.length));
     const row = Math.floor(index / gridSize);
     const col = index % gridSize;
 
     const isDimmed = hasHoveredNode && !connectedNodeIds.has(note.id);
+    const isConnected = hasHoveredNode && connectedNodeIds.has(note.id) && note.id !== hoveredNoteId;
+    const isFocused = hasHoveredNode && note.id === hoveredNoteId;
 
     return {
       id: note.id,
@@ -75,6 +77,8 @@ function createInitialNodes(notes: CanvasData["notes"], selectedNoteId: string |
       data: {
         note,
         isSelected: selectedNoteId === note.id,
+        isFocused,
+        isConnected,
       },
       style: isDimmed
         ? {
@@ -170,8 +174,8 @@ export function CanvasView({
   const hasHoveredNode = Boolean(isCtrlPressed && hoveredNoteId);
 
   const initialNodes = useMemo(
-    () => createInitialNodes(data.notes, selectedNoteId, connectedNodeIds, hasHoveredNode),
-    [data.notes, selectedNoteId, connectedNodeIds, hasHoveredNode]
+    () => createInitialNodes(data.notes, selectedNoteId, connectedNodeIds, hasHoveredNode, hoveredNoteId),
+    [data.notes, selectedNoteId, connectedNodeIds, hasHoveredNode, hoveredNoteId]
   );
 
   const initialEdges = useMemo(
@@ -183,11 +187,60 @@ export function CanvasView({
   const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(initialEdges);
 
   const currentNoteIds = useMemo(() => data.notes.map((n) => n.id).sort().join(","), [data.notes]);
+  const prevHighlightStateRef = useRef<string>("");
 
   if (currentNoteIds !== prevNoteIdsRef.current) {
     prevNoteIdsRef.current = currentNoteIds;
     setNodes(initialNodes);
     setEdges(initialEdges);
+  }
+
+  const highlightState = `${isCtrlPressed}-${hoveredNoteId}`;
+  if (highlightState !== prevHighlightStateRef.current) {
+    prevHighlightStateRef.current = highlightState;
+    setNodes((nds) =>
+      nds.map((node) => {
+        const isDimmed = hasHoveredNode && !connectedNodeIds.has(node.id);
+        const isConnected = hasHoveredNode && connectedNodeIds.has(node.id) && node.id !== hoveredNoteId;
+        const isFocused = hasHoveredNode && node.id === hoveredNoteId;
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            isFocused,
+            isConnected,
+          },
+          style: isDimmed
+            ? {
+                opacity: 0.25,
+                transition: "opacity 0.2s ease-in-out",
+              }
+            : undefined,
+        };
+      })
+    );
+
+    setEdges((eds) =>
+      eds.map((edge) => {
+        const activeNodeId = isCtrlPressed && hoveredNoteId ? hoveredNoteId : null;
+        const isConnected = activeNodeId
+          ? edge.source === activeNodeId || edge.target === activeNodeId
+          : false;
+        const isDimmed = activeNodeId && !isConnected;
+        const baseColor = edgeColors[edge.data?.link_type as string] || edgeColors.manual;
+
+        return {
+          ...edge,
+          style: {
+            stroke: baseColor,
+            strokeWidth: isConnected ? 3 : 1.5,
+            opacity: isDimmed ? 0.15 : 0.7,
+            transition: "all 0.2s ease-in-out",
+          },
+        };
+      })
+    );
   }
 
   const savePendingPositions = useCallback(() => {
@@ -294,6 +347,28 @@ export function CanvasView({
 
   const handleEscape = useCallback(() => {
     setSelectedNoteId(null);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Control" || e.key === "Meta") {
+        setIsCtrlPressed(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Control" || e.key === "Meta") {
+        setIsCtrlPressed(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
+    };
   }, []);
 
   useCanvasShortcuts({

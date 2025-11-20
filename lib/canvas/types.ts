@@ -25,6 +25,8 @@ export interface CanvasData {
 export interface NoteNodeData extends Record<string, unknown> {
   note: CanvasNote;
   isSelected: boolean;
+  isFocused?: boolean;
+  isConnected?: boolean;
 }
 
 export type CanvasNode = ReactFlowNode<NoteNodeData>;

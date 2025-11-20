@@ -30,7 +30,7 @@ const categoryAccents: Record<string, string> = {
 };
 
 export const NoteNode = memo(({ data }: NoteNodeProps) => {
-  const { note, isSelected } = data;
+  const { note, isSelected, isFocused, isConnected } = data;
 
   const nodeType = useMemo(
     () => nodeTypeStyles[note.category || ""] || nodeTypeStyles.default,
@@ -63,7 +63,11 @@ export const NoteNode = memo(({ data }: NoteNodeProps) => {
         "after:content-[''] after:absolute after:left-0 after:top-3 after:bottom-3 after:w-[3px] after:rounded-r-sm",
         categoryAccent,
         isSelected &&
-          "border-orange-500! ring-4 ring-orange-500/30 shadow-[0_4px_16px_rgba(249,115,22,0.2)] dark:shadow-[0_4px_16px_rgba(249,115,22,0.3)]"
+          "border-orange-500! ring-4 ring-orange-500/30 shadow-[0_4px_16px_rgba(249,115,22,0.2)] dark:shadow-[0_4px_16px_rgba(249,115,22,0.3)]",
+        isFocused &&
+          "border-orange-500! ring-4 ring-orange-500/40 shadow-[0_8px_24px_rgba(249,115,22,0.25)] dark:shadow-[0_8px_24px_rgba(249,115,22,0.4)]",
+        isConnected &&
+          "border-orange-400/70! ring-2 ring-orange-400/30 shadow-[0_4px_16px_rgba(251,146,60,0.15)]"
       )}
     >
       <Handle type="target" position={Position.Top} className="opacity-0" />
