@@ -3,18 +3,22 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState, useRef, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowUp, Search, FileText, Lightbulb, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatHistorySidebar } from "./chat-history-sidebar";
 import { ChatMessage } from "./chat-message";
 import { ProTips } from "./pro-tips";
 import { useDashboard } from "@/lib/contexts/dashboard-context";
+import { CONVERSATIONS_QUERY_KEY } from "@/lib/api/hooks/use-conversations";
 
 export function ChatBox() {
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [input, setInput] = useState("");
   const { usage } = useDashboard();
   const isPro = usage?.plan === "pro";
+  const queryClient = useQueryClient();
+
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -22,6 +26,9 @@ export function ChatBox() {
         conversation_id: conversationId,
       },
     }),
+    onFinish: () => {
+      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEY });
+    },
   });
   const isLoading = status === "submitted" || status === "streaming";
   const messagesEndRef = useRef<HTMLDivElement>(null);
