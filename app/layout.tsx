@@ -19,6 +19,14 @@ const lora = Lora({
 export const metadata: Metadata = {
   title: "Recoil - Personal Memory App",
   description: "Store and search your memories with semantic search",
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+    other: {
+      rel: "icon",
+      url: "/logo.svg",
+    },
+  },
 };
 
 configure({
