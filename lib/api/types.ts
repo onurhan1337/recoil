@@ -12,6 +12,7 @@ export interface Note {
   favorite?: boolean;
   archived?: boolean;
   collections?: Collection[];
+  canvas_position?: { x: number; y: number } | null;
 }
 
 export interface Collection {

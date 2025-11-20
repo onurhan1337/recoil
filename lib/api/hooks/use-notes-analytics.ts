@@ -12,7 +12,7 @@ export function useNotesAnalytics(notes: Note[]) {
     }, {} as Record<string, number>);
 
     const topCategories = Object.entries(categoryCount)
-      .filter(([, count]) => count >= 3)
+      .filter(([, count]) => count >= 2)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5);
 
