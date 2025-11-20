@@ -13,6 +13,7 @@ import {
   BarChart3,
   Layers,
   Library,
+  Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewNoteDialog } from "@/components/new-note-dialog";
@@ -28,6 +29,7 @@ const navigation = [
   { name: "Notes", href: "/notes", icon: BookOpen },
   { name: "Collections", href: "/collections", icon: Library },
   { name: "Templates", href: "/templates", icon: Layers },
+  { name: "Mind Map", href: "/canvas", icon: Network, badge: "PRO" },
   { name: "Analytics", href: "/analytics", icon: BarChart3, badge: "PRO" },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
@@ -165,7 +167,11 @@ export default function DashboardLayout({
             backgroundSize: "24px 24px",
           }}
         >
-          <div className="mx-auto max-w-4xl h-full p-8 lg:p-12">{children}</div>
+          {pathname === "/canvas" ? (
+            children
+          ) : (
+            <div className="mx-auto max-w-4xl h-full p-8 lg:p-12">{children}</div>
+          )}
         </main>
       </div>
     </DashboardProvider>

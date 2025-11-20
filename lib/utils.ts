@@ -72,3 +72,17 @@ export function calculateCreditPercentage(
 export function isProPlan(plan: string | undefined | null): boolean {
   return plan === "pro";
 }
+
+export function blockDefaultHotkey(event: KeyboardEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+}
+
+export function isMac() {
+  return navigator.userAgent.toLowerCase().includes("mac");
+}
+
+export function isCtrlOrCmdPressed(event: KeyboardEvent) {
+  return isMac() ? event.metaKey : event.ctrlKey;
+}

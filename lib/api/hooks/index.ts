@@ -15,3 +15,7 @@ export * from "./use-templates";
 export * from "./use-collections";
 export * from "./use-reminders";
 export * from "./use-notifications";
+export * from "./use-canvas";
+export * from "./use-canvas-positions";
+export * from "./use-canvas-links";
+export * from "./use-semantic-links";
