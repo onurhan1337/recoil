@@ -1,7 +1,7 @@
 {
   "name": "recoil",
   "version": "1.0.0",
-  "description": "",
+  "description": "Personal knowledge management app with AI-powered semantic search and interactive knowledge graph visualization",
   "main": "index.js",
   "scripts": {
     "dev": "next dev --turbopack",
@@ -13,9 +13,18 @@
     "type": "git",
     "url": "git+https://github.com/onurhan1337/recoil.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "knowledge-management",
+    "note-taking",
+    "ai",
+    "semantic-search",
+    "embeddings",
+    "nextjs",
+    "supabase",
+    "pkm"
+  ],
+  "author": "onurhan1337",
+  "license": "MIT",
   "type": "module",
   "bugs": {
     "url": "https://github.com/onurhan1337/recoil/issues"

@@ -20,6 +20,7 @@ Recoil helps you capture, organize, and retrieve your notes using semantic searc
 ## Tech Stack
 
 **Frontend**
+
 - Next.js 16 (App Router)
 - React 19
 - Tailwind CSS
@@ -27,16 +28,19 @@ Recoil helps you capture, organize, and retrieve your notes using semantic searc
 - Tiptap editor
 
 **Backend**
+
 - Next.js API routes and Server Actions
 - Supabase (PostgreSQL)
 - Zod validation
 
 **AI/ML**
+
 - Google Gemini (primary)
 - Ollama (local fallback)
 - Xenova Transformers for embeddings (all-MiniLM-L6-v2)
 
 **Services**
+
 - Supabase Auth
 - Resend (email)
 - Polar.sh (subscriptions)
@@ -122,18 +126,18 @@ The app will be available at `http://localhost:3000`.
 
 The app uses the following main tables:
 
-| Table | Purpose |
-|-------|---------|
-| notes | Note storage with embeddings |
-| note_links | Relationships between notes |
-| collections | Note groupings |
-| conversations | Chat history |
-| messages | Chat messages |
-| reminders | Scheduled notifications |
-| notifications | In-app alerts |
-| usage | Credit and subscription tracking |
-| note_templates | Reusable templates |
-| analyses | Analytics results |
+| Table          | Purpose                          |
+| -------------- | -------------------------------- |
+| notes          | Note storage with embeddings     |
+| note_links     | Relationships between notes      |
+| collections    | Note groupings                   |
+| conversations  | Chat history                     |
+| messages       | Chat messages                    |
+| reminders      | Scheduled notifications          |
+| notifications  | In-app alerts                    |
+| usage          | Credit and subscription tracking |
+| note_templates | Reusable templates               |
+| analyses       | Analytics results                |
 
 ## How It Works
 
@@ -156,11 +160,13 @@ The app uses the following main tables:
 The app uses a credit-based system:
 
 **Free Plan (500 credits/month)**
+
 - Create note: 2 credits
 - Chat message: 5 credits
 - Embedding: 1 credit per 512-character chunk
 
 **Pro Plan (10,000 credits/month)**
+
 - Create note: 1 credit
 - Chat message: 3 credits
 - Embedding: Free
@@ -191,19 +197,23 @@ recoil/
 ## API Endpoints
 
 ### Notes
+
 - `POST /api/notes` - Create note
 - `GET /api/notes` - List notes
 - `POST /api/notes/search` - Semantic search
 
 ### Chat
+
 - `POST /api/chat` - Send message with streaming response
 - `GET /api/conversations` - List conversations
 
 ### Collections
+
 - `GET /api/collections` - List collections
 - `POST /api/collections` - Create collection
 
 ### Reminders
+
 - `POST /api/reminders` - Create reminder
 - `GET /api/reminders` - List reminders
 
@@ -240,4 +250,4 @@ These endpoints require the `CRON_SECRET` for authentication.
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
