@@ -177,8 +177,10 @@ export function NoteDetailsPanel({
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Metadata</h4>
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <p>Created: {format(new Date(note.created_at), "PPp")}</p>
-                    <p>ID: {note.id}</p>
+                    <span>
+                      Created: {format(new Date(note.created_at), "PPp")}
+                    </span>
+                    <span>ID: {note.id}</span>
                   </div>
                 </div>
 

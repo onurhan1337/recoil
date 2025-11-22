@@ -45,13 +45,13 @@ const nodeTypes: NodeTypes = {
 };
 
 const edgeColors: Record<string, string> = {
-  manual: "#ea580c",
-  semantic: "#f97316",
-  collection: "#fb923c",
-  tag: "#f59e0b",
+  manual: "oklch(37.1% 0 0)",
+  semantic: "oklch(62.3% 0.214 259.815)",
+  collection: "oklch(62.3% 0.214 259.815)",
+  tag: "oklch(62.3% 0.214 259.815)",
 };
 
-const edgeHoverColor = "#c2410c";
+const edgeHoverColor = "oklch(62.3% 0.214 259.815)";
 
 const DEBOUNCE_SAVE_MS = 1000;
 const GRID_SPACING = 400;
@@ -610,8 +610,8 @@ export function CanvasView({
         <Background
           variant={BackgroundVariant.Dots}
           gap={24}
-          size={1}
-          color="rgba(15, 20, 30, 0.06)"
+          size={3}
+          color="rgba(15, 20, 30, 0.08)"
           style={{
             backgroundColor: "transparent",
           }}

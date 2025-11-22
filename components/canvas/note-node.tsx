@@ -24,9 +24,9 @@ const nodeTypeStyles: Record<string, string> = {
 };
 
 const categoryAccents: Record<string, string> = {
-  work: "after:bg-linear-to-b after:from-orange-600 after:to-transparent",
-  personal: "after:bg-linear-to-b after:from-green-500 after:to-transparent",
-  idea: "after:bg-linear-to-b after:from-orange-500 after:to-transparent",
+  work: "after:bg-linear-to-b after:from-stone-600 after:to-stone-200",
+  personal: "after:bg-linear-to-b after:from-stone-500 after:to-stone-200",
+  idea: "after:bg-linear-to-b after:from-neutral-500 after:to-neutral-200",
 };
 
 export const NoteNode = memo(({ data }: NoteNodeProps) => {
@@ -62,12 +62,9 @@ export const NoteNode = memo(({ data }: NoteNodeProps) => {
         nodeType,
         "after:content-[''] after:absolute after:left-0 after:top-3 after:bottom-3 after:w-[3px] after:rounded-r-sm",
         categoryAccent,
-        isSelected &&
-          "border-orange-500! ring-4 ring-orange-500/30 shadow-[0_4px_16px_rgba(249,115,22,0.2)] dark:shadow-[0_4px_16px_rgba(249,115,22,0.3)]",
-        isFocused &&
-          "border-orange-500! ring-4 ring-orange-500/40 shadow-[0_8px_24px_rgba(249,115,22,0.25)] dark:shadow-[0_8px_24px_rgba(249,115,22,0.4)]",
-        isConnected &&
-          "border-orange-400/70! ring-2 ring-orange-400/30 shadow-[0_4px_16px_rgba(251,146,60,0.15)]"
+        isSelected && "border-blue-500! ring-4 ring-offset-2 ring-blue-500/30",
+        isFocused && "border-blue-400! ring-1 ring-offset-2 ring-blue-500/40",
+        isConnected && "border-blue-400! ring-1 ring-offset-2 ring-blue-400/50"
       )}
     >
       <Handle type="target" position={Position.Top} className="opacity-0" />
@@ -90,14 +87,18 @@ export const NoteNode = memo(({ data }: NoteNodeProps) => {
           <div className="flex items-center gap-1 shrink-0 relative z-10">
             {note.pinned && <Pin className="h-3 w-3 opacity-40" />}
             {note.favorite && (
-              <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+              <Star className="h-3 w-3 text-stone-500 fill-stone-500" />
             )}
             {note.archived && <Archive className="h-3 w-3 opacity-40" />}
           </div>
         </div>
 
         <div className="text-[13px] text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-3 relative z-10">
-          <MarkdownRenderer content={displayContent} compact className="prose-p:text-[13px]" />
+          <MarkdownRenderer
+            content={displayContent}
+            compact
+            className="prose-p:text-[13px]"
+          />
         </div>
 
         <div className="flex items-center justify-between pt-1 text-[11px] text-zinc-500 dark:text-zinc-400 relative z-10">
