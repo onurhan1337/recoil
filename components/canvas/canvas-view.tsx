@@ -20,7 +20,6 @@ import { NoteNode } from "./note-node";
 import { CanvasControls } from "./canvas-controls";
 import { NoteDetailsPanel } from "./note-details-panel";
 import { CanvasSearchDialog } from "./canvas-search-dialog";
-import { CanvasFilters } from "./canvas-filters";
 import { useCanvasShortcuts } from "@/lib/hooks/use-canvas-shortcuts";
 import { useUpdateCanvasPositions, useCreateCanvasLink } from "@/lib/api/hooks";
 import type { CanvasData, CanvasNode, CanvasEdge } from "@/lib/canvas/types";
@@ -57,14 +56,23 @@ const edgeHoverColor = "#c2410c";
 const DEBOUNCE_SAVE_MS = 1000;
 const GRID_SPACING = 400;
 
-function createInitialNodes(notes: CanvasData["notes"], selectedNoteId: string | null, connectedNodeIds: Set<string>, hasHoveredNode: boolean, hoveredNoteId: string | null): CanvasNode[] {
+function createInitialNodes(
+  notes: CanvasData["notes"],
+  selectedNoteId: string | null,
+  connectedNodeIds: Set<string>,
+  hasHoveredNode: boolean,
+  hoveredNoteId: string | null
+): CanvasNode[] {
   return notes.map((note, index) => {
     const gridSize = Math.ceil(Math.sqrt(notes.length));
     const row = Math.floor(index / gridSize);
     const col = index % gridSize;
 
     const isDimmed = hasHoveredNode && !connectedNodeIds.has(note.id);
-    const isConnected = hasHoveredNode && connectedNodeIds.has(note.id) && note.id !== hoveredNoteId;
+    const isConnected =
+      hasHoveredNode &&
+      connectedNodeIds.has(note.id) &&
+      note.id !== hoveredNoteId;
     const isFocused = hasHoveredNode && note.id === hoveredNoteId;
 
     return {
@@ -104,7 +112,8 @@ function createInitialEdges(
 
   return filteredLinks.map((link) => {
     const isConnected = activeNodeId
-      ? link.source_note_id === activeNodeId || link.target_note_id === activeNodeId
+      ? link.source_note_id === activeNodeId ||
+        link.target_note_id === activeNodeId
       : false;
     const isDimmed = activeNodeId && !isConnected;
 
@@ -140,7 +149,8 @@ export function CanvasView({
   availableCategories,
   availableTags,
 }: CanvasViewProps) {
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [hoveredNoteId, setHoveredNoteId] = useState<string | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
@@ -148,7 +158,9 @@ export function CanvasView({
 
   const updatePositions = useUpdateCanvasPositions();
   const createLink = useCreateCanvasLink();
-  const pendingPositionUpdates = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const pendingPositionUpdates = useRef<Map<string, { x: number; y: number }>>(
+    new Map()
+  );
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevNoteIdsRef = useRef<string>("");
 
@@ -174,19 +186,47 @@ export function CanvasView({
   const hasHoveredNode = Boolean(isCtrlPressed && hoveredNoteId);
 
   const initialNodes = useMemo(
-    () => createInitialNodes(data.notes, selectedNoteId, connectedNodeIds, hasHoveredNode, hoveredNoteId),
-    [data.notes, selectedNoteId, connectedNodeIds, hasHoveredNode, hoveredNoteId]
+    () =>
+      createInitialNodes(
+        data.notes,
+        selectedNoteId,
+        connectedNodeIds,
+        hasHoveredNode,
+        hoveredNoteId
+      ),
+    [
+      data.notes,
+      selectedNoteId,
+      connectedNodeIds,
+      hasHoveredNode,
+      hoveredNoteId,
+    ]
   );
 
   const initialEdges = useMemo(
-    () => createInitialEdges(data.links, showSemanticLinks, hoveredNoteId, isCtrlPressed),
+    () =>
+      createInitialEdges(
+        data.links,
+        showSemanticLinks,
+        hoveredNoteId,
+        isCtrlPressed
+      ),
     [data.links, showSemanticLinks, hoveredNoteId, isCtrlPressed]
   );
 
-  const [nodes, setNodes, onNodesChangeInternal] = useNodesState<CanvasNode>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(initialEdges);
+  const [nodes, setNodes, onNodesChangeInternal] =
+    useNodesState<CanvasNode>(initialNodes);
+  const [edges, setEdges, onEdgesChange] =
+    useEdgesState<CanvasEdge>(initialEdges);
 
-  const currentNoteIds = useMemo(() => data.notes.map((n) => n.id).sort().join(","), [data.notes]);
+  const currentNoteIds = useMemo(
+    () =>
+      data.notes
+        .map((n) => n.id)
+        .sort()
+        .join(","),
+    [data.notes]
+  );
   const prevHighlightStateRef = useRef<string>("");
 
   if (currentNoteIds !== prevNoteIdsRef.current) {
@@ -201,7 +241,10 @@ export function CanvasView({
     setNodes((nds) =>
       nds.map((node) => {
         const isDimmed = hasHoveredNode && !connectedNodeIds.has(node.id);
-        const isConnected = hasHoveredNode && connectedNodeIds.has(node.id) && node.id !== hoveredNoteId;
+        const isConnected =
+          hasHoveredNode &&
+          connectedNodeIds.has(node.id) &&
+          node.id !== hoveredNoteId;
         const isFocused = hasHoveredNode && node.id === hoveredNoteId;
 
         return {
@@ -223,12 +266,14 @@ export function CanvasView({
 
     setEdges((eds) =>
       eds.map((edge) => {
-        const activeNodeId = isCtrlPressed && hoveredNoteId ? hoveredNoteId : null;
+        const activeNodeId =
+          isCtrlPressed && hoveredNoteId ? hoveredNoteId : null;
         const isConnected = activeNodeId
           ? edge.source === activeNodeId || edge.target === activeNodeId
           : false;
         const isDimmed = activeNodeId && !isConnected;
-        const baseColor = edgeColors[edge.data?.link_type as string] || edgeColors.manual;
+        const baseColor =
+          edgeColors[edge.data?.link_type as string] || edgeColors.manual;
 
         return {
           ...edge,
@@ -256,13 +301,19 @@ export function CanvasView({
 
   const handleNodesChange = useCallback(
     (changes: Parameters<OnNodesChange>[0]) => {
-      onNodesChangeInternal(changes as Parameters<typeof onNodesChangeInternal>[0]);
+      onNodesChangeInternal(
+        changes as Parameters<typeof onNodesChangeInternal>[0]
+      );
 
-      const selectionChanges = changes.filter((change) => change.type === "select");
+      const selectionChanges = changes.filter(
+        (change) => change.type === "select"
+      );
       if (selectionChanges.length > 0) {
         setTimeout(() => {
           const currentNodes = reactFlowInstance?.getNodes() || [];
-          const selectedIds = currentNodes.filter((node) => node.selected).map((node) => node.id);
+          const selectedIds = currentNodes
+            .filter((node) => node.selected)
+            .map((node) => node.id);
 
           if (selectedIds.length === 1) {
             setSelectedNoteId(selectedIds[0]);
@@ -308,12 +359,17 @@ export function CanvasView({
     return data.links
       .filter(
         (link) =>
-          link.source_note_id === selectedNoteId || link.target_note_id === selectedNoteId
+          link.source_note_id === selectedNoteId ||
+          link.target_note_id === selectedNoteId
       )
       .map((link) => {
         const connectedNoteId =
-          link.source_note_id === selectedNoteId ? link.target_note_id : link.source_note_id;
-        const connectedNote = data.notes.find((note) => note.id === connectedNoteId);
+          link.source_note_id === selectedNoteId
+            ? link.target_note_id
+            : link.source_note_id;
+        const connectedNote = data.notes.find(
+          (note) => note.id === connectedNoteId
+        );
         return {
           id: connectedNoteId,
           label: connectedNote?.label || null,
@@ -336,10 +392,14 @@ export function CanvasView({
       setSelectedNoteId(noteId);
       const node = nodes.find((n) => n.id === noteId);
       if (node && reactFlowInstance) {
-        reactFlowInstance.setCenter(node.position.x + 150, node.position.y + 100, {
-          zoom: 1,
-          duration: 800,
-        });
+        reactFlowInstance.setCenter(
+          node.position.x + 150,
+          node.position.y + 100,
+          {
+            zoom: 1,
+            duration: 800,
+          }
+        );
       }
     },
     [nodes, reactFlowInstance]
@@ -382,8 +442,10 @@ export function CanvasView({
     setSelectedNoteId(null);
   }, []);
 
-  const handleNodeClick = useCallback((_event: React.MouseEvent, _node: { id: string }) => {
-  }, []);
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, _node: { id: string }) => {},
+    []
+  );
 
   const handleNodeDoubleClick = useCallback(
     (_event: React.MouseEvent, node: { id: string }) => {
@@ -392,9 +454,12 @@ export function CanvasView({
     []
   );
 
-  const handleNodeMouseEnter = useCallback((_event: React.MouseEvent, node: { id: string }) => {
-    setHoveredNoteId(node.id);
-  }, []);
+  const handleNodeMouseEnter = useCallback(
+    (_event: React.MouseEvent, node: { id: string }) => {
+      setHoveredNoteId(node.id);
+    },
+    []
+  );
 
   const handleNodeMouseLeave = useCallback(() => {
     setHoveredNoteId(null);
@@ -497,7 +562,11 @@ export function CanvasView({
   }, []);
 
   return (
-    <div className="w-full h-full relative bg-white dark:bg-zinc-950" onKeyDown={handleKeyDown as unknown as React.KeyboardEventHandler} onKeyUp={handleKeyUp as unknown as React.KeyboardEventHandler}>
+    <div
+      className="w-full h-full relative bg-white dark:bg-zinc-950"
+      onKeyDown={handleKeyDown as unknown as React.KeyboardEventHandler}
+      onKeyUp={handleKeyUp as unknown as React.KeyboardEventHandler}
+    >
       <style jsx global>{`
         .react-flow__edge.custom-edge:hover .react-flow__edge-path {
           stroke: ${edgeHoverColor} !important;
@@ -549,13 +618,6 @@ export function CanvasView({
         />
       </ReactFlow>
 
-      <div className="absolute top-4 right-4 z-10">
-        <CanvasFilters
-          availableCategories={availableCategories}
-          availableTags={availableTags}
-        />
-      </div>
-
       <CanvasControls
         reactFlowInstance={reactFlowInstance}
         showSemanticLinks={showSemanticLinks}
@@ -565,6 +627,8 @@ export function CanvasView({
         isGenerating={isGenerating}
         onApplyLayout={handleApplyLayout}
         onResetPositions={handleResetPositions}
+        availableCategories={availableCategories}
+        availableTags={availableTags}
       />
 
       {selectedNote && selectedNoteIds.size === 1 && (
@@ -579,7 +643,9 @@ export function CanvasView({
         <div className="absolute top-4 left-4 z-20">
           <div className="bg-background/95 backdrop-blur-xl border rounded-xl shadow-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="text-sm font-medium">{selectedNoteIds.size} nodes selected</div>
+              <div className="text-sm font-medium">
+                {selectedNoteIds.size} nodes selected
+              </div>
             </div>
             <div className="text-xs text-muted-foreground">
               Use Ctrl/Cmd+A to select all, or drag to select multiple nodes
