@@ -65,6 +65,143 @@ export function MarkdownRenderer({
               {children}
             </h3>
           ),
+          p: ({ children }) => (
+            <p
+              className={cn(
+                "mb-2 last:mb-0",
+                compact ? "text-sm" : "text-base"
+              )}
+            >
+              {children}
+            </p>
+          ),
+          ul: ({ children }) => (
+            <ul
+              className={cn(
+                "list-disc list-outside ml-4 space-y-1 my-2",
+                compact ? "text-sm" : "text-base"
+              )}
+            >
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol
+              className={cn(
+                "list-decimal list-outside ml-4 space-y-1 my-2",
+                compact ? "text-sm" : "text-base"
+              )}
+            >
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => (
+            <li
+              className={cn(
+                "leading-relaxed",
+                compact ? "text-sm" : "text-base"
+              )}
+            >
+              {children}
+            </li>
+          ),
+          strong: ({ children }) => (
+            <strong
+              className={cn("font-semibold", compact ? "text-sm" : "text-base")}
+            >
+              {children}
+            </strong>
+          ),
+          em: ({ children }) => (
+            <em className={cn("italic", compact ? "text-sm" : "text-base")}>
+              {children}
+            </em>
+          ),
+          code: ({ children }) => (
+            <code
+              className={cn(
+                "bg-secondary/50 px-1.5 py-0.5 border border-border text-foreground",
+                compact ? "text-sm" : "text-base"
+              )}
+            >
+              {children}
+            </code>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote
+              className={cn(
+                "my-4 flex items-start text-muted-foreground tracking-tight",
+                compact ? "text-xs" : "text-sm"
+              )}
+            >
+              <div className="flex items-center w-4 mr-4">↪</div>
+              <div className="w-full">{children}</div>
+            </blockquote>
+          ),
+          hr: ({ children }) => (
+            <hr
+              className={cn(
+                "border-t-2 border-dashed border-border",
+                compact ? "text-sm" : "text-base"
+              )}
+            />
+          ),
+          table: ({ children }) => (
+            <table className={cn("w-full", compact ? "text-sm" : "text-base")}>
+              {children}
+            </table>
+          ),
+          tbody: ({ children }) => (
+            <tbody
+              className={cn(
+                "divide-y divide-stone-200",
+                compact ? "text-sm" : "text-base"
+              )}
+            >
+              {children}
+            </tbody>
+          ),
+          thead: ({ children }) => (
+            <thead
+              className={cn("bg-stone-100", compact ? "text-sm" : "text-base")}
+            >
+              {children}
+            </thead>
+          ),
+          tr: ({ children }) => (
+            <tr
+              className={cn(
+                "hover:bg-stone-50",
+                compact ? "text-sm" : "text-base"
+              )}
+            >
+              {children}
+            </tr>
+          ),
+          td: ({ children }) => (
+            <td
+              className={cn("px-4 py-2.5", compact ? "text-sm" : "text-base")}
+            >
+              {children}
+            </td>
+          ),
+          th: ({ children }) => (
+            <th
+              className={cn(
+                "px-4 py-2.5 font-semibold",
+                compact ? "text-sm" : "text-base"
+              )}
+            >
+              {children}
+            </th>
+          ),
+          tfoot: ({ children }) => (
+            <tfoot
+              className={cn("bg-stone-100", compact ? "text-sm" : "text-base")}
+            >
+              {children}
+            </tfoot>
+          ),
         }}
       >
         {content}
