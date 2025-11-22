@@ -23,8 +23,8 @@ export function MarkdownRenderer({
         "prose-p:leading-relaxed prose-p:text-foreground",
         "prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 prose-a:decoration-2 prose-a:decoration-foreground/20 hover:prose-a:decoration-foreground/40",
         "prose-strong:text-foreground prose-strong:font-semibold",
-        "prose-code:bg-secondary/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:border prose-code:border-border prose-code:text-foreground prose-code:before:content-[''] prose-code:after:content-['']",
-        "prose-pre:bg-secondary/30 prose-pre:border-2 prose-pre:border-border",
+        "prose-code:bg-secondary/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-foreground prose-code:before:content-[''] prose-code:after:content-[''] prose-code:break-all prose-code:max-w-full",
+        "prose-pre:bg-secondary/30 prose-pre:overflow-x-auto prose-pre:max-w-full",
         "prose-blockquote:border-l-4 prose-blockquote:border-foreground/20 prose-blockquote:pl-4 prose-blockquote:italic",
         "prose-ul:list-disc prose-ol:list-decimal",
         "prose-li:text-foreground prose-li:marker:text-muted-foreground",
@@ -117,15 +117,30 @@ export function MarkdownRenderer({
               {children}
             </em>
           ),
-          code: ({ children }) => (
-            <code
+          code: ({ children, className: codeClassName }) => {
+            const isInline = !codeClassName?.includes("language");
+            return (
+              <code
+                className={cn(
+                  "bg-secondary/50 px-1.5 py-0.5 text-foreground",
+                  isInline && "break-all max-w-full",
+                  compact ? "text-sm" : "text-base",
+                  codeClassName
+                )}
+              >
+                {children}
+              </code>
+            );
+          },
+          pre: ({ children }) => (
+            <pre
               className={cn(
-                "bg-secondary/50 px-1.5 py-0.5 border border-border text-foreground",
+                "bg-secondary/30 rounded-md p-4 overflow-x-auto max-w-full",
                 compact ? "text-sm" : "text-base"
               )}
             >
               {children}
-            </code>
+            </pre>
           ),
           blockquote: ({ children }) => (
             <blockquote
