@@ -68,9 +68,9 @@ export function NoteDetailsPanel({
                     </h3>
                   )}
                   {note.label && (
-                    <p className="text-sm text-muted-foreground font-lora">
+                    <span className="text-sm text-muted-foreground font-lora">
                       <MarkdownRenderer content={note.label} />
-                    </p>
+                    </span>
                   )}
                 </div>
 
