@@ -350,6 +350,19 @@ export function CanvasView({
           note={selectedNote}
           onClose={clearSelection}
           connectedNotes={connectedNotes}
+          onFocusNode={(nodeId) => {
+            const node = nodes.find((n) => n.id === nodeId);
+            if (node && reactFlowInstance) {
+              reactFlowInstance.setCenter(
+                node.position.x + 150,
+                node.position.y + 100,
+                {
+                  zoom: 1,
+                  duration: 800,
+                }
+              );
+            }
+          }}
         />
       )}
 
