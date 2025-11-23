@@ -152,9 +152,9 @@ export function KnowledgeGraph({
 
   const getTextOpacity = useCallback(
     (globalScale: number) => {
-      const threshold = settings.display.textFadeThreshold;
+      const threshold = Math.min(settings.display.textFadeThreshold, 0.99);
       if (globalScale < threshold) return 0;
-      if (globalScale > 1) return 1;
+      if (globalScale >= 1) return 1;
       return (globalScale - threshold) / (1 - threshold);
     },
     [settings.display.textFadeThreshold]
@@ -194,7 +194,6 @@ export function KnowledgeGraph({
         linkDirectionalParticleSpeed={PARTICLE_SETTINGS.speed}
         onNodeClick={handleNodeClick}
         onNodeHover={handleNodeHover}
-        onNodeRightClick={handleNodeClick}
         nodeCanvasObject={(
           node: GraphNode,
           ctx: CanvasRenderingContext2D,

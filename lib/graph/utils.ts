@@ -1,7 +1,13 @@
 import { stripMarkdown } from "@/lib/utils";
 import type { Note } from "@/lib/api/types";
 import type { CanvasLink } from "@/lib/canvas/types";
-import type { GraphNode, GraphLink, GraphData, GraphSettings, GraphNodeData } from "./types";
+import type {
+  GraphNode,
+  GraphLink,
+  GraphData,
+  GraphSettings,
+  GraphNodeData,
+} from "./types";
 import { CATEGORY_COLORS } from "./constants";
 
 export function calculateConnectionCounts(
@@ -20,16 +26,13 @@ export function filterNotesBySearch(notes: Note[], query: string): Note[] {
   const lowerQuery = query.toLowerCase();
   return notes.filter(
     (note) =>
-      note.title?.toLowerCase().includes(lowerQuery) ||
-      note.label?.toLowerCase().includes(lowerQuery) ||
-      note.content?.toLowerCase().includes(lowerQuery)
+      (note.title ?? "").toLowerCase().includes(lowerQuery) ||
+      (note.label ?? "").toLowerCase().includes(lowerQuery) ||
+      (note.content ?? "").toLowerCase().includes(lowerQuery)
   );
 }
 
-export function filterOrphanNotes(
-  notes: Note[],
-  links: CanvasLink[]
-): Note[] {
+export function filterOrphanNotes(notes: Note[], links: CanvasLink[]): Note[] {
   const linkedNoteIds = new Set<string>();
   links.forEach((link) => {
     linkedNoteIds.add(link.source_note_id);
@@ -105,4 +108,3 @@ export function createGraphData(
 
   return { nodes, links: graphLinks };
 }
-
