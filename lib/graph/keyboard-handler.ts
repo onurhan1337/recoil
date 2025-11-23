@@ -11,14 +11,76 @@ interface UseGraphKeyboardOptions {
   enableOnFormTags?: boolean;
 }
 
+export interface UseGraphKeyboardReturn {
+  setCenter: (center: { x: number; y: number }) => void;
+}
+
+/**
+ * Attempts to get the current center position of the graph viewport.
+ * Since centerAt() is setter-only, we use screen2GraphCoords to convert
+ * the viewport center to graph coordinates.
+ *
+ * @param graphRef - Reference to the ForceGraph2D instance
+ * @returns The center position in graph coordinates, or null if it cannot be determined
+ */
+export function getGraphCenter(
+  graphRef: ForceGraph2DRef
+): { x: number; y: number } | null {
+  if (!graphRef.current) return null;
+
+  try {
+    // Access the internal container to find the canvas element
+    const graphInstance = graphRef.current as unknown as {
+      _container?: {
+        querySelector?: (selector: string) => HTMLElement | null;
+      };
+    };
+    const canvasElement = graphInstance._container?.querySelector?.("canvas");
+    const canvas = canvasElement as HTMLCanvasElement | null;
+
+    if (!canvas || !graphRef.current.screen2GraphCoords) {
+      return null;
+    }
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const center = graphRef.current.screen2GraphCoords(centerX, centerY);
+
+    if (
+      center &&
+      typeof center.x === "number" &&
+      typeof center.y === "number"
+    ) {
+      return { x: center.x, y: center.y };
+    }
+  } catch (error) {
+    // Silently fail - will fall back to {x: 0, y: 0}
+  }
+
+  return null;
+}
+
 export function useGraphKeyboard({
   graphRef,
   panSpeed = KEYBOARD_SPEEDS.pan,
   zoomSpeed = KEYBOARD_SPEEDS.zoom,
   enabled = true,
   enableOnFormTags = false,
-}: UseGraphKeyboardOptions) {
+}: UseGraphKeyboardOptions): UseGraphKeyboardReturn {
   const centerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const centerInitializedRef = useRef(false);
+
+  /**
+   * Set the center position for keyboard panning.
+   * This should be called from onEngineTick in the ForceGraph2D component
+   * to initialize the center with the graph's actual position.
+   */
+  const setCenter = useCallback((center: { x: number; y: number }) => {
+    if (!centerInitializedRef.current) {
+      centerRef.current = center;
+      centerInitializedRef.current = true;
+    }
+  }, []);
 
   /**
    * Pan the graph by the given delta
@@ -113,4 +175,6 @@ export function useGraphKeyboard({
     { enabled, enableOnFormTags, preventDefault: true },
     [panBy, panSpeed, enableOnFormTags]
   );
+
+  return { setCenter };
 }

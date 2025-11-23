@@ -9,7 +9,7 @@ import type {
   ForceGraph2DRef,
 } from "@/lib/graph/types";
 import { createGraphData } from "@/lib/graph/utils";
-import { useGraphKeyboard } from "@/lib/graph/keyboard-handler";
+import { useGraphKeyboard, getGraphCenter } from "@/lib/graph/keyboard-handler";
 import { drawNode } from "@/lib/graph/node-renderer";
 import {
   SELECTED_NODE_COLOR,
@@ -118,7 +118,7 @@ export function KnowledgeGraph({
     }
   }, [applyForces]);
 
-  useGraphKeyboard({
+  const { setCenter } = useGraphKeyboard({
     graphRef,
     enabled: mounted,
   });
@@ -224,6 +224,10 @@ export function KnowledgeGraph({
             applyForces();
             graphRef.current.d3ReheatSimulation();
             forcesInitializedRef.current = true;
+          }
+          const center = getGraphCenter(graphRef);
+          if (center) {
+            setCenter(center);
           }
         }}
       />
