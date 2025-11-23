@@ -194,7 +194,12 @@ export function KnowledgeGraph({
   }
 
   return (
-    <div ref={containerRef} className="w-full h-full relative">
+    <div
+      ref={containerRef}
+      className="w-full h-full relative"
+      role="region"
+      aria-label="Knowledge graph visualization"
+    >
       <ForceGraph2D
         ref={graphRef as never}
         graphData={graphData as never}
