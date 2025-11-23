@@ -6,10 +6,11 @@ export const CANVAS_QUERY_KEY = ["canvas"] as const;
 
 interface UseCanvasOptions {
   includeSemanticLinks?: boolean;
+  enabled?: boolean;
 }
 
 export function useCanvas(options: UseCanvasOptions = {}) {
-  const { includeSemanticLinks = false } = options;
+  const { includeSemanticLinks = false, enabled = true } = options;
 
   return useQuery({
     queryKey: [...CANVAS_QUERY_KEY, { includeSemanticLinks }],
@@ -23,6 +24,7 @@ export function useCanvas(options: UseCanvasOptions = {}) {
       return apiGet<CanvasData>(url);
     },
     staleTime: 30000,
+    enabled,
   });
 }
 

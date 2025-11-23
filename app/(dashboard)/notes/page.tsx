@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   MessageCircle,
@@ -9,7 +9,9 @@ import {
   FileUp,
   Trash2,
   FolderPlus,
+  Network,
 } from "lucide-react";
+import { useQueryState, parseAsString } from "nuqs";
 import {
   useNotesInfinite,
   useTags,
@@ -21,6 +23,8 @@ import { useNotesAnalytics } from "@/lib/api/hooks/use-notes-analytics";
 import { NotesFilters } from "@/components/notes-filters";
 import { NotesAnalytics } from "@/components/notes-analytics";
 import { NotesGrid } from "@/components/notes-grid";
+import { NoteDetailsDialog } from "@/components/note-details-dialog";
+import { GraphViewPanel } from "@/components/graph-view-panel";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -33,12 +37,18 @@ import { MarkdownImportDialog } from "@/components/markdown-import-dialog";
 import { BulkCollectionDialog } from "@/components/bulk-collection-dialog";
 import { toast } from "sonner";
 import { useDashboard } from "@/lib/contexts/dashboard-context";
+import type { Note } from "@/lib/api/types";
 
 export default function NotesPage() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
   const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(
     new Set()
+  );
+  const [isGraphViewOpen, setIsGraphViewOpen] = useState(false);
+  const [noteIdParam, setNoteIdParam] = useQueryState(
+    "noteId",
+    parseAsString.withDefault("").withOptions({ shallow: false })
   );
 
   const bulkDelete = useBulkDeleteNotes();
@@ -73,6 +83,31 @@ export default function NotesPage() {
   const favoriteNotes = notes.filter((note) => note.favorite);
   const nonFavoriteNotes = notes.filter((note) => !note.favorite);
   const pinnedCount = allNotes.filter((note) => note.pinned).length;
+
+  const selectedNoteFromUrl = useMemo(() => {
+    if (!noteIdParam || isLoading) return null;
+    return allNotes.find((note) => note.id === noteIdParam) || null;
+  }, [noteIdParam, allNotes, isLoading]);
+
+  useEffect(() => {
+    if (noteIdParam && !isLoading && !selectedNoteFromUrl) {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      } else if (!hasNextPage && allNotes.length > 0) {
+        setNoteIdParam("");
+        toast.error("Note not found or you don't have access to it");
+      }
+    }
+  }, [
+    noteIdParam,
+    selectedNoteFromUrl,
+    allNotes.length,
+    isLoading,
+    setNoteIdParam,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  ]);
 
   const handleNoteSelect = (noteId: string, selected: boolean) => {
     setSelectedNoteIds((prev) => {
@@ -113,18 +148,37 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <MarkdownImportDialog
-        open={isImportDialogOpen}
-        onOpenChange={setIsImportDialogOpen}
-      />
+    <GraphViewPanel
+      open={isGraphViewOpen}
+      onOpenChange={setIsGraphViewOpen}
+      notes={allNotes}
+    >
+      <div className="space-y-8">
+        <MarkdownImportDialog
+          open={isImportDialogOpen}
+          onOpenChange={setIsImportDialogOpen}
+        />
 
-      <BulkCollectionDialog
-        open={isCollectionDialogOpen}
-        onOpenChange={setIsCollectionDialogOpen}
-        selectedNoteIds={Array.from(selectedNoteIds)}
-        onSuccess={() => setSelectedNoteIds(new Set())}
-      />
+        <BulkCollectionDialog
+          open={isCollectionDialogOpen}
+          onOpenChange={setIsCollectionDialogOpen}
+          selectedNoteIds={Array.from(selectedNoteIds)}
+          onSuccess={() => setSelectedNoteIds(new Set())}
+        />
+
+        {selectedNoteFromUrl && (
+          <NoteDetailsDialog
+            note={selectedNoteFromUrl}
+            pinnedCount={pinnedCount}
+            trigger={null}
+            open={Boolean(noteIdParam)}
+            onOpenChange={(open) => {
+              if (!open) {
+                setNoteIdParam("");
+              }
+            }}
+          />
+        )}
 
       <div className="flex items-start justify-between">
         <div>
@@ -207,17 +261,30 @@ export default function NotesPage() {
       )}
 
       {allNotes.length > 0 && (
-        <NotesFilters
-          filters={filters}
-          search={search}
-          setSearch={setSearch}
-          onFiltersChange={setFilters}
-          availableCategories={availableCategories as string[]}
-          availableTags={allTags}
-          availableCollections={collections}
-          hasActiveFilters={!!hasActiveFilters}
-          onClearFilters={clearFilters}
-        />
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <NotesFilters
+              filters={filters}
+              search={search}
+              setSearch={setSearch}
+              onFiltersChange={setFilters}
+              availableCategories={availableCategories as string[]}
+              availableTags={allTags}
+              availableCollections={collections}
+              hasActiveFilters={!!hasActiveFilters}
+              onClearFilters={clearFilters}
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsGraphViewOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Network className="h-4 w-4" />
+            Graph View
+          </Button>
+        </div>
       )}
 
       <NotesAnalytics analytics={analytics} isPro={isPro} />
@@ -318,6 +385,7 @@ export default function NotesPage() {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </GraphViewPanel>
   );
 }

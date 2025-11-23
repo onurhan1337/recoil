@@ -1,11 +1,10 @@
 "use client";
 
-import { X, Star, Pin, Archive, ExternalLink } from "lucide-react";
+import { X, Star, Pin, Archive, ExternalLink, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import ReactMarkdown from "react-markdown";
 import type { CanvasNote } from "@/lib/canvas/types";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -22,12 +21,14 @@ interface NoteDetailsPanelProps {
     category: string | null;
     linkType: string;
   }>;
+  onFocusNode?: (nodeId: string) => void;
 }
 
 export function NoteDetailsPanel({
   note,
   onClose,
   connectedNotes = [],
+  onFocusNode,
 }: NoteDetailsPanelProps) {
   return (
     <AnimatePresence>
@@ -163,10 +164,19 @@ export function NoteDetailsPanel({
                               </Badge>
                             </CardTitle>
                             {connectedNote.category && (
-                              <p className="text-[10px] text-muted-foreground">
+                              <p className="text-[10px] text-muted-foreground mb-2">
                                 {connectedNote.category}
                               </p>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs w-fit justify-start px-2 cursor-pointer"
+                              onClick={() => onFocusNode?.(connectedNote.id)}
+                            >
+                              <Network className="h-3 w-3 mr-1" />
+                              View in Canvas
+                            </Button>
                           </CardHeader>
                         </Card>
                       ))}
