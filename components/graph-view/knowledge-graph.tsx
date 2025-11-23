@@ -117,7 +117,7 @@ export function KnowledgeGraph({
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [isMounted(), graphData.nodes.length, applyForces]);
+  }, [graphData.nodes.length, applyForces]);
 
   useEffect(() => {
     if (forcesInitializedRef.current) {
