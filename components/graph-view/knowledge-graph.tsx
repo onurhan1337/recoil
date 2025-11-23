@@ -19,6 +19,7 @@ import {
   ARROW_SETTINGS,
   GRAPH_SETTINGS,
 } from "@/lib/graph/constants";
+import { useIsMounted } from "usehooks-ts";
 
 export function KnowledgeGraph({
   notes,
@@ -31,14 +32,10 @@ export function KnowledgeGraph({
   const graphRef = useRef<ForceGraph2DRef["current"]>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState(DEFAULT_DIMENSIONS);
-  const [mounted, setMounted] = useState(false);
+  const isMounted = useIsMounted();
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const forcesInitializedRef = useRef(false);
   const { theme } = useTheme();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -51,8 +48,21 @@ export function KnowledgeGraph({
     };
 
     updateDimensions();
+
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions();
+    });
+
+    resizeObserver.observe(containerRef.current);
+
     window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateDimensions);
+    };
   }, []);
 
   const graphData = useMemo(() => {
@@ -97,7 +107,7 @@ export function KnowledgeGraph({
   }, [settings.forces]);
 
   useEffect(() => {
-    if (mounted && graphData.nodes.length > 0) {
+    if (isMounted() && graphData.nodes.length > 0) {
       const timer = setTimeout(() => {
         applyForces();
         if (graphRef.current && !forcesInitializedRef.current) {
@@ -107,7 +117,7 @@ export function KnowledgeGraph({
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [mounted, graphData.nodes.length, applyForces]);
+  }, [isMounted(), graphData.nodes.length, applyForces]);
 
   useEffect(() => {
     if (forcesInitializedRef.current) {
@@ -120,8 +130,20 @@ export function KnowledgeGraph({
 
   const { setCenter } = useGraphKeyboard({
     graphRef,
-    enabled: mounted,
+    enabled: isMounted(),
   });
+
+  const onEngineTick = useCallback(() => {
+    if (!forcesInitializedRef.current && graphRef.current) {
+      applyForces();
+      graphRef.current.d3ReheatSimulation();
+      forcesInitializedRef.current = true;
+    }
+    const center = getGraphCenter(graphRef);
+    if (center) {
+      setCenter(center);
+    }
+  }, [applyForces, getGraphCenter, setCenter]);
 
   const isDark = theme === "dark";
   const backgroundColor = isDark ? "#09090b" : "#ffffff";
@@ -160,7 +182,7 @@ export function KnowledgeGraph({
     [settings.display.textFadeThreshold]
   );
 
-  if (!mounted) {
+  if (!isMounted()) {
     return (
       <div
         ref={containerRef}
@@ -219,17 +241,7 @@ export function KnowledgeGraph({
           });
         }}
         cooldownTicks={GRAPH_SETTINGS.cooldownTicks}
-        onEngineTick={() => {
-          if (!forcesInitializedRef.current && graphRef.current) {
-            applyForces();
-            graphRef.current.d3ReheatSimulation();
-            forcesInitializedRef.current = true;
-          }
-          const center = getGraphCenter(graphRef);
-          if (center) {
-            setCenter(center);
-          }
-        }}
+        onEngineTick={onEngineTick}
       />
     </div>
   );
