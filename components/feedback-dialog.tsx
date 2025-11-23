@@ -68,27 +68,27 @@ export function FeedbackDialog({ trigger }: FeedbackDialogProps) {
     >
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="sm" className="w-full justify-start">
+          <Button variant="ghost" size="sm" className="w-full justify-start hover:bg-muted/50">
             <MessageSquare className="h-4 w-4 mr-2" />
             Feedback
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-lg p-0 flex flex-col max-h-[90vh]">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle className="text-xl font-lora font-semibold mb-3">
+        <DialogHeader className="px-6 pt-6 pb-5 border-b">
+          <DialogTitle className="text-lg font-lora font-medium mb-4">
             Share Your Feedback
           </DialogTitle>
-          <div className="flex items-center gap-0.5 bg-muted/50 p-0.5 rounded-lg w-fit">
+          <div className="flex items-center gap-1">
             {feedbackTypes.map((type) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => setFeedbackType(type)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                   feedbackType === type
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 {type}
@@ -97,13 +97,13 @@ export function FeedbackDialog({ trigger }: FeedbackDialogProps) {
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 pt-4 pb-5">
+        <div className="flex-1 overflow-y-auto px-6 pt-6 pb-5">
           <div className="space-y-6">
             <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground font-lora">
+              <label className="text-sm text-foreground font-lora">
                 How would you rate your experience?
               </label>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((star) => {
                   const isActive = star <= (hoveredRating || rating);
                   return (
@@ -113,17 +113,13 @@ export function FeedbackDialog({ trigger }: FeedbackDialogProps) {
                       onClick={() => setRating(star)}
                       onMouseEnter={() => setHoveredRating(star)}
                       onMouseLeave={() => setHoveredRating(0)}
-                      className={`transition-all duration-200 ${
-                        isActive
-                          ? "scale-105"
-                          : "hover:scale-105 opacity-60 hover:opacity-80"
-                      }`}
+                      className="transition-opacity duration-150"
                     >
                       <Star
-                        className={`h-7 w-7 transition-all ${
+                        className={`h-6 w-6 transition-colors ${
                           isActive
                             ? "fill-foreground text-foreground"
-                            : "text-muted-foreground"
+                            : "text-muted-foreground/40 hover:text-muted-foreground/60"
                         }`}
                         strokeWidth={isActive ? 0 : 1.5}
                       />
@@ -134,28 +130,36 @@ export function FeedbackDialog({ trigger }: FeedbackDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground font-lora">
-                Additional Comments (Optional)
+              <label className="text-sm text-foreground font-lora">
+                Additional Comments
+                <span className="text-muted-foreground font-normal ml-1">(Optional)</span>
               </label>
               <Textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Tell us more about your experience..."
-                className="min-h-[200px] font-lora text-sm leading-relaxed resize-none"
+                className="min-h-[120px] font-lora text-sm resize-none"
                 maxLength={1000}
               />
-              <p className="text-xs text-muted-foreground text-right font-lora">
+              <p className="text-xs text-muted-foreground text-right">
                 {comment.length}/1000
               </p>
             </div>
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t flex items-center justify-end">
+        <div className="px-6 py-4 border-t flex items-center justify-end gap-3">
+          <Button
+            variant="ghost"
+            onClick={handleClose}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit}
             disabled={submitFeedbackMutation.isPending || rating === 0}
-            className="font-lora bg-foreground text-background hover:bg-foreground/90 h-9 px-6 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-lora h-9 px-5 disabled:opacity-50"
           >
             {submitFeedbackMutation.isPending ? (
               <>

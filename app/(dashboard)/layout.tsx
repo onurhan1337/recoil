@@ -70,23 +70,27 @@ export default function DashboardLayout({
   }
 
   return (
-    <DashboardProvider user={user ?? null} usage={usage ?? null} isLoading={isLoading}>
+    <DashboardProvider
+      user={user ?? null}
+      usage={usage ?? null}
+      isLoading={isLoading}
+    >
       <div className="flex h-screen bg-background">
         <NewNoteDialog
           open={isNewNoteDialogOpen}
           onOpenChange={setIsNewNoteDialogOpen}
         />
 
-        <aside className="flex w-64 flex-col border-r">
-          <div className="flex h-14 items-center justify-between px-2 border-b bg-stone-100">
+        <aside className="flex w-64 flex-col border-r bg-background">
+          <div className="flex h-14 items-center justify-between px-3 border-b">
             <Link
               href="/"
-              className="flex items-center gap-1 font-semibold text-sm"
+              className="flex items-center gap-2 font-semibold text-sm hover:opacity-80 transition-opacity"
             >
               <img
                 src="/logo.svg"
                 alt="Recoil"
-                className="h-12 w-12 object-cover"
+                className="h-10 w-10 object-cover"
               />
               <span className="text-xl font-lora">Recoil</span>
             </Link>
@@ -96,10 +100,43 @@ export default function DashboardLayout({
           <div className="p-3 border-b">
             <button
               onClick={() => setIsNewNoteDialogOpen(true)}
-              className="group w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full bg-[linear-gradient(to_right,rgb(41_37_36),rgb(68_64_60),rgb(41_37_36))] hover:bg-[linear-gradient(to_right,rgb(28_25_23),rgb(41_37_36),rgb(28_25_23))] text-white shadow-[0_1px_2px_0_rgba(0,0,0,0.05),0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, 
+                  rgb(40, 20, 25), 
+                  rgb(50, 25, 30), 
+                  rgb(60, 30, 35), 
+                  rgb(70, 35, 40), 
+                  rgb(60, 30, 35), 
+                  rgb(50, 25, 30), 
+                  rgb(40, 20, 25)
+                )`,
+              }}
+              className="metallic-noise-button group w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full text-white border border-[rgba(255,255,255,0.15)] shadow-[0_2px_4px_0_rgba(0,0,0,0.5),0_1px_0_0_rgba(255,255,255,0.1)_inset,0_-1px_0_0_rgba(0,0,0,0.3)_inset,0_0_20px_rgba(150,50,50,0.25)] hover:border-[rgba(255,255,255,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.6),0_1px_0_0_rgba(255,255,255,0.15)_inset,0_-1px_0_0_rgba(0,0,0,0.4)_inset,0_0_30px_rgba(180,60,60,0.35)] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer relative overflow-hidden"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = `linear-gradient(to right, 
+                  rgb(45, 25, 30), 
+                  rgb(55, 30, 35), 
+                  rgb(65, 35, 40), 
+                  rgb(75, 40, 45), 
+                  rgb(65, 35, 40), 
+                  rgb(55, 30, 35), 
+                  rgb(45, 25, 30)
+                )`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = `linear-gradient(to right, 
+                  rgb(40, 20, 25), 
+                  rgb(50, 25, 30), 
+                  rgb(60, 30, 35), 
+                  rgb(70, 35, 40), 
+                  rgb(60, 30, 35), 
+                  rgb(50, 25, 30), 
+                  rgb(40, 20, 25)
+                )`;
+              }}
             >
-              <Plus className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
-              New Note
+              <Plus className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 relative z-10" />
+              <span className="relative z-10">New Note</span>
             </button>
           </div>
 
@@ -112,20 +149,25 @@ export default function DashboardLayout({
                     key={item.name}
                     href={item.href}
                     className={cn(
-                      "flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-md transition-colors",
+                      "flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-md transition-all duration-200",
                       isActive
-                        ? "bg-muted font-medium"
+                        ? "bg-muted font-medium text-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      <item.icon className="h-4 w-4" />
+                      <item.icon
+                        className={cn(
+                          "h-4 w-4 transition-colors",
+                          isActive ? "text-foreground" : ""
+                        )}
+                      />
                       {item.name}
                     </div>
                     {item.badge && (
                       <Badge
                         variant="secondary"
-                        className="text-[10px] px-1.5 py-0 h-4"
+                        className="text-[10px] px-1.5 py-0 h-4 font-semibold"
                       >
                         {item.badge}
                       </Badge>
@@ -136,8 +178,8 @@ export default function DashboardLayout({
             </div>
           </nav>
 
-          <div className="border-t p-3 space-y-3">
-            <div className="rounded-md bg-muted/50 p-3">
+          <div className="border-t border-border/50 p-3 space-y-2.5">
+            <div className="rounded-md bg-muted/50 p-3 border border-border/30">
               <CreditDisplay
                 credits={usage?.credits ?? 0}
                 plan={usage?.plan ?? "free"}
@@ -145,12 +187,12 @@ export default function DashboardLayout({
                 showUpgrade={true}
               />
             </div>
-            <div className="pt-2">
+            <div>
               <FeedbackDialog />
             </div>
             <button
               onClick={handleSignOut}
-              className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+              className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors py-1.5 rounded-md hover:bg-muted/30"
             >
               Sign out
             </button>
@@ -170,7 +212,9 @@ export default function DashboardLayout({
           {pathname === "/canvas" ? (
             children
           ) : (
-            <div className="mx-auto max-w-4xl h-full p-8 lg:p-12">{children}</div>
+            <div className="mx-auto max-w-4xl h-full p-8 lg:p-12">
+              {children}
+            </div>
           )}
         </main>
       </div>

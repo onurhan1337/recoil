@@ -52,26 +52,27 @@ export function NewNoteDialog({ open, onOpenChange }: NewNoteDialogProps) {
       <Dialog open={open} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle className="text-lg font-semibold">
-                  New Note
-                </DialogTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Capture your thoughts and ideas
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowTemplateSelector(true)}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Use Template
-              </Button>
+            <div>
+              <DialogTitle className="text-lg font-semibold">
+                New Note
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Capture your thoughts and ideas
+              </p>
             </div>
           </DialogHeader>
           <div className="mb-6">
+            <div className="flex items-center justify-end mb-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowTemplateSelector(true)}
+                className="text-muted-foreground hover:text-foreground h-8 text-xs"
+              >
+                <FileText className="h-3.5 w-3.5 mr-1.5" />
+                Use Template
+              </Button>
+            </div>
             <NoteInput
               key={key}
               onNoteCreated={handleNoteCreated}
