@@ -128,218 +128,126 @@ export function MarkdownImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <FileUp className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <DialogTitle className="text-xl font-semibold">
-                Import Markdown Notes
-              </DialogTitle>
-              <DialogDescription className="mt-1.5">
-                Upload a markdown file or paste content. Notes are automatically
-                split by H1 headings (#).
-              </DialogDescription>
-            </div>
-          </div>
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
+          <DialogTitle className="text-xl font-semibold">
+            Import Markdown Notes
+          </DialogTitle>
+          <DialogDescription className="mt-1.5 text-sm">
+            Upload a markdown file or paste content. Notes are automatically split by H1 headings.
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 grid grid-cols-[1.2fr_1fr] gap-6 p-6 min-h-0 overflow-hidden">
-          <div className="space-y-4 flex flex-col min-h-0">
-            <div
-              className={`relative rounded-xl border-2 border-dashed transition-all duration-200 ${
-                isDragging
-                  ? "border-primary bg-primary/5 scale-[1.01]"
-                  : "border-border hover:border-primary/50 hover:bg-muted/30"
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="p-8 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-                  <FileText
-                    className={`h-8 w-8 transition-colors ${
-                      isDragging ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  />
-                </div>
-                <p className="text-sm font-semibold mb-1.5">
-                  Drop markdown file here
-                </p>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Supports .md and .markdown files
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 mx-auto"
-                >
-                  <Upload className="h-4 w-4" />
-                  Choose File
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".md,.markdown"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col min-h-0 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">
-                  Or paste markdown content
-                </label>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>
-                    {markdown.length.toLocaleString()} / 100,000 characters
-                  </span>
-                  {markdown.trim() && (
-                    <Badge variant="secondary" className="text-xs font-medium">
-                      {previewNotes.length} note
-                      {previewNotes.length !== 1 ? "s" : ""}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <Textarea
-                value={markdown}
-                onChange={(e) => setMarkdown(e.target.value)}
-                placeholder={`# Meeting Notes\n\nThis is a note about the meeting. #work #meeting\n\n# Ideas\n\nBrainstorming ideas here. #ideas`}
-                className="flex-1 font-mono text-sm resize-none min-h-[200px]"
+        <div className="flex-1 flex flex-col px-6 pb-6 min-h-0 overflow-hidden space-y-5">
+          <div
+            className={`rounded-md border-2 border-dashed transition-all cursor-pointer ${
+              isDragging
+                ? "border-primary bg-primary/5 scale-[1.01]"
+                : "border-border hover:border-primary/50 hover:bg-muted/30"
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="p-10 text-center">
+              <p className="text-sm font-medium text-foreground mb-1">
+                Drop markdown file here or click to browse
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Supports .md and .markdown files
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".md,.markdown"
+                onChange={handleFileUpload}
+                className="hidden"
               />
             </div>
           </div>
 
-          <div className="flex flex-col min-h-0 border-l pl-6">
-            <div className="flex items-start gap-3 mb-4 shrink-0 pb-4 border-b">
-              <div className="p-1.5 rounded-md bg-primary/10">
-                <Info className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold mb-1">Preview</h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Use H1 headings (
-                  <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                    #
-                  </code>
-                  ) to separate notes. Add tags with{" "}
-                  <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                    #tag
-                  </code>{" "}
-                  syntax.
-                </p>
-              </div>
+          <div className="flex-1 flex flex-col min-h-0 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground">
+                Or paste markdown content
+              </label>
+              {markdown.trim() && (
+                <span className="text-xs text-muted-foreground font-medium">
+                  {previewNotes.length} note{previewNotes.length !== 1 ? "s" : ""} found
+                </span>
+              )}
             </div>
+            <Textarea
+              value={markdown}
+              onChange={(e) => setMarkdown(e.target.value)}
+              placeholder={`# Meeting Notes\n\nThis is a note about the meeting. #work #meeting\n\n# Ideas\n\nBrainstorming ideas here. #ideas`}
+              className="flex-1 font-mono text-sm resize-none min-h-[200px]"
+            />
+          </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 min-h-0 pr-2">
-              {previewNotes.length > 0 ? (
-                <>
-                  <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 pb-2 mb-2 border-b">
-                    <p className="text-xs font-medium text-muted-foreground">
-                      {previewNotes.length} note
-                      {previewNotes.length !== 1 ? "s" : ""} ready to import
-                    </p>
-                  </div>
-                  {previewNotes.map((note, index) => (
-                    <div
-                      key={index}
-                      className="group rounded-lg border bg-card p-4 space-y-3 hover:border-primary/50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <h5 className="text-sm font-semibold line-clamp-1 mb-1">
-                            {note.title || `Note ${index + 1}`}
-                          </h5>
-                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                            {note.content}
-                          </p>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className="text-xs shrink-0 font-mono"
-                        >
-                          {note.content.length}
-                        </Badge>
-                      </div>
-                      {note.tags && note.tags.length > 0 && (
-                        <div className="flex gap-1.5 flex-wrap pt-1">
-                          {note.tags.map((tag, tagIndex) => (
-                            <Badge
-                              key={tagIndex}
-                              variant="secondary"
-                              className="text-xs font-medium"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
+          {previewNotes.length > 0 && (
+            <div className="rounded-md border bg-muted/50 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                  Preview
+                </p>
+                <span className="text-xs text-muted-foreground">
+                  {previewNotes.length} note{previewNotes.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="space-y-2.5 max-h-40 overflow-y-auto">
+                {previewNotes.slice(0, 4).map((note, index) => (
+                  <div key={index} className="flex items-start gap-2 text-xs">
+                    <span className="text-muted-foreground font-mono shrink-0 mt-0.5">
+                      {index + 1}.
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-foreground">
+                        {note.title || `Note ${index + 1}`}
+                      </span>
+                      {note.content && (
+                        <span className="text-muted-foreground ml-2">
+                          {note.content.substring(0, 60)}
+                          {note.content.length > 60 ? "..." : ""}
+                        </span>
                       )}
                     </div>
-                  ))}
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                  <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                    <FileText className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    No preview available
+                ))}
+                {previewNotes.length > 4 && (
+                  <p className="text-xs text-muted-foreground pl-5">
+                    +{previewNotes.length - 4} more note{previewNotes.length - 4 !== 1 ? "s" : ""}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Add markdown content to see a preview
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t bg-muted/30 shrink-0">
-          <div className="text-xs text-muted-foreground">
-            {markdown.trim() && previewNotes.length > 0 && (
-              <span>
-                Ready to import{" "}
-                <span className="font-medium text-foreground">
-                  {previewNotes.length}
-                </span>{" "}
-                note{previewNotes.length !== 1 ? "s" : ""}
-              </span>
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t shrink-0">
+          <Button variant="outline" onClick={() => handleDialogClose(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleImport}
+            disabled={
+              !markdown.trim() ||
+              importMarkdown.isPending ||
+              previewNotes.length === 0
+            }
+          >
+            {importMarkdown.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Importing...
+              </>
+            ) : (
+              `Import ${previewNotes.length} Note${
+                previewNotes.length !== 1 ? "s" : ""
+              }`
             )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => handleDialogClose(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleImport}
-              disabled={
-                !markdown.trim() ||
-                importMarkdown.isPending ||
-                previewNotes.length === 0
-              }
-              className="min-w-[120px]"
-            >
-              {importMarkdown.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                <>
-                  <FileUp className="h-4 w-4 mr-2" />
-                  Import {previewNotes.length} Note
-                  {previewNotes.length !== 1 ? "s" : ""}
-                </>
-              )}
-            </Button>
-          </div>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
