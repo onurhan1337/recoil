@@ -68,7 +68,11 @@ export function FeedbackDialog({ trigger }: FeedbackDialogProps) {
     >
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="sm" className="w-full justify-start hover:bg-muted/50">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start hover:bg-muted/50"
+          >
             <MessageSquare className="h-4 w-4 mr-2" />
             Feedback
           </Button>
@@ -100,7 +104,7 @@ export function FeedbackDialog({ trigger }: FeedbackDialogProps) {
         <div className="flex-1 overflow-y-auto px-6 pt-6 pb-5">
           <div className="space-y-6">
             <div className="space-y-3">
-              <label className="text-sm text-foreground font-lora">
+              <label className="text-sm text-foreground">
                 How would you rate your experience?
               </label>
               <div className="flex items-center gap-2">
@@ -130,9 +134,11 @@ export function FeedbackDialog({ trigger }: FeedbackDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-foreground font-lora">
+              <label className="text-sm text-foreground">
                 Additional Comments
-                <span className="text-muted-foreground font-normal ml-1">(Optional)</span>
+                <span className="text-muted-foreground font-normal ml-1">
+                  (Optional)
+                </span>
               </label>
               <Textarea
                 value={comment}
@@ -159,7 +165,7 @@ export function FeedbackDialog({ trigger }: FeedbackDialogProps) {
           <Button
             onClick={handleSubmit}
             disabled={submitFeedbackMutation.isPending || rating === 0}
-            className="font-lora h-9 px-5 disabled:opacity-50"
+            className="h-9 px-5 disabled:opacity-50"
           >
             {submitFeedbackMutation.isPending ? (
               <>
