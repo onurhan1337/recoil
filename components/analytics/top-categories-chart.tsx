@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -21,17 +20,19 @@ interface TopCategoriesChartProps {
   data: Array<{
     category: string;
     notes: number;
+    score?: number;
   }>;
 }
 
 export function TopCategoriesChart({ data }: TopCategoriesChartProps) {
-  const chartConfig: ChartConfig = data.reduce((acc, cat, index) => {
+  const chartConfig = data.reduce((acc, cat, index) => {
+    const chartColorIndex = Math.min(index + 1, 5);
     acc[cat.category] = {
       label: cat.category,
-      color: `var(--chart-${Math.min(index + 1, 5)})`,
+      color: `var(--color-chart-${chartColorIndex})`,
     };
     return acc;
-  }, {} as ChartConfig);
+  }, {} as Record<string, { label?: string; color?: string }>);
 
   if (data.length === 0) {
     return (
@@ -55,9 +56,7 @@ export function TopCategoriesChart({ data }: TopCategoriesChartProps) {
     <Card className="border">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">Top Categories</CardTitle>
-        <CardDescription>
-          Most used categories in recent notes
-        </CardDescription>
+        <CardDescription>Most used categories in recent notes</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer
@@ -65,10 +64,7 @@ export function TopCategoriesChart({ data }: TopCategoriesChartProps) {
           className="mx-auto aspect-square max-h-[300px]"
         >
           <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent />}
-            />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <Pie
               data={data.map((cat) => ({
                 name: cat.category,
@@ -81,20 +77,20 @@ export function TopCategoriesChart({ data }: TopCategoriesChartProps) {
               outerRadius={80}
               label
             >
-              {data.map((cat) => (
-                <Cell
-                  key={cat.category}
-                  fill={`var(--color-${cat.category})`}
-                />
-              ))}
+              {data.map((cat, index) => {
+                const chartColorIndex = Math.min(index + 1, 5);
+                return (
+                  <Cell
+                    key={cat.category}
+                    fill={`var(--color-chart-${chartColorIndex})`}
+                  />
+                );
+              })}
             </Pie>
-            <ChartLegend
-              content={<ChartLegendContent nameKey="name" />}
-            />
+            <ChartLegend content={<ChartLegendContent nameKey="name" />} />
           </PieChart>
         </ChartContainer>
       </CardContent>
     </Card>
   );
 }
-

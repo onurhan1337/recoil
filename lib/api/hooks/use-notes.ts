@@ -21,6 +21,7 @@ export const NOTES_WITH_COLLECTIONS_QUERY_KEY = [
   "notes",
   "with-collections",
 ] as const;
+export const NOTES_ANALYTICS_QUERY_KEY = ["notes", "analytics"] as const;
 
 export interface NotesFilters {
   search?: string;
@@ -93,6 +94,7 @@ export function useCreateNote() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
@@ -107,6 +109,7 @@ export function useDeleteNote() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
     },
   });
 }
@@ -134,6 +137,7 @@ export function useUpdateNote() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
@@ -159,6 +163,7 @@ export function usePinNote() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
     },
   });
 }
@@ -172,6 +177,7 @@ export function useFavoriteNote() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
     },
   });
 }
@@ -190,6 +196,7 @@ export function useArchiveNote() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
     },
   });
 }
@@ -203,6 +210,7 @@ export function useDuplicateNote() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY });
     },
   });
@@ -217,6 +225,7 @@ export function useBulkCreateNotes() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
       queryClient.invalidateQueries({
         queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY,
       });
@@ -235,6 +244,7 @@ export function useImportMarkdown() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
       queryClient.invalidateQueries({
         queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY,
       });
@@ -256,6 +266,7 @@ export function useBulkDeleteNotes() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: NOTES_INFINITE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTES_ANALYTICS_QUERY_KEY });
       queryClient.invalidateQueries({
         queryKey: NOTES_WITH_COLLECTIONS_QUERY_KEY,
       });

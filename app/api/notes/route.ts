@@ -148,6 +148,24 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get("limit");
     const offsetParam = searchParams.get("offset");
+    const analyticsParam = searchParams.get("analytics");
+
+    if (analyticsParam === "true") {
+      const { data, error: analyticsError } = await supabase
+        .from("notes")
+        .select("id, category, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (analyticsError) {
+        console.error("Error fetching analytics notes:", analyticsError);
+        return errorResponse("Internal server error", 500);
+      }
+
+      return successResponse({
+        notes: data || [],
+      });
+    }
 
     const validation = validateQuery(paginationSchema, {
       limit: limitParam,

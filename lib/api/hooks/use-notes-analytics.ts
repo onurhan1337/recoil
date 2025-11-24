@@ -1,20 +1,28 @@
 import { useMemo } from "react";
 import type { Note } from "../types";
+import { getTopCategories } from "@/lib/utils/top-categories";
+import { useQuery } from "@tanstack/react-query";
+import { apiGet } from "../client";
+import { NOTES_ANALYTICS_QUERY_KEY } from "./use-notes";
 
-export function useNotesAnalytics(notes: Note[]) {
+export function useNotesAnalyticsQuery() {
+  return useQuery({
+    queryKey: NOTES_ANALYTICS_QUERY_KEY,
+    queryFn: () =>
+      apiGet<{ notes: Pick<Note, "id" | "category" | "created_at">[] }>(
+        "/api/notes?analytics=true"
+      ).then((res) => res.notes),
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useNotesAnalytics<
+  T extends Pick<Note, "id" | "category" | "created_at">
+>(notes: T[]) {
   return useMemo(() => {
     if (!notes.length) return null;
 
-    const categoryCount = notes.reduce((acc, note) => {
-      const cat = note.category || "Other";
-      acc[cat] = (acc[cat] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const topCategories = Object.entries(categoryCount)
-      .filter(([, count]) => count >= 2)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5);
+    const topCategories = getTopCategories(notes);
 
     const thisWeek = notes.filter((note) => {
       const noteDate = new Date(note.created_at);
