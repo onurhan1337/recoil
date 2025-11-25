@@ -39,6 +39,7 @@ interface NoteCardWithContextMenuProps {
   note: Note;
   pinnedCount: number;
   showLabel: boolean;
+  displayTitle?: string | null;
   selectedNoteIds?: Set<string>;
   onNoteSelect?: (noteId: string, selected: boolean) => void;
   onNoteDeleted?: () => void;
@@ -48,6 +49,7 @@ function NoteCardWithContextMenu({
   note,
   pinnedCount,
   showLabel,
+  displayTitle,
   selectedNoteIds = new Set(),
   onNoteSelect,
   onNoteDeleted,
@@ -133,7 +135,7 @@ function NoteCardWithContextMenu({
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div className="w-full">
+        <div className="w-full min-w-0">
           <NoteDetailsDialog
             note={note}
             pinnedCount={pinnedCount}
@@ -141,7 +143,8 @@ function NoteCardWithContextMenu({
               <button
                 data-note-id={note.id}
                 onClick={(e) => {
-                  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+                  const isMac =
+                    navigator.platform.toUpperCase().indexOf("MAC") >= 0;
                   const isModifierPressed = isMac ? e.metaKey : e.ctrlKey;
                   if (isModifierPressed && onNoteSelect) {
                     e.preventDefault();
@@ -151,7 +154,7 @@ function NoteCardWithContextMenu({
                     return;
                   }
                 }}
-                className={`group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 text-left w-full h-[180px] ${
+                className={`group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 text-left w-full min-w-0 h-[180px] ${
                   note.pinned
                     ? "border-primary/50 bg-primary/5"
                     : "border-border"
@@ -162,14 +165,14 @@ function NoteCardWithContextMenu({
                     <Pin className="h-4 w-4 text-primary fill-primary" />
                   </div>
                 )}
-                <div className="flex-1 flex flex-col gap-3 min-h-0">
-                  {showLabel && (
-                    <h3 className="text-sm font-medium line-clamp-1 text-foreground">
-                      {note.label}
+                <div className="flex-1 flex flex-col gap-3 min-h-0 min-w-0">
+                  {showLabel && displayTitle && (
+                    <h3 className="text-sm font-medium line-clamp-1 text-foreground min-w-0 truncate">
+                      {displayTitle}
                     </h3>
                   )}
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <div className="text-sm line-clamp-2 leading-relaxed font-lora text-foreground/90">
+                  <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+                    <div className="text-sm line-clamp-2 leading-relaxed font-lora text-foreground/90 break-words overflow-hidden">
                       <MarkdownRenderer content={note.content} compact />
                     </div>
                   </div>
@@ -306,4 +309,3 @@ function NoteCardWithContextMenu({
 }
 
 export { NoteCardWithContextMenu };
-

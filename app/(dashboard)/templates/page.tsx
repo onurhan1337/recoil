@@ -92,20 +92,14 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-lora font-semibold tracking-tight mb-2">
             Templates
           </h1>
           <p className="text-muted-foreground tracking-wide font-lora text-sm">
-            {isPro
-              ? `Manage your ${templates.length} custom template${
-                  templates.length === 1 ? "" : "s"
-                }`
-              : `Free plan: ${templates.length}/1 template${
-                  templates.length === 1 ? " (limit reached)" : ""
-                }`}
+            Reusable note structures
           </p>
         </div>
         <Button

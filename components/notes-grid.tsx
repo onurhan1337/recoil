@@ -40,6 +40,14 @@ export function NotesGrid({
     );
   };
 
+  const getNoteDisplayTitle = (note: Note): string | null => {
+    if (note.title) return note.title;
+    if (note.label && !isLabelRedundant(note.label, note.content)) {
+      return note.label;
+    }
+    return null;
+  };
+
   const sortedNotes = [...notes].sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
@@ -61,10 +69,9 @@ export function NotesGrid({
   };
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 w-full">
       {sortedNotes.map((note, index) => {
-        const showLabel =
-          note.label && !isLabelRedundant(note.label, note.content);
+        const displayTitle = getNoteDisplayTitle(note);
 
         return (
           <motion.div
@@ -77,11 +84,12 @@ export function NotesGrid({
               damping: 25,
               delay: index * 0.02,
             }}
+            className="min-w-0 w-full"
           >
             {hasSelectedNotes ? (
               <div
                 onClick={(e) => handleCardClick(e, note.id)}
-                className={`group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 cursor-pointer w-full h-[180px] ${
+                className={`group relative flex flex-col overflow-hidden rounded-md border bg-card p-4 transition-all hover:bg-muted/50 cursor-pointer w-full min-w-0 h-[180px] ${
                   selectedNoteIds.has(note.id)
                     ? "border-orange-500/60 bg-orange-500/5 hover:bg-orange-500/10"
                     : note.pinned
@@ -107,14 +115,14 @@ export function NotesGrid({
                     <Pin className="h-4 w-4 text-primary fill-primary" />
                   </div>
                 )}
-                <div className="flex-1 flex flex-col gap-3 min-h-0">
-                  {showLabel && (
-                    <h3 className="text-sm font-medium line-clamp-1 text-foreground">
-                      {note.label}
+                <div className="flex-1 flex flex-col gap-3 min-h-0 min-w-0">
+                  {displayTitle && (
+                    <h3 className="text-sm font-medium line-clamp-1 text-foreground min-w-0 truncate">
+                      {displayTitle}
                     </h3>
                   )}
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <div className="text-sm line-clamp-2 leading-relaxed font-lora text-foreground/90">
+                  <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+                    <div className="text-sm line-clamp-2 leading-relaxed font-lora text-foreground/90 break-words overflow-hidden">
                       <MarkdownRenderer content={note.content} compact />
                     </div>
                   </div>
@@ -136,7 +144,8 @@ export function NotesGrid({
               <NoteCardWithContextMenu
                 note={note}
                 pinnedCount={pinnedCount}
-                showLabel={!!showLabel}
+                showLabel={!!displayTitle}
+                displayTitle={displayTitle}
                 selectedNoteIds={selectedNoteIds}
                 onNoteSelect={onNoteSelect}
                 onNoteDeleted={onNoteDeleted}

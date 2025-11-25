@@ -17,11 +17,16 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl tracking-tight font-lora text-foreground font-semibold">
-          Settings
-        </h1>
+        <div>
+          <h1 className="text-3xl font-lora font-semibold tracking-tight mb-2">
+            Settings
+          </h1>
+          <p className="text-muted-foreground tracking-wide font-lora text-sm">
+            Manage your account
+          </p>
+        </div>
         <UpgradePlanDialog />
       </div>
 

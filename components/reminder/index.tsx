@@ -62,12 +62,8 @@ export function ReminderDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <div className="rounded-lg flex items-center justify-start">
-              <Bell className="h-5 w-5" />
-            </div>
-            <span className="font-lora tracking-tight text-md font-semibold">
-              {reminder ? "Edit Reminder" : "Set Reminder"}
-            </span>
+            <Bell className="h-5 w-5" />
+            {reminder ? "Edit Reminder" : "Set Reminder"}
           </DialogTitle>
         </DialogHeader>
 

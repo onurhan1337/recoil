@@ -38,8 +38,8 @@ export function MarkdownRenderer({
           h1: ({ children }) => (
             <h1
               className={cn(
-                "font-lora font-semibold mb-2 mt-3 first:mt-0",
-                compact ? "text-sm" : "text-xl"
+                "font-lora font-semibold tracking-tight mb-2 mt-3 first:mt-0",
+                compact ? "text-sm" : "text-2xl"
               )}
             >
               {children}
@@ -48,8 +48,8 @@ export function MarkdownRenderer({
           h2: ({ children }) => (
             <h2
               className={cn(
-                "font-lora font-semibold mb-1.5 mt-2.5 first:mt-0",
-                compact ? "text-sm" : "text-lg"
+                "font-lora font-semibold tracking-tight mb-1.5 mt-2.5 first:mt-0",
+                compact ? "text-sm" : "text-xl"
               )}
             >
               {children}
@@ -59,7 +59,7 @@ export function MarkdownRenderer({
             <h3
               className={cn(
                 "font-lora font-semibold mb-1 mt-2 first:mt-0",
-                compact ? "text-sm" : "text-base"
+                compact ? "text-sm" : "text-lg"
               )}
             >
               {children}

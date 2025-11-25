@@ -204,7 +204,7 @@ export default function NotesPage() {
       notes={allNotes}
       isPro={isPro}
     >
-      <div className="space-y-8">
+      <div className="space-y-10">
         <MarkdownImportDialog
           open={isImportDialogOpen}
           onOpenChange={setIsImportDialogOpen}
@@ -237,11 +237,7 @@ export default function NotesPage() {
               Notes
             </h1>
             <p className="text-muted-foreground tracking-wide font-lora text-sm">
-              {allNotes.length} {allNotes.length === 1 ? "note" : "notes"} in
-              your collection
-              {notes.length !== allNotes.length && (
-                <span className="ml-1">({notes.length} shown)</span>
-              )}
+              Your thoughts and ideas
             </p>
           </div>
 
@@ -303,7 +299,7 @@ export default function NotesPage() {
 
           {allNotes.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 rounded-md border bg-card shadow-sm p-2">
+              <div className="flex flex-col md:flex-row md:items-center gap-2 rounded-md border bg-card shadow-sm p-2">
                 <div className="relative flex-1 min-w-0 group">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none transition-colors group-focus-within:text-foreground/70" />
                   <Input
@@ -315,125 +311,130 @@ export default function NotesPage() {
                   />
                 </div>
 
-                <div className="h-6 w-px bg-border mx-1" />
+                <div className="hidden md:block h-6 w-px bg-border mx-1" />
+                <div className="md:hidden w-full h-px bg-border my-1" />
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`gap-1.5 h-9 px-2.5 rounded-md transition-all ${
-                        hasActiveFilters
-                          ? "bg-primary/10 text-primary hover:bg-primary/15 shadow-sm"
-                          : "hover:bg-muted"
-                      }`}
-                    >
-                      <Filter
-                        className={`h-3.5 w-3.5 shrink-0 ${
-                          hasActiveFilters ? "text-primary" : ""
-                        }`}
-                      />
-                      <span className="text-xs font-normal">Filters</span>
-                      {hasActiveFilters && (
-                        <Badge
-                          variant="secondary"
-                          className="ml-0.5 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] font-semibold bg-primary/20 text-primary border-0"
-                        >
-                          {activeFilters.length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64 p-2">
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Filter by
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator className="my-1" />
-
-                    <CategoryFilter
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                      availableCategories={availableCategories as string[]}
-                    />
-
-                    <TagFilter
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                      availableTags={allTags}
-                    />
-
-                    <CollectionFilter
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                      availableCollections={collections}
-                    />
-
-                    <DateFilter
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                    />
-
-                    <SortFilter
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                    />
-
-                    <DropdownMenuSeparator className="my-1" />
-
-                    <PinnedFilter
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                    />
-
-                    <ArchivedFilter
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                    />
-
-                    {hasActiveFilters && (
-                      <>
-                        <DropdownMenuSeparator className="my-1" />
-                        <ClearFiltersButton onClearFilters={clearFilters} />
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <div className="h-6 w-px bg-border mx-1" />
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                <div className="flex items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setIsGraphViewOpen(true)}
-                        className="gap-1.5 h-9 px-2.5 rounded-md hover:bg-muted transition-colors"
+                        className={`gap-1.5 h-9 px-2.5 rounded-md transition-all ${
+                          hasActiveFilters
+                            ? "bg-primary/10 text-primary hover:bg-primary/15 shadow-sm"
+                            : "hover:bg-muted"
+                        }`}
                       >
-                        <Network className="h-3.5 w-3.5 shrink-0" />
-                        <span className="text-xs font-normal">Graph View</span>
-                        {!isPro && (
-                          <Lock className="h-3 w-3 text-muted-foreground/60" />
+                        <Filter
+                          className={`h-3.5 w-3.5 shrink-0 ${
+                            hasActiveFilters ? "text-primary" : ""
+                          }`}
+                        />
+                        <span className="text-xs font-normal">Filters</span>
+                        {hasActiveFilters && (
+                          <Badge
+                            variant="secondary"
+                            className="ml-0.5 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] font-semibold bg-primary/20 text-primary border-0"
+                          >
+                            {activeFilters.length}
+                          </Badge>
                         )}
                       </Button>
-                    </TooltipTrigger>
-                    {!isPro && (
-                      <TooltipContent>
-                        <p>Pro feature - Upgrade to unlock</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64 p-2">
+                      <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Filter by
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator className="my-1" />
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsImportDialogOpen(true)}
-                  className="gap-1.5 h-9 px-2.5 rounded-md hover:bg-muted transition-colors"
-                >
-                  <FileUp className="h-3.5 w-3.5 shrink-0" />
-                  <span className="text-xs font-normal">Import</span>
-                </Button>
+                      <CategoryFilter
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        availableCategories={availableCategories as string[]}
+                      />
+
+                      <TagFilter
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        availableTags={allTags}
+                      />
+
+                      <CollectionFilter
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        availableCollections={collections}
+                      />
+
+                      <DateFilter
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                      />
+
+                      <SortFilter
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                      />
+
+                      <DropdownMenuSeparator className="my-1" />
+
+                      <PinnedFilter
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                      />
+
+                      <ArchivedFilter
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                      />
+
+                      {hasActiveFilters && (
+                        <>
+                          <DropdownMenuSeparator className="my-1" />
+                          <ClearFiltersButton onClearFilters={clearFilters} />
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <div className="hidden md:block h-6 w-px bg-border mx-1" />
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsGraphViewOpen(true)}
+                          className="gap-1.5 h-9 px-2.5 rounded-md hover:bg-muted transition-colors"
+                        >
+                          <Network className="h-3.5 w-3.5 shrink-0" />
+                          <span className="text-xs font-normal">
+                            Graph View
+                          </span>
+                          {!isPro && (
+                            <Lock className="h-3 w-3 text-muted-foreground/60" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      {!isPro && (
+                        <TooltipContent>
+                          <p>Pro feature - Upgrade to unlock</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsImportDialogOpen(true)}
+                    className="gap-1.5 h-9 px-2.5 rounded-md hover:bg-muted transition-colors"
+                  >
+                    <FileUp className="h-3.5 w-3.5 shrink-0" />
+                    <span className="text-xs font-normal">Import</span>
+                  </Button>
+                </div>
               </div>
 
               {hasActiveFilters && (

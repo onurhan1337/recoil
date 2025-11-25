@@ -89,7 +89,7 @@ export function NoteDetailsDialog({
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <div className="flex-1 min-w-0">
             {(note.title || note.label) && (
-              <DialogTitle className="text-xl font-semibold mb-2 line-clamp-2 font-lora">
+              <DialogTitle className="mb-2 line-clamp-2">
                 {note.title || note.label}
               </DialogTitle>
             )}

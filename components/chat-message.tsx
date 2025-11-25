@@ -143,19 +143,19 @@ export function ChatMessage({
               h1: ({ node, ...props }) => (
                 <h1
                   {...props}
-                  className="text-xl font-semibold mb-3 mt-4 first:mt-0"
+                  className="text-xl font-lora font-semibold tracking-tight mb-3 mt-4 first:mt-0"
                 />
               ),
               h2: ({ node, ...props }) => (
                 <h2
                   {...props}
-                  className="text-lg font-semibold mb-2 mt-3 first:mt-0"
+                  className="text-lg font-lora font-semibold tracking-tight mb-2 mt-3 first:mt-0"
                 />
               ),
               h3: ({ node, ...props }) => (
                 <h3
                   {...props}
-                  className="text-base font-semibold mb-2 mt-3 first:mt-0"
+                  className="text-base font-lora font-semibold mb-2 mt-3 first:mt-0"
                 />
               ),
               blockquote: ({ node, ...props }) => (
@@ -225,19 +225,19 @@ export function ChatMessage({
                     h1: ({ node, ...props }) => (
                       <h1
                         {...props}
-                        className="text-base font-semibold mb-2 mt-2 first:mt-0"
+                        className="text-base font-lora font-semibold tracking-tight mb-2 mt-2 first:mt-0"
                       />
                     ),
                     h2: ({ node, ...props }) => (
                       <h2
                         {...props}
-                        className="text-sm font-semibold mb-1 mt-2 first:mt-0"
+                        className="text-sm font-lora font-semibold tracking-tight mb-1 mt-2 first:mt-0"
                       />
                     ),
                     h3: ({ node, ...props }) => (
                       <h3
                         {...props}
-                        className="text-sm font-semibold mb-1 mt-2 first:mt-0"
+                        className="text-sm font-lora font-semibold mb-1 mt-2 first:mt-0"
                       />
                     ),
                     strong: ({ node, ...props }) => (

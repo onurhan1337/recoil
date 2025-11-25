@@ -98,15 +98,14 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-lora font-semibold tracking-tight mb-2">
             Analytics
           </h1>
           <p className="text-muted-foreground tracking-wide font-lora text-sm">
-            Discover insights about your thinking patterns and note-taking
-            habits
+            Insights and patterns
           </p>
         </div>
       </div>
@@ -174,9 +173,7 @@ export default function AnalyticsPage() {
                       <Brain className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl font-lora">
-                        Thinking Patterns
-                      </CardTitle>
+                      <CardTitle>Thinking Patterns</CardTitle>
                       <CardDescription className="mt-1">
                         AI-powered analysis of your recent notes
                       </CardDescription>

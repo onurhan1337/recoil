@@ -14,24 +14,24 @@ export function NotificationItem({
 }: NotificationItemProps) {
   return (
     <div
-      className={`group p-3 hover:bg-muted/50 transition-colors ${
-        !notification.read ? "bg-stone-200/30 dark:bg-blue-950/20" : ""
+      className={`group px-4 py-3 hover:bg-muted/50 transition-colors ${
+        !notification.read ? "bg-muted/30" : ""
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <h4 className="text-sm font-medium line-clamp-1 flex items-center gap-2">
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="flex items-start justify-between gap-2">
+            <h4 className="text-sm font-lora font-semibold tracking-tight line-clamp-1 flex items-center gap-2">
               {notification.title}
               {!notification.read && (
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
               )}
             </h4>
           </div>
-          <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">
+          <p className="text-sm text-muted-foreground line-clamp-2 font-lora leading-relaxed">
             {notification.message}
           </p>
-          <p className="text-xs text-muted-foreground/60">
+          <p className="text-xs text-muted-foreground/70 font-lora tracking-wide">
             {formatDistanceToNow(new Date(notification.created_at), {
               addSuffix: true,
             })}

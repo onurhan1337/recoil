@@ -31,9 +31,11 @@ export function NotificationList({
 
   if (notifications.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 px-4">
-        <Bell className="h-10 w-10 text-muted-foreground/30 mb-2" />
-        <p className="text-sm text-muted-foreground">No notifications yet</p>
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="rounded-full bg-muted/50 p-3 mb-3">
+          <Bell className="h-5 w-5 text-muted-foreground/50" />
+        </div>
+        <p className="text-sm text-muted-foreground font-lora tracking-wide">All caught up</p>
       </div>
     );
   }

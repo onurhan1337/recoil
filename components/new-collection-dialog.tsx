@@ -56,7 +56,7 @@ export function NewCollectionDialog({ open, onOpenChange }: NewCollectionDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="font-lora">Create New Collection</DialogTitle>
+          <DialogTitle>Create New Collection</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

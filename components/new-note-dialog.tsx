@@ -53,9 +53,7 @@ export function NewNoteDialog({ open, onOpenChange }: NewNoteDialogProps) {
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <div>
-              <DialogTitle className="text-lg font-medium font-lora">
-                New Note
-              </DialogTitle>
+              <DialogTitle>New Note</DialogTitle>
               <p className="text-sm text-muted-foreground mt-1">
                 <i className="font-lora bg-linear-to-r from-red-950 via-red-700 to-red-950 bg-clip-text pr-1 text-transparent">
                   Connecting the dots

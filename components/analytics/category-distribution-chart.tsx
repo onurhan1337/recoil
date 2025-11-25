@@ -41,7 +41,7 @@ export function CategoryDistributionChart({
   return (
     <Card className="border">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Category Distribution</CardTitle>
+        <CardTitle>Category Distribution</CardTitle>
         <CardDescription>Breakdown of notes by category</CardDescription>
       </CardHeader>
       <CardContent>

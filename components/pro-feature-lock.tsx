@@ -44,7 +44,7 @@ export function ProFeatureLock({
           <CardHeader>
             <div className="flex items-center gap-2 mb-2">
               <Lock className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-xl">{title}</CardTitle>
+              <CardTitle>{title}</CardTitle>
             </div>
             <CardDescription className="text-base">{description}</CardDescription>
           </CardHeader>

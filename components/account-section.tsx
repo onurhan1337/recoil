@@ -44,7 +44,7 @@ export function AccountSection({ user }: AccountSectionProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-medium">Account</h2>
+      <h2 className="text-2xl font-lora font-semibold tracking-tight mb-2">Account</h2>
       <div className="rounded-lg border border-border p-4 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Email</span>

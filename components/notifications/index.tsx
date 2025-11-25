@@ -30,17 +30,17 @@ export function NotificationsDropdown() {
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-stone-700 text-white text-[10px] flex items-center justify-center font-semibold">
+            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-semibold">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" sideOffset={8} className="w-80 p-0">
+      <DropdownMenuContent align="start" sideOffset={8} className="w-80 p-0 rounded-lg border shadow-lg">
         <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h3 className="font-semibold text-sm font-lora">Notifications</h3>
+          <h3 className="text-sm font-lora font-semibold tracking-tight">Notifications</h3>
           {unreadCount > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground font-lora tracking-wide">
               {unreadCount} unread
             </span>
           )}

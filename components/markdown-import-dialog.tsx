@@ -130,9 +130,7 @@ export function MarkdownImportDialog({
     <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
-          <DialogTitle className="text-xl font-semibold">
-            Import Markdown Notes
-          </DialogTitle>
+          <DialogTitle>Import Markdown Notes</DialogTitle>
           <DialogDescription className="mt-1.5 text-sm">
             Upload a markdown file or paste content. Notes are automatically split by H1 headings.
           </DialogDescription>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -15,6 +15,7 @@ import {
   Library,
   Network,
   BookMarked,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewNoteDialog } from "@/components/new-note-dialog";
@@ -22,6 +23,8 @@ import { CreditDisplay } from "@/components/credit-display";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { NotificationsDropdown } from "@/components/notifications";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useUser, useUsage } from "@/lib/api/hooks";
 import { DashboardProvider } from "@/lib/contexts/dashboard-context";
 
@@ -42,9 +45,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isNewNoteDialogOpen, setIsNewNoteDialogOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [pathname]);
 
   const { data: user, isLoading: userLoading } = useUser();
   const { data: usage, isLoading: usageLoading } = useUsage({
@@ -71,6 +79,135 @@ export default function DashboardLayout({
     );
   }
 
+  const SidebarContent = ({
+    hideNotifications = false,
+  }: {
+    hideNotifications?: boolean;
+  }) => (
+    <>
+      <div className="flex h-14 items-center justify-between px-3 border-b">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-semibold text-sm hover:opacity-80 transition-opacity"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        >
+          <img
+            src="/logo.svg"
+            alt="Recoil"
+            className="h-10 w-10 object-cover"
+          />
+          <span className="text-xl font-lora">Recoil</span>
+        </Link>
+        {!hideNotifications && <NotificationsDropdown />}
+      </div>
+
+      <div className="p-3 border-b">
+        <button
+          onClick={() => {
+            setIsNewNoteDialogOpen(true);
+            setIsMobileSidebarOpen(false);
+          }}
+          style={{
+            background: `linear-gradient(to right, 
+              rgb(40, 20, 25), 
+              rgb(50, 25, 30), 
+              rgb(60, 30, 35), 
+              rgb(70, 35, 40), 
+              rgb(60, 30, 35), 
+              rgb(50, 25, 30), 
+              rgb(40, 20, 25)
+            )`,
+          }}
+          className="metallic-noise-button group w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full text-white border border-[rgba(255,255,255,0.15)] shadow-[0_2px_4px_0_rgba(0,0,0,0.5),0_1px_0_0_rgba(255,255,255,0.1)_inset,0_-1px_0_0_rgba(0,0,0,0.3)_inset,0_0_20px_rgba(150,50,50,0.25)] hover:border-[rgba(255,255,255,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.6),0_1px_0_0_rgba(255,255,255,0.15)_inset,0_-1px_0_0_rgba(0,0,0,0.4)_inset,0_0_30px_rgba(180,60,60,0.35)] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer relative overflow-hidden"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = `linear-gradient(to right, 
+              rgb(45, 25, 30), 
+              rgb(55, 30, 35), 
+              rgb(65, 35, 40), 
+              rgb(75, 40, 45), 
+              rgb(65, 35, 40), 
+              rgb(55, 30, 35), 
+              rgb(45, 25, 30)
+            )`;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = `linear-gradient(to right, 
+              rgb(40, 20, 25), 
+              rgb(50, 25, 30), 
+              rgb(60, 30, 35), 
+              rgb(70, 35, 40), 
+              rgb(60, 30, 35), 
+              rgb(50, 25, 30), 
+              rgb(40, 20, 25)
+            )`;
+          }}
+        >
+          <Plus className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 relative z-10" />
+          <span className="relative z-10">New Note</span>
+        </button>
+      </div>
+
+      <nav className="flex-1 p-3">
+        <div className="space-y-0.5">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className={cn(
+                  "flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-md transition-all duration-200",
+                  isActive
+                    ? "bg-muted font-medium text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon
+                    className={cn(
+                      "h-4 w-4 transition-colors",
+                      isActive ? "text-foreground" : ""
+                    )}
+                  />
+                  {item.name}
+                </div>
+                {item.badge && (
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] px-1.5 py-0 h-4 font-semibold"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      <div className="border-t border-border/50 p-3 space-y-2.5">
+        <div className="rounded-md bg-muted/50 p-3 border border-border/30">
+          <CreditDisplay
+            credits={usage?.credits ?? 0}
+            plan={usage?.plan ?? "free"}
+            monthlyLimit={usage?.monthly_credits_limit ?? 500}
+            showUpgrade={true}
+          />
+        </div>
+        <div>
+          <FeedbackDialog />
+        </div>
+        <button
+          onClick={handleSignOut}
+          className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors py-1.5 rounded-md hover:bg-muted/30"
+        >
+          Sign out
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <DashboardProvider
       user={user ?? null}
@@ -83,123 +220,18 @@ export default function DashboardLayout({
           onOpenChange={setIsNewNoteDialogOpen}
         />
 
-        <aside className="flex w-64 flex-col border-r bg-background">
-          <div className="flex h-14 items-center justify-between px-3 border-b">
-            <Link
-              href="/"
-              className="flex items-center gap-2 font-semibold text-sm hover:opacity-80 transition-opacity"
-            >
-              <img
-                src="/logo.svg"
-                alt="Recoil"
-                className="h-10 w-10 object-cover"
-              />
-              <span className="text-xl font-lora">Recoil</span>
-            </Link>
-            <NotificationsDropdown />
-          </div>
-
-          <div className="p-3 border-b">
-            <button
-              onClick={() => setIsNewNoteDialogOpen(true)}
-              style={{
-                background: `linear-gradient(to right, 
-                  rgb(40, 20, 25), 
-                  rgb(50, 25, 30), 
-                  rgb(60, 30, 35), 
-                  rgb(70, 35, 40), 
-                  rgb(60, 30, 35), 
-                  rgb(50, 25, 30), 
-                  rgb(40, 20, 25)
-                )`,
-              }}
-              className="metallic-noise-button group w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full text-white border border-[rgba(255,255,255,0.15)] shadow-[0_2px_4px_0_rgba(0,0,0,0.5),0_1px_0_0_rgba(255,255,255,0.1)_inset,0_-1px_0_0_rgba(0,0,0,0.3)_inset,0_0_20px_rgba(150,50,50,0.25)] hover:border-[rgba(255,255,255,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.6),0_1px_0_0_rgba(255,255,255,0.15)_inset,0_-1px_0_0_rgba(0,0,0,0.4)_inset,0_0_30px_rgba(180,60,60,0.35)] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer relative overflow-hidden"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = `linear-gradient(to right, 
-                  rgb(45, 25, 30), 
-                  rgb(55, 30, 35), 
-                  rgb(65, 35, 40), 
-                  rgb(75, 40, 45), 
-                  rgb(65, 35, 40), 
-                  rgb(55, 30, 35), 
-                  rgb(45, 25, 30)
-                )`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = `linear-gradient(to right, 
-                  rgb(40, 20, 25), 
-                  rgb(50, 25, 30), 
-                  rgb(60, 30, 35), 
-                  rgb(70, 35, 40), 
-                  rgb(60, 30, 35), 
-                  rgb(50, 25, 30), 
-                  rgb(40, 20, 25)
-                )`;
-              }}
-            >
-              <Plus className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 relative z-10" />
-              <span className="relative z-10">New Note</span>
-            </button>
-          </div>
-
-          <nav className="flex-1 p-3">
-            <div className="space-y-0.5">
-              {navigation.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-md transition-all duration-200",
-                      isActive
-                        ? "bg-muted font-medium text-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon
-                        className={cn(
-                          "h-4 w-4 transition-colors",
-                          isActive ? "text-foreground" : ""
-                        )}
-                      />
-                      {item.name}
-                    </div>
-                    {item.badge && (
-                      <Badge
-                        variant="secondary"
-                        className="text-[10px] px-1.5 py-0 h-4 font-semibold"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
-
-          <div className="border-t border-border/50 p-3 space-y-2.5">
-            <div className="rounded-md bg-muted/50 p-3 border border-border/30">
-              <CreditDisplay
-                credits={usage?.credits ?? 0}
-                plan={usage?.plan ?? "free"}
-                monthlyLimit={usage?.monthly_credits_limit ?? 500}
-                showUpgrade={true}
-              />
-            </div>
-            <div>
-              <FeedbackDialog />
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors py-1.5 rounded-md hover:bg-muted/30"
-            >
-              Sign out
-            </button>
-          </div>
+        <aside className="hidden md:flex w-64 flex-col border-r bg-background">
+          <SidebarContent />
         </aside>
+
+        <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+          <SheetContent side="left" className="w-64 p-0">
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            <div className="flex flex-col h-full">
+              <SidebarContent hideNotifications={true} />
+            </div>
+          </SheetContent>
+        </Sheet>
 
         <main
           className="flex-1 overflow-auto bg-background"
@@ -211,13 +243,39 @@ export default function DashboardLayout({
             backgroundSize: "24px 24px",
           }}
         >
-          {pathname === "/canvas" ? (
-            children
-          ) : (
-            <div className="mx-auto max-w-4xl h-full p-8 lg:p-12">
-              {children}
-            </div>
-          )}
+          <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between px-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="h-9 w-9"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <Link
+              href="/"
+              className="flex items-center gap-2 font-semibold text-sm"
+            >
+              <img
+                src="/logo.svg"
+                alt="Recoil"
+                className="h-8 w-8 object-cover"
+              />
+              <span className="text-lg font-lora">Recoil</span>
+            </Link>
+            <NotificationsDropdown />
+          </div>
+          <div className="md:mt-0 mt-14">
+            {pathname === "/canvas" ? (
+              <div className="h-[calc(100vh-3.5rem)] md:h-screen">
+                {children}
+              </div>
+            ) : (
+              <div className="mx-auto max-w-4xl h-full p-4 sm:p-6 md:p-8 lg:p-12">
+                {children}
+              </div>
+            )}
+          </div>
         </main>
       </div>
     </DashboardProvider>
