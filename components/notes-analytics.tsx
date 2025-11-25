@@ -1,8 +1,8 @@
 "use client";
 
-import { Lock, TrendingUp, FileText } from "lucide-react";
+import { TrendingUp, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { UpgradePlanDialog } from "@/components/upgrade-plan-dialog";
+import { ProFeatureLock } from "@/components/pro-feature-lock";
 import { TopCategory } from "@/lib/utils/top-categories";
 
 interface NotesAnalyticsProps {
@@ -15,35 +15,22 @@ interface NotesAnalyticsProps {
 }
 
 export function NotesAnalytics({ analytics, isPro }: NotesAnalyticsProps) {
+  if (!isPro) {
+    return (
+      <div className="relative rounded-md border-2 border-dashed bg-muted/20 p-6">
+        <ProFeatureLock
+          variant="inline"
+          description="Upgrade to Pro to unlock notes analytics and insights."
+          className="min-h-[200px]"
+        />
+      </div>
+    );
+  }
+
   if (!analytics) return null;
 
   return (
     <div className="relative rounded-md border-2 border-dashed bg-muted/20 p-6">
-      {!isPro && (
-        <div
-          className="absolute inset-0 bg-background/60 backdrop-blur-sm rounded-md flex items-center justify-center z-10"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              135deg,
-              transparent,
-              transparent 15px,
-              rgba(0, 0, 0, 0.03) 15px,
-              rgba(0, 0, 0, 0.03) 17px
-            )`,
-          }}
-        >
-          <div className="text-center space-y-2">
-            <Lock className="h-5 w-5 mx-auto text-muted-foreground" />
-            <UpgradePlanDialog
-              trigger={
-                <button className="text-xs font-medium hover:underline underline-offset-4">
-                  Upgrade to unlock
-                </button>
-              }
-            />
-          </div>
-        </div>
-      )}
       <div className="rounded-md border bg-card p-5 relative overflow-hidden">
         <div className="space-y-5 relative z-10">
           <div className="flex gap-6">
@@ -81,7 +68,6 @@ export function NotesAnalytics({ analytics, isPro }: NotesAnalyticsProps) {
           </div>
         </div>
 
-        {/* Analytics Illustration - Modern Abstract Design */}
         <div className="absolute bottom-0 right-0 w-64 h-64 pointer-events-none overflow-hidden">
           <svg
             viewBox="0 0 200 200"
@@ -128,7 +114,6 @@ export function NotesAnalytics({ analytics, isPro }: NotesAnalyticsProps) {
               </linearGradient>
             </defs>
 
-            {/* Abstract floating shapes */}
             <rect
               x="120"
               y="120"
@@ -148,7 +133,6 @@ export function NotesAnalytics({ analytics, isPro }: NotesAnalyticsProps) {
               transform="rotate(-10 125 165)"
             />
 
-            {/* Diagonal lines */}
             <line
               x1="80"
               y1="160"
@@ -170,7 +154,6 @@ export function NotesAnalytics({ analytics, isPro }: NotesAnalyticsProps) {
               opacity="0.08"
             />
 
-            {/* Small geometric elements */}
             <circle
               cx="140"
               cy="130"
@@ -193,14 +176,12 @@ export function NotesAnalytics({ analytics, isPro }: NotesAnalyticsProps) {
               opacity="0.09"
             />
 
-            {/* Hexagon shape */}
             <path
               d="M 150 100 L 165 108 L 165 123 L 150 131 L 135 123 L 135 108 Z"
               fill="hsl(var(--muted-foreground))"
               opacity="0.08"
             />
 
-            {/* Triangle */}
             <path
               d="M 110 110 L 130 110 L 120 125 Z"
               fill="hsl(var(--muted-foreground))"

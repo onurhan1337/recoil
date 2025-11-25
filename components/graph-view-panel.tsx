@@ -27,19 +27,21 @@ import { Loader2, Sparkles, X } from "lucide-react";
 import type { Note } from "@/lib/api/types";
 import { useRouter } from "next/navigation";
 import { applyGraphFilters } from "@/lib/graph/utils";
+import { ProFeatureLock } from "@/components/pro-feature-lock";
 
 interface GraphViewPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   notes: Note[];
   children: React.ReactNode;
+  isPro?: boolean;
 }
 
 export function GraphViewPanel({
   open,
   onOpenChange,
-  notes,
   children,
+  isPro = false,
 }: GraphViewPanelProps) {
   const [showSemanticLinks, setShowSemanticLinks] = useState(false);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
@@ -47,9 +49,9 @@ export function GraphViewPanel({
     useState<GraphSettings>(DEFAULT_SETTINGS);
   const router = useRouter();
 
-  const { data, isLoading } = useCanvas({
+  const { data, isLoading, error } = useCanvas({
     includeSemanticLinks: showSemanticLinks,
-    enabled: open,
+    enabled: open && isPro,
   });
 
   const filteredNotes = useMemo(() => {
@@ -181,7 +183,18 @@ export function GraphViewPanel({
             </div>
 
             <div className="flex-1 min-h-0 bg-background overflow-hidden relative">
-              {isLoading ? (
+              {!isPro ||
+              (error &&
+                error instanceof Error &&
+                error.message.includes("Pro plan")) ? (
+                <div className="flex items-center justify-center h-full p-8">
+                  <ProFeatureLock
+                    variant="card"
+                    title="Graph View"
+                    description="Visualize your notes as an interactive knowledge graph. See connections and relationships between your ideas."
+                  />
+                </div>
+              ) : isLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center space-y-4">
                     <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
