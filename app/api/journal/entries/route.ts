@@ -65,30 +65,33 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get("date");
 
-    let query = supabase
+    if (!dateParam) {
+      return errorResponse("Date parameter is required", 400);
+    }
+
+    const dateValidation = entryDateSchema.safeParse({ date: dateParam });
+    if (!dateValidation.success) {
+      return errorResponse("Invalid date parameter", 400);
+    }
+
+    const parsedDate = parseISO(dateParam + "T00:00:00.000Z");
+    const date = new UTCDate(parsedDate);
+
+    if (isNaN(date.getTime())) {
+      return errorResponse("Invalid date format", 400);
+    }
+
+    const start = startOfDay(date).toISOString();
+    const end = endOfDay(date).toISOString();
+
+    const { data: entries, error } = await supabase
       .from("journal_entries")
       .select("*")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (dateParam) {
-      if (entryDateSchema.safeParse({ date: dateParam }).success) {
-        const parsedDate = parseISO(dateParam + "T00:00:00.000Z");
-        const date = new UTCDate(parsedDate);
-
-        if (!isNaN(date.getTime())) {
-          const start = startOfDay(date).toISOString();
-          const end = endOfDay(date).toISOString();
-
-          query = query
-            .gte("created_at", start)
-            .lte("created_at", end)
-            .limit(30);
-        }
-      }
-    }
-
-    const { data: entries, error } = await query;
+      .gte("created_at", start)
+      .lte("created_at", end)
+      .order("created_at", { ascending: false })
+      .limit(30);
 
     if (error) {
       return errorResponse("Failed to fetch journal entries", 500);

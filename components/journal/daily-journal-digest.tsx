@@ -17,12 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { formatDate } from "@/lib/utils";
-import type { JournalEntry } from "@/lib/api/types";
-import {
-  getJournalEntriesForDate,
-  groupByTimeOfDay,
-  timeOfDayConfig,
-} from "@/lib/utils/journal";
+import { groupByTimeOfDay, timeOfDayConfig } from "@/lib/utils/journal";
 import {
   Clock,
   Sparkles,
@@ -31,7 +26,11 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useUpdateJournalEntry, useDeleteJournalEntry } from "@/lib/api/hooks";
+import {
+  useUpdateJournalEntry,
+  useDeleteJournalEntry,
+  useJournalEntries,
+} from "@/lib/api/hooks";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { PromoteEntryDialog } from "./promote-entry-dialog";
@@ -44,9 +43,9 @@ import {
 } from "@/components/ui/context-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { JournalEntry } from "@/lib/api/types";
 
 interface DailyJournalDigestProps {
-  entries: JournalEntry[];
   selectedDate: Date;
   onDateSelect?: (date: Date) => void;
 }
@@ -274,20 +273,14 @@ function JournalEntryCard({
 }
 
 export function DailyJournalDigest({
-  entries,
   selectedDate,
   onDateSelect,
 }: DailyJournalDigestProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const dayEntries = useMemo(
-    () => getJournalEntriesForDate(entries, selectedDate),
-    [entries, selectedDate]
-  );
+  const dateString = format(selectedDate, "yyyy-MM-dd");
+  const { data: entries = [] } = useJournalEntries(dateString);
 
-  const entriesByTime = useMemo(
-    () => groupByTimeOfDay(dayEntries),
-    [dayEntries]
-  );
+  const entriesByTime = useMemo(() => groupByTimeOfDay(entries), [entries]);
 
   const sortedTimeOfDays = useMemo(() => {
     return (["morning", "afternoon", "evening", "night"] as const).filter(
@@ -382,7 +375,7 @@ export function DailyJournalDigest({
         </div>
       </CardHeader>
       <CardContent className="space-y-4 p-5 bg-card">
-        {dayEntries.length === 0 ? (
+        {entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in">
             <p className="text-sm text-muted-foreground leading-relaxed font-lora">
               {isCurrentDay ? "A blank page." : "No entries."}

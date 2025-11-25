@@ -1,34 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { startOfDay, addDays, subDays, isToday } from "date-fns";
+import { useQueryState } from "nuqs";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  startOfDay,
+  addDays,
+  subDays,
+  isToday,
+  format,
+  parseISO,
+} from "date-fns";
 import {
   JOURNAL_ENTRIES_QUERY_KEY,
   JOURNAL_ENTRIES_STATS_QUERY_KEY,
-  useJournalEntries,
+  journalDateParser,
+  usePrefetchAdjacentDates,
 } from "@/lib/api/hooks";
 import { DailyJournalDigest } from "@/components/journal/daily-journal-digest";
 import { JournalEntryInput } from "@/components/journal/journal-entry-input";
 import { JournalAnalytics } from "@/components/journal/journal-analytics";
-import { queryClient } from "@/lib/query-client";
 
 export default function JournalPage() {
-  const [selectedDate, setSelectedDate] = useState<Date>(
-    startOfDay(new Date())
-  );
-  const { data: entries = [] } = useJournalEntries();
+  const queryClient = useQueryClient();
+  const [dateString, setDateString] = useQueryState("date", journalDateParser);
+
+  const selectedDate = useMemo(() => {
+    return startOfDay(parseISO(dateString));
+  }, [dateString]);
+
+  usePrefetchAdjacentDates(selectedDate);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const target = e.target as HTMLElement;
+        const isInputFocused =
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable;
+
+        if (!isInputFocused) {
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useHotkeys(
     "arrowleft",
     (e) => {
       e.preventDefault();
-      setSelectedDate((prev) => subDays(prev, 1));
+      const prevDay = subDays(selectedDate, 1);
+      setDateString(format(prevDay, "yyyy-MM-dd"));
     },
     {
       enableOnFormTags: false,
       preventDefault: true,
-    }
+    },
+    [selectedDate, setDateString]
   );
 
   useHotkeys(
@@ -36,17 +70,22 @@ export default function JournalPage() {
     (e) => {
       e.preventDefault();
       const nextDay = addDays(selectedDate, 1);
-      if (!isToday(nextDay) && nextDay > new Date()) {
+      const today = startOfDay(new Date());
+      if (!isToday(nextDay) && nextDay > today) {
         return;
       }
-      setSelectedDate(nextDay);
+      setDateString(format(nextDay, "yyyy-MM-dd"));
     },
     {
       enableOnFormTags: false,
       preventDefault: true,
     },
-    [selectedDate]
+    [selectedDate, setDateString]
   );
+
+  const handleDateSelect = (date: Date) => {
+    setDateString(format(startOfDay(date), "yyyy-MM-dd"));
+  };
 
   return (
     <div className="space-y-10">
@@ -73,9 +112,8 @@ export default function JournalPage() {
       />
 
       <DailyJournalDigest
-        entries={entries}
         selectedDate={selectedDate}
-        onDateSelect={(date) => setSelectedDate(startOfDay(date))}
+        onDateSelect={handleDateSelect}
       />
     </div>
   );
