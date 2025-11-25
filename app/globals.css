@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 :root {
   --radius: 0.65rem;
   --background: oklch(1 0 0);
@@ -182,6 +191,74 @@
     to {
       height: 0;
     }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes gentle-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .journal-warm-bg {
+    background-color: oklch(0.99 0.01 85);
+  }
+
+  .dark .journal-warm-bg {
+    background-color: oklch(0.15 0.01 85);
+  }
+
+  .journal-soft-border {
+    border-color: oklch(0.92 0.005 85);
+  }
+
+  .dark .journal-soft-border {
+    border-color: oklch(0.25 0.005 85);
+  }
+
+  .journal-gentle-shadow {
+    box-shadow: 0 2px 8px oklch(0.5 0.02 85 / 0.08);
+  }
+
+  .dark .journal-gentle-shadow {
+    box-shadow: 0 2px 8px oklch(0 0 0 / 0.3);
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
+
+  .animate-gentle-pulse {
+    animation: gentle-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.3s ease-out;
   }
 
   .metallic-noise-button {

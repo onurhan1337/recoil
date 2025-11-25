@@ -14,6 +14,7 @@ import {
   Layers,
   Library,
   Network,
+  BookMarked,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewNoteDialog } from "@/components/new-note-dialog";
@@ -27,6 +28,7 @@ import { DashboardProvider } from "@/lib/contexts/dashboard-context";
 const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Notes", href: "/notes", icon: BookOpen },
+  { name: "Journal", href: "/journal", icon: BookMarked },
   { name: "Collections", href: "/collections", icon: Library },
   { name: "Templates", href: "/templates", icon: Layers },
   { name: "Mind Map", href: "/canvas", icon: Network, badge: "PRO" },
