@@ -20,7 +20,7 @@ export default function DashboardPage() {
             </h1>
           </div>
           <p className="text-muted-foreground tracking-wide font-lora text-sm">
-            Think different.
+            Where thoughts take shape.
           </p>
         </div>
 
