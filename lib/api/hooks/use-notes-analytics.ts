@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "../client";
 import { NOTES_ANALYTICS_QUERY_KEY } from "./use-notes";
 
-export function useNotesAnalyticsQuery() {
+export function useNotesAnalyticsQuery(isPro: boolean = false) {
   return useQuery({
     queryKey: NOTES_ANALYTICS_QUERY_KEY,
     queryFn: () =>
@@ -13,6 +13,8 @@ export function useNotesAnalyticsQuery() {
         "/api/notes?analytics=true"
       ).then((res) => res.notes),
     staleTime: 1000 * 60 * 5,
+    enabled: isPro,
+    retry: false,
   });
 }
 
