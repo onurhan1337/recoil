@@ -99,6 +99,26 @@ export const paginationSchema = z.object({
     .pipe(z.number().int().min(0)),
 });
 
+export const journalEntrySchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(1, "Journal entry content is required")
+    .max(50000, "Journal entry content must be less than 50,000 characters"),
+});
+
+export const updateJournalEntrySchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(1, "Journal entry content is required")
+    .max(50000, "Journal entry content must be less than 50,000 characters"),
+});
+
+export const entryDateSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+});
+
 export const conversationCreateSchema = z.object({
   title: z
     .preprocess(
@@ -334,10 +354,16 @@ export const reminderSchema = z.object({
         )
     ),
   email_enabled: z
-    .preprocess((val) => (val === null || val === undefined ? true : val), z.boolean())
+    .preprocess(
+      (val) => (val === null || val === undefined ? true : val),
+      z.boolean()
+    )
     .default(true),
   in_app_enabled: z
-    .preprocess((val) => (val === null || val === undefined ? true : val), z.boolean())
+    .preprocess(
+      (val) => (val === null || val === undefined ? true : val),
+      z.boolean()
+    )
     .default(true),
 });
 

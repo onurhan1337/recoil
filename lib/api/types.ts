@@ -189,3 +189,37 @@ export interface NotificationsListResponse {
   notifications: Notification[];
   unreadCount: number;
 }
+
+export interface JournalEntry {
+  id: string;
+  user_id: string;
+  content: string;
+  word_count: number;
+  promoted_to_note_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateJournalEntryResponse {
+  success: boolean;
+  entry: JournalEntry;
+}
+
+export interface JournalEntriesResponse {
+  entries: JournalEntry[];
+}
+
+export interface JournalStatsResponse {
+  streak: number;
+  totalEntries: number;
+  entriesThisWeek: number;
+  entriesThisMonth: number;
+  totalWords: number;
+  entriesByDate: Record<string, number>;
+}
+
+export interface PromoteJournalEntryResponse {
+  success: boolean;
+  note: Note;
+  creditsRemaining: number;
+}

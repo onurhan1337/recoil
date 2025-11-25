@@ -19,3 +19,4 @@ export * from "./use-canvas";
 export * from "./use-canvas-positions";
 export * from "./use-canvas-links";
 export * from "./use-semantic-links";
+export * from "./use-journal-entries";
