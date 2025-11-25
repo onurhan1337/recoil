@@ -99,7 +99,8 @@ export async function POST(
 
     if (!shouldProcessAsync) {
       try {
-        embedding = (await generateEmbedding(noteContent)).join(",");
+        const embeddingArray = await generateEmbedding(noteContent);
+        embedding = `[${embeddingArray.join(",")}]`;
         metadata = await generateNoteMetadata(noteContent);
       } catch (error) {
         return errorResponse("Failed to generate embedding/metadata", 500);

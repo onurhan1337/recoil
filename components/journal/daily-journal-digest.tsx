@@ -65,7 +65,7 @@ function JournalEntryCard({
 
   const handleSave = async () => {
     if (!editContent.trim()) {
-      toast.error("Entry cannot be empty");
+      toast.error("Cannot be empty");
       return;
     }
 
@@ -75,9 +75,9 @@ function JournalEntryCard({
         content: editContent.trim(),
       });
       setIsEditing(false);
-      toast.success("Entry updated");
+      toast.success("Saved");
     } catch (err) {
-      toast.error("Failed to update entry");
+      toast.error("Update failed");
     }
   };
 
@@ -152,7 +152,7 @@ function JournalEntryCard({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="absolute right-7 flex items-center gap-1"
+                      className="absolute right-8 sm:right-7 flex items-center gap-1.5 sm:gap-1 z-10 bg-card/95 backdrop-blur-sm rounded-md px-1 py-1 sm:px-0 sm:py-0 sm:bg-transparent sm:backdrop-blur-none"
                     >
                       <motion.button
                         initial={{ opacity: 0, x: 8 }}
@@ -165,7 +165,7 @@ function JournalEntryCard({
                         }}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
-                        className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-muted/60 transition-colors duration-150"
+                        className="h-9 w-9 sm:h-7 sm:w-7 flex items-center justify-center rounded-md hover:bg-muted/60 active:bg-muted/80 transition-colors duration-150 touch-manipulation"
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowActions(false);
@@ -173,7 +173,7 @@ function JournalEntryCard({
                         }}
                         title="Edit"
                       >
-                        <Edit2 className="h-3.5 w-3.5 text-muted-foreground/70" />
+                        <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-muted-foreground/70" />
                       </motion.button>
                       <motion.button
                         initial={{ opacity: 0, x: 8 }}
@@ -187,7 +187,7 @@ function JournalEntryCard({
                         }}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
-                        className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-muted/60 transition-colors duration-150"
+                        className="h-9 w-9 sm:h-7 sm:w-7 flex items-center justify-center rounded-md hover:bg-muted/60 active:bg-muted/80 transition-colors duration-150 touch-manipulation"
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowActions(false);
@@ -195,7 +195,7 @@ function JournalEntryCard({
                         }}
                         title="Make it searchable"
                       >
-                        <Sparkles className="h-3.5 w-3.5 text-muted-foreground/70" />
+                        <Sparkles className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-muted-foreground/70" />
                       </motion.button>
                       <motion.button
                         initial={{ opacity: 0, x: 8 }}
@@ -209,7 +209,7 @@ function JournalEntryCard({
                         }}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
-                        className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-destructive/5 hover:text-destructive/80 transition-colors duration-150"
+                        className="h-9 w-9 sm:h-7 sm:w-7 flex items-center justify-center rounded-md hover:bg-destructive/5 hover:text-destructive/80 active:bg-destructive/10 active:text-destructive transition-colors duration-150 touch-manipulation"
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowActions(false);
@@ -217,19 +217,24 @@ function JournalEntryCard({
                         }}
                         title="Delete"
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground/70" />
+                        <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-muted-foreground/70" />
                       </motion.button>
                     </motion.div>
                   )}
                 </AnimatePresence>
                 <button
-                  className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted/60 transition-all duration-200"
+                  className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 h-8 w-8 sm:h-6 sm:w-6 flex items-center justify-center rounded-md hover:bg-muted/60 active:bg-muted/80 transition-all duration-200 touch-manipulation"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowActions(!showActions);
                   }}
                 >
-                  <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground/70" />
+                  <ChevronLeft
+                    className={cn(
+                      "h-4 w-4 sm:h-3.5 sm:w-3.5 text-muted-foreground/70 transition-transform duration-200",
+                      showActions && "rotate-180"
+                    )}
+                  />
                 </button>
               </div>
             </div>
@@ -297,9 +302,9 @@ export function DailyJournalDigest({
 
     try {
       await deleteMutation.mutateAsync(entryId);
-      toast.success("Entry deleted");
+      toast.success("Removed");
     } catch (err) {
-      toast.error("Failed to delete entry");
+      toast.error("Delete failed");
     }
   };
 

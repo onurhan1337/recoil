@@ -33,7 +33,7 @@ export function ActivityByDayChart({ data }: ActivityByDayChartProps) {
   return (
     <Card className="border">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Activity by Day</CardTitle>
+        <CardTitle>Activity by Day</CardTitle>
         <CardDescription>
           Note-taking patterns throughout the week
         </CardDescription>

@@ -65,9 +65,7 @@ export function ChatHistorySidebar({
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle className="text-2xl font-lora font-semibold tracking-tight">
-            Chat History
-          </DialogTitle>
+          <DialogTitle>Chat History</DialogTitle>
         </DialogHeader>
 
         <div className="px-6 pt-4 pb-4 border-b bg-muted/30">

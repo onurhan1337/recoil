@@ -50,14 +50,14 @@ export function MarkdownImportDialog({
       setMarkdown(content);
     };
     reader.onerror = () => {
-      toast.error("Failed to read file");
+      toast.error("Read failed");
     };
     reader.readAsText(file);
   };
 
   const handleImport = async () => {
     if (!markdown.trim()) {
-      toast.error("Please enter or upload markdown content");
+      toast.error("Content required");
       return;
     }
 
@@ -71,7 +71,7 @@ export function MarkdownImportDialog({
       const result = await importMarkdown.mutateAsync(markdown);
 
       toast.success(
-        `Successfully imported ${result.notes.length} note${
+        `Imported ${result.notes.length} note${
           result.notes.length !== 1 ? "s" : ""
         }`
       );
@@ -80,7 +80,7 @@ export function MarkdownImportDialog({
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to import markdown"
+        error instanceof Error ? error.message : "Import failed"
       );
     }
   };
@@ -111,7 +111,7 @@ export function MarkdownImportDialog({
     if (!file) return;
 
     if (!file.name.endsWith(".md") && !file.name.endsWith(".markdown")) {
-      toast.error("Please upload a Markdown file (.md or .markdown)");
+      toast.error("Markdown file required");
       return;
     }
 
@@ -121,7 +121,7 @@ export function MarkdownImportDialog({
       setMarkdown(content);
     };
     reader.onerror = () => {
-      toast.error("Failed to read file");
+      toast.error("Read failed");
     };
     reader.readAsText(file);
   };
@@ -130,9 +130,7 @@ export function MarkdownImportDialog({
     <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
-          <DialogTitle className="text-xl font-semibold">
-            Import Markdown Notes
-          </DialogTitle>
+          <DialogTitle>Import Markdown Notes</DialogTitle>
           <DialogDescription className="mt-1.5 text-sm">
             Upload a markdown file or paste content. Notes are automatically split by H1 headings.
           </DialogDescription>

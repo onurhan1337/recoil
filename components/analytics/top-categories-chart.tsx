@@ -38,7 +38,7 @@ export function TopCategoriesChart({ data }: TopCategoriesChartProps) {
     return (
       <Card className="border">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Top Categories</CardTitle>
+          <CardTitle>Top Categories</CardTitle>
           <CardDescription>
             Most used categories in recent notes
           </CardDescription>

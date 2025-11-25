@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -132,7 +132,7 @@ export function GraphViewPanel({
             <div className="px-6 py-4 border-b bg-muted/30 shrink-0">
               <div className="flex items-start justify-between mb-3">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-semibold font-lora">
+                  <h2 className="text-2xl font-lora font-semibold tracking-tight mb-2">
                     Knowledge Graph
                   </h2>
                   <p className="text-sm text-muted-foreground">

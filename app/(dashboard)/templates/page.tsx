@@ -42,7 +42,7 @@ export default function TemplatesPage() {
 
     try {
       await deleteTemplateMutation.mutateAsync(templateId);
-      toast.success("Template deleted successfully");
+      toast.success("Removed");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to delete template"
@@ -59,7 +59,7 @@ export default function TemplatesPage() {
   }) => {
     try {
       await createTemplateMutation.mutateAsync(data);
-      toast.success("Template created successfully");
+      toast.success("Created");
       setShowCreateDialog(false);
     } catch (error) {
       toast.error(
@@ -82,7 +82,7 @@ export default function TemplatesPage() {
         templateId: editingTemplate,
         ...data,
       });
-      toast.success("Template updated successfully");
+      toast.success("Saved");
       setEditingTemplate(null);
     } catch (error) {
       toast.error(
@@ -92,20 +92,14 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-lora font-semibold tracking-tight mb-2">
             Templates
           </h1>
           <p className="text-muted-foreground tracking-wide font-lora text-sm">
-            {isPro
-              ? `Manage your ${templates.length} custom template${
-                  templates.length === 1 ? "" : "s"
-                }`
-              : `Free plan: ${templates.length}/1 template${
-                  templates.length === 1 ? " (limit reached)" : ""
-                }`}
+            Reusable note structures
           </p>
         </div>
         <Button

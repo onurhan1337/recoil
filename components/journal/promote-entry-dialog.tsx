@@ -51,7 +51,7 @@ export function PromoteEntryDialog({
 
   const handlePromote = async () => {
     if (!content.trim()) {
-      toast.error("Content cannot be empty");
+      toast.error("Cannot be empty");
       return;
     }
 
@@ -63,14 +63,14 @@ export function PromoteEntryDialog({
         tags: tags.length > 0 ? tags : undefined,
       });
 
-      toast.success("Entry converted to note");
+      toast.success("Converted");
       onOpenChange(false);
       onSuccess?.();
     } catch (err: any) {
       if (err.status === 402) {
         toast.error(err.message || "Insufficient credits");
       } else {
-        toast.error("Failed to convert entry");
+        toast.error("Conversion failed");
       }
     }
   };
@@ -80,9 +80,7 @@ export function PromoteEntryDialog({
       <DialogContent className="max-w-3xl max-h-[85vh] border border-border/60 bg-background ring-1 ring-border/50 ring-offset-2 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:ring-border/60 dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)] p-0 flex flex-col">
         <div className="px-6 pt-6 pb-4 border-b border-border/30">
           <DialogHeader>
-            <DialogTitle className="font-lora text-xl font-medium tracking-tight text-foreground">
-              Make it searchable
-            </DialogTitle>
+            <DialogTitle>Make it searchable</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground/70 font-lora mt-2 leading-relaxed tracking-wide">
               Transform this entry into a searchable note. Edit, add a title,
               and tags. 2 credits.

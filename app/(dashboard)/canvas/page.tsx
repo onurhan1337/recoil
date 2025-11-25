@@ -83,7 +83,7 @@ export default function CanvasPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-full">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Loading canvas...</p>
@@ -122,7 +122,7 @@ export default function CanvasPage() {
     }
 
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-full">
         <div className="text-center space-y-4">
           <p className="text-sm text-destructive">{errorMessage}</p>
           <Button onClick={() => window.location.reload()}>Retry</Button>
@@ -137,10 +137,10 @@ export default function CanvasPage() {
 
   if (data.notes.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen p-4">
+      <div className="flex items-center justify-center h-full p-4">
         <Card className="max-w-md border-border/50 shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-xl">Your Mind Map Awaits</CardTitle>
+            <CardTitle>Your Mind Map Awaits</CardTitle>
             <CardDescription className="text-base">
               Start creating notes to see them visualized as an interconnected
               mind map. Watch your knowledge graph come to life.
@@ -159,7 +159,7 @@ export default function CanvasPage() {
   }
 
   return (
-    <div className="h-screen w-full">
+    <div className="h-full w-full">
       <CanvasView
         data={filteredData}
         showSemanticLinks={showSemanticLinks}

@@ -33,12 +33,12 @@ export default function CollectionsPage() {
   const handleDelete = async (collectionId: string) => {
     try {
       await deleteCollection.mutateAsync(collectionId);
-      toast.success("Collection deleted successfully");
+      toast.success("Removed");
       if (selectedCollection === collectionId) {
         setSelectedCollection(null);
       }
     } catch (error) {
-      toast.error("Failed to delete collection");
+      toast.error("Delete failed");
     }
   };
 
@@ -56,7 +56,7 @@ export default function CollectionsPage() {
     : [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-lora font-semibold tracking-tight mb-2">
@@ -184,7 +184,7 @@ export default function CollectionsPage() {
       {selectedCollection && selectedCollectionData && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-lora font-semibold tracking-tight">
+            <h2 className="text-2xl font-lora font-semibold tracking-tight mb-2">
               {selectedCollectionData.name}
             </h2>
             <Button

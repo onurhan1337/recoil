@@ -80,9 +80,7 @@ export function FeedbackDialog({ trigger }: FeedbackDialogProps) {
       </DialogTrigger>
       <DialogContent className="max-w-lg p-0 flex flex-col max-h-[90vh]">
         <DialogHeader className="px-6 pt-6 pb-5 border-b">
-          <DialogTitle className="text-lg font-lora font-medium mb-4">
-            Share Your Feedback
-          </DialogTitle>
+          <DialogTitle className="mb-4">Share Your Feedback</DialogTitle>
           <div className="flex items-center gap-1">
             {feedbackTypes.map((type) => (
               <button

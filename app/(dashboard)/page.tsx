@@ -20,7 +20,7 @@ export default function DashboardPage() {
             </h1>
           </div>
           <p className="text-muted-foreground tracking-wide font-lora text-sm">
-            Ask questions and explore your thoughts using AI-powered search
+            Where thoughts take shape.
           </p>
         </div>
 

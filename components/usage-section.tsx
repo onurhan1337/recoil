@@ -172,7 +172,7 @@ export function UsageSection({ usage }: UsageSectionProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-medium">Plan & Usage</h2>
+      <h2 className="text-2xl font-lora font-semibold tracking-tight mb-2">Plan & Usage</h2>
       <div className="rounded-lg border border-border p-4 space-y-4">
         <div className="flex items-center justify-between">
           <CreditDisplay

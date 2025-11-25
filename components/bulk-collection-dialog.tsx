@@ -98,9 +98,7 @@ export function BulkCollectionDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            <span className="font-lora font-semibold">Manage Collections</span>
-          </DialogTitle>
+          <DialogTitle>Manage Collections</DialogTitle>
           <DialogDescription>
             Add or remove {selectedNoteIds.length} note
             {selectedNoteIds.length !== 1 ? "s" : ""} from a collection

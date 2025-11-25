@@ -67,22 +67,24 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
           </button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">Upgrade to Pro</DialogTitle>
+          <DialogTitle>Upgrade to Pro</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="text-center space-y-2 pb-2">
-            <p className="text-sm text-muted-foreground">
-              Unlock powerful AI features and advanced analytics
+            <p className="text-sm text-muted-foreground font-lora tracking-wide">
+              Unlock powerful AI features
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="rounded-lg border-2 border-border p-5 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-lg border-2 border-border p-4 md:p-5 space-y-4">
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Free</h3>
+                  <h3 className="text-lg font-lora font-semibold tracking-tight">
+                    Free
+                  </h3>
                   {isPro === false && (
                     <Badge variant="secondary" className="text-xs">
                       Current
@@ -139,10 +141,12 @@ export function UpgradePlanDialog({ trigger }: UpgradePlanDialogProps) {
               </div>
             </div>
 
-            <div className="rounded-lg border-2 border-foreground p-5 space-y-4 bg-muted/30">
+            <div className="rounded-lg border-2 border-foreground p-4 md:p-5 space-y-4 bg-muted/30">
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Pro</h3>
+                  <h3 className="text-lg font-lora font-semibold tracking-tight">
+                    Pro
+                  </h3>
                   {isPro === true && (
                     <Badge variant="secondary" className="text-xs">
                       Current

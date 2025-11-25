@@ -24,16 +24,16 @@ export function AccountSection({ user }: AccountSectionProps) {
 
   const handleSaveName = async () => {
     if (!displayName.trim()) {
-      toast.error("Display name cannot be empty");
+      toast.error("Cannot be empty");
       return;
     }
 
     try {
       await updateDisplayNameMutation.mutateAsync(displayName);
-      toast.success("Display name updated successfully");
+      toast.success("Saved");
       setIsEditingName(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update display name");
+      toast.error(error instanceof Error ? error.message : "Update failed");
     }
   };
 
@@ -44,7 +44,7 @@ export function AccountSection({ user }: AccountSectionProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-medium">Account</h2>
+      <h2 className="text-2xl font-lora font-semibold tracking-tight mb-2">Account</h2>
       <div className="rounded-lg border border-border p-4 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Email</span>
