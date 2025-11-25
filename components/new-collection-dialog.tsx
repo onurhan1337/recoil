@@ -36,19 +36,19 @@ export function NewCollectionDialog({ open, onOpenChange }: NewCollectionDialogP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error("Please enter a collection name");
+      toast.error("Name required");
       return;
     }
 
     try {
       await createCollection.mutateAsync({ name, description, color });
-      toast.success("Collection created successfully");
+      toast.success("Created");
       onOpenChange(false);
       setName("");
       setDescription("");
       setColor(PRESET_COLORS[0]);
     } catch (error) {
-      toast.error("Failed to create collection");
+      toast.error("Creation failed");
     }
   };
 

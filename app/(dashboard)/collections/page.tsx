@@ -33,12 +33,12 @@ export default function CollectionsPage() {
   const handleDelete = async (collectionId: string) => {
     try {
       await deleteCollection.mutateAsync(collectionId);
-      toast.success("Collection deleted successfully");
+      toast.success("Removed");
       if (selectedCollection === collectionId) {
         setSelectedCollection(null);
       }
     } catch (error) {
-      toast.error("Failed to delete collection");
+      toast.error("Delete failed");
     }
   };
 

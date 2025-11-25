@@ -50,14 +50,14 @@ export function MarkdownImportDialog({
       setMarkdown(content);
     };
     reader.onerror = () => {
-      toast.error("Failed to read file");
+      toast.error("Read failed");
     };
     reader.readAsText(file);
   };
 
   const handleImport = async () => {
     if (!markdown.trim()) {
-      toast.error("Please enter or upload markdown content");
+      toast.error("Content required");
       return;
     }
 
@@ -71,7 +71,7 @@ export function MarkdownImportDialog({
       const result = await importMarkdown.mutateAsync(markdown);
 
       toast.success(
-        `Successfully imported ${result.notes.length} note${
+        `Imported ${result.notes.length} note${
           result.notes.length !== 1 ? "s" : ""
         }`
       );
@@ -80,7 +80,7 @@ export function MarkdownImportDialog({
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to import markdown"
+        error instanceof Error ? error.message : "Import failed"
       );
     }
   };
@@ -111,7 +111,7 @@ export function MarkdownImportDialog({
     if (!file) return;
 
     if (!file.name.endsWith(".md") && !file.name.endsWith(".markdown")) {
-      toast.error("Please upload a Markdown file (.md or .markdown)");
+      toast.error("Markdown file required");
       return;
     }
 
@@ -121,7 +121,7 @@ export function MarkdownImportDialog({
       setMarkdown(content);
     };
     reader.onerror = () => {
-      toast.error("Failed to read file");
+      toast.error("Read failed");
     };
     reader.readAsText(file);
   };

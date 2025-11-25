@@ -26,7 +26,7 @@ export function useNotificationActions() {
 
       await markAsReadMutation.mutateAsync(id);
     } catch (error) {
-      toast.error("Failed to mark notification as read");
+      toast.error("Mark failed");
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }
   };
@@ -46,9 +46,9 @@ export function useNotificationActions() {
       });
 
       await deleteMutation.mutateAsync(id);
-      toast.success("Notification deleted");
+      toast.success("Removed");
     } catch (error) {
-      toast.error("Failed to delete notification");
+      toast.error("Delete failed");
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }
   };

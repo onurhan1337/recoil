@@ -46,7 +46,7 @@ export function NoteInput({ onNoteCreated, initialTemplate }: NoteInputProps) {
     e.preventDefault();
 
     if (!content.trim()) {
-      toast.error("Please enter some content");
+      toast.error("Content required");
       return;
     }
 
@@ -56,7 +56,7 @@ export function NoteInput({ onNoteCreated, initialTemplate }: NoteInputProps) {
         title: title.trim() || undefined,
         tags: tags.length > 0 ? tags : undefined,
       });
-      toast.success("Note saved successfully");
+      toast.success("Saved");
       setContent("");
       setTitle("");
       setTags([]);
@@ -65,7 +65,7 @@ export function NoteInput({ onNoteCreated, initialTemplate }: NoteInputProps) {
       if (err instanceof Error) {
         toast.error(err.message);
       } else {
-        toast.error("An unexpected error occurred");
+        toast.error("Save failed");
       }
     }
   };

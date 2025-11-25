@@ -65,7 +65,7 @@ function JournalEntryCard({
 
   const handleSave = async () => {
     if (!editContent.trim()) {
-      toast.error("Entry cannot be empty");
+      toast.error("Cannot be empty");
       return;
     }
 
@@ -75,9 +75,9 @@ function JournalEntryCard({
         content: editContent.trim(),
       });
       setIsEditing(false);
-      toast.success("Entry updated");
+      toast.success("Saved");
     } catch (err) {
-      toast.error("Failed to update entry");
+      toast.error("Update failed");
     }
   };
 
@@ -302,9 +302,9 @@ export function DailyJournalDigest({
 
     try {
       await deleteMutation.mutateAsync(entryId);
-      toast.success("Entry deleted");
+      toast.success("Removed");
     } catch (err) {
-      toast.error("Failed to delete entry");
+      toast.error("Delete failed");
     }
   };
 

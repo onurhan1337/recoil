@@ -48,7 +48,7 @@ export function EditCollectionDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error("Please enter a collection name");
+      toast.error("Name required");
       return;
     }
 
@@ -59,10 +59,10 @@ export function EditCollectionDialog({
         description,
         color,
       });
-      toast.success("Collection updated successfully");
+      toast.success("Saved");
       onOpenChange(false);
     } catch (error) {
-      toast.error("Failed to update collection");
+      toast.error("Update failed");
     }
   };
 

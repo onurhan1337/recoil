@@ -68,7 +68,7 @@ function NoteCardWithContextMenu({
         noteId: note.id,
         pinned: !note.pinned,
       });
-      toast.success(note.pinned ? "Note unpinned" : "Note pinned");
+      toast.success(note.pinned ? "Unpinned" : "Pinned");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to toggle pin"
@@ -83,7 +83,7 @@ function NoteCardWithContextMenu({
         favorite: !note.favorite,
       });
       toast.success(
-        note.favorite ? "Removed from favorites" : "Added to favorites"
+        note.favorite ? "Removed" : "Favorited"
       );
     } catch (error) {
       toast.error(
@@ -98,7 +98,7 @@ function NoteCardWithContextMenu({
         noteId: note.id,
         archived: !note.archived,
       });
-      toast.success(note.archived ? "Note unarchived" : "Note archived");
+      toast.success(note.archived ? "Unarchived" : "Archived");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to toggle archive"
@@ -109,7 +109,7 @@ function NoteCardWithContextMenu({
   const handleDuplicate = async () => {
     try {
       await duplicateNote.mutateAsync(note.id);
-      toast.success("Note duplicated");
+      toast.success("Duplicated");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to duplicate note"
@@ -123,7 +123,7 @@ function NoteCardWithContextMenu({
     }
     try {
       await deleteNote.mutateAsync(note.id);
-      toast.success("Note deleted");
+      toast.success("Removed");
       onNoteDeleted?.();
     } catch (error) {
       toast.error(

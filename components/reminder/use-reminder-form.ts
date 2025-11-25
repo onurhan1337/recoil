@@ -157,8 +157,8 @@ export function useReminderForm({
           id: reminder.id,
           ...payload,
         });
-        toast.success("Reminder updated", {
-          description: `You'll be notified on ${format(
+        toast.success("Updated", {
+          description: `${format(
             validation.dateTime!,
             "PPP"
           )} at ${formState.time}`,
@@ -168,8 +168,8 @@ export function useReminderForm({
           note_id: noteId,
           ...payload,
         });
-        toast.success("Reminder created", {
-          description: `You'll be notified on ${format(
+        toast.success("Set", {
+          description: `${format(
             validation.dateTime!,
             "PPP"
           )} at ${formState.time}`,
@@ -181,7 +181,7 @@ export function useReminderForm({
       resetForm();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to save reminder"
+        error instanceof Error ? error.message : "Save failed"
       );
     }
   };
@@ -199,13 +199,13 @@ export function useReminderForm({
 
     try {
       await deleteReminderMutation.mutateAsync(reminder.id);
-      toast.success("Reminder deleted successfully");
+      toast.success("Removed");
       onOpenChange(false);
       onSuccess?.();
       resetForm();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete reminder"
+        error instanceof Error ? error.message : "Delete failed"
       );
     }
   };

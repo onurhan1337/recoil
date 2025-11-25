@@ -42,7 +42,7 @@ export default function TemplatesPage() {
 
     try {
       await deleteTemplateMutation.mutateAsync(templateId);
-      toast.success("Template deleted successfully");
+      toast.success("Removed");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to delete template"
@@ -59,7 +59,7 @@ export default function TemplatesPage() {
   }) => {
     try {
       await createTemplateMutation.mutateAsync(data);
-      toast.success("Template created successfully");
+      toast.success("Created");
       setShowCreateDialog(false);
     } catch (error) {
       toast.error(
@@ -82,7 +82,7 @@ export default function TemplatesPage() {
         templateId: editingTemplate,
         ...data,
       });
-      toast.success("Template updated successfully");
+      toast.success("Saved");
       setEditingTemplate(null);
     } catch (error) {
       toast.error(

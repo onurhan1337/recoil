@@ -37,9 +37,9 @@ export function NoteCollectionsManager({
     setPendingAction(collectionId);
     try {
       await addNoteToCollection.mutateAsync({ collectionId, noteId });
-      toast.success("Added to collection");
+      toast.success("Added");
     } catch (error) {
-      toast.error("Failed to add to collection");
+      toast.error("Add failed");
     } finally {
       setPendingAction(null);
     }
@@ -49,9 +49,9 @@ export function NoteCollectionsManager({
     setPendingAction(collectionId);
     try {
       await removeNoteFromCollection.mutateAsync({ collectionId, noteId });
-      toast.success("Removed from collection");
+      toast.success("Removed");
     } catch (error) {
-      toast.error("Failed to remove from collection");
+      toast.error("Remove failed");
     } finally {
       setPendingAction(null);
     }

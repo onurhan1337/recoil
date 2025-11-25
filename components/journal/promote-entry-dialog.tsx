@@ -51,7 +51,7 @@ export function PromoteEntryDialog({
 
   const handlePromote = async () => {
     if (!content.trim()) {
-      toast.error("Content cannot be empty");
+      toast.error("Cannot be empty");
       return;
     }
 
@@ -63,14 +63,14 @@ export function PromoteEntryDialog({
         tags: tags.length > 0 ? tags : undefined,
       });
 
-      toast.success("Entry converted to note");
+      toast.success("Converted");
       onOpenChange(false);
       onSuccess?.();
     } catch (err: any) {
       if (err.status === 402) {
         toast.error(err.message || "Insufficient credits");
       } else {
-        toast.error("Failed to convert entry");
+        toast.error("Conversion failed");
       }
     }
   };

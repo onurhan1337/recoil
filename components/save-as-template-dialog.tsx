@@ -40,7 +40,7 @@ export function SaveAsTemplateDialog({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast.error("Template name is required");
+      toast.error("Name required");
       return;
     }
 
@@ -53,7 +53,7 @@ export function SaveAsTemplateDialog({
         tags: noteTags || ([] as string[]),
       });
 
-      toast.success("Template saved successfully");
+      toast.success("Saved");
       onOpenChange(false);
       setName(noteTitle || "");
       setDescription("");
