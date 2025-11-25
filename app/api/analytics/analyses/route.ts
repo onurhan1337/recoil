@@ -1,14 +1,24 @@
-import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { authenticateUser, errorResponse, successResponse } from "@/lib/api/utils";
+import {
+  authenticateUser,
+  errorResponse,
+  successResponse,
+  ensureUserUsage,
+  isProPlan,
+} from "@/lib/api/utils";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const user = await authenticateUser(supabase);
 
     if (!user) {
       return errorResponse("Unauthorized", 401);
+    }
+
+    const usage = await ensureUserUsage(supabase, user.id);
+    if (!isProPlan(usage?.plan)) {
+      return errorResponse("Pro plan required for analytics", 403);
     }
 
     const { data: analyses, error } = await supabase

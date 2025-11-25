@@ -10,6 +10,8 @@ import {
   getUserPlan,
   calculateNoteCost,
   isInsufficientCreditsError,
+  ensureUserUsage,
+  isProPlan,
 } from "@/lib/api/utils";
 import { validateRequest, validateQuery } from "@/lib/validation-utils";
 
@@ -151,6 +153,11 @@ export async function GET(request: NextRequest) {
     const analyticsParam = searchParams.get("analytics");
 
     if (analyticsParam === "true") {
+      const usage = await ensureUserUsage(supabase, user.id);
+      if (!isProPlan(usage?.plan)) {
+        return errorResponse("Pro plan required for analytics", 403);
+      }
+
       const { data, error: analyticsError } = await supabase
         .from("notes")
         .select("id, category, created_at")

@@ -26,7 +26,7 @@ import { AnalysisHistoryItem } from "@/components/analytics/analysis-history-ite
 import { AnalyticsLoading } from "@/components/analytics/analytics-loading";
 import { AnalyticsEmptyState } from "@/components/analytics/analytics-empty-state";
 import { HistoryEmptyState } from "@/components/analytics/history-empty-state";
-import { ProUpgradeCard } from "@/components/analytics/pro-upgrade-card";
+import { ProFeatureLock } from "@/components/pro-feature-lock";
 import { NotesOverTimeChart } from "@/components/analytics/notes-over-time-chart";
 import { ActivityByDayChart } from "@/components/analytics/activity-by-day-chart";
 import { CategoryDistributionChart } from "@/components/analytics/category-distribution-chart";
@@ -111,7 +111,11 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {!isPro && <ProUpgradeCard />}
+      {!isPro && (
+        <ProFeatureLock
+          description="Upgrade to Pro to unlock thinking patterns analysis and gain insights into your note-taking habits."
+        />
+      )}
 
       {isPro && (
         <div className="space-y-6">

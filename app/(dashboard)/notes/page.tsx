@@ -12,6 +12,7 @@ import {
   Network,
   Search,
   Filter,
+  Lock,
 } from "lucide-react";
 import { useQueryState, parseAsString } from "nuqs";
 import { useNotesInfinite, useTags, useBulkDeleteNotes } from "@/lib/api/hooks";
@@ -53,6 +54,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { isProPlan } from "@/lib/utils";
 import { MarkdownImportDialog } from "@/components/markdown-import-dialog";
 import { BulkCollectionDialog } from "@/components/bulk-collection-dialog";
@@ -98,7 +105,7 @@ export default function NotesPage() {
     clearFilters,
   } = useNotesFilter(allNotes);
 
-  const { data: analyticsNotes = [] } = useNotesAnalyticsQuery();
+  const { data: analyticsNotes = [] } = useNotesAnalyticsQuery(isPro);
   const analytics = useNotesAnalytics(analyticsNotes);
 
   const favoriteNotes = notes.filter((note) => note.favorite);
@@ -195,6 +202,7 @@ export default function NotesPage() {
       open={isGraphViewOpen}
       onOpenChange={setIsGraphViewOpen}
       notes={allNotes}
+      isPro={isPro}
     >
       <div className="space-y-8">
         <MarkdownImportDialog
@@ -393,15 +401,29 @@ export default function NotesPage() {
 
                 <div className="h-6 w-px bg-border mx-1" />
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsGraphViewOpen(true)}
-                  className="gap-1.5 h-9 px-2.5 rounded-md hover:bg-muted transition-colors"
-                >
-                  <Network className="h-3.5 w-3.5 shrink-0" />
-                  <span className="text-xs font-normal">Graph View</span>
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsGraphViewOpen(true)}
+                        className="gap-1.5 h-9 px-2.5 rounded-md hover:bg-muted transition-colors"
+                      >
+                        <Network className="h-3.5 w-3.5 shrink-0" />
+                        <span className="text-xs font-normal">Graph View</span>
+                        {!isPro && (
+                          <Lock className="h-3 w-3 text-muted-foreground/60" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    {!isPro && (
+                      <TooltipContent>
+                        <p>Pro feature - Upgrade to unlock</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
 
                 <Button
                   variant="ghost"

@@ -4,8 +4,11 @@ import { useState, useMemo } from "react";
 import { useQueryStates } from "nuqs";
 import { CanvasView } from "@/components/canvas/canvas-view";
 import { useCanvas, useGenerateSemanticLinks } from "@/lib/api/hooks";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProFeatureLock } from "@/components/pro-feature-lock";
+import { toast } from "sonner";
+import { canvasFiltersParsers, applyCanvasFilters } from "@/lib/canvas/filters";
 import {
   Card,
   CardContent,
@@ -14,8 +17,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
-import { toast } from "sonner";
-import { canvasFiltersParsers, applyCanvasFilters } from "@/lib/canvas/filters";
 
 export default function CanvasPage() {
   const [showSemanticLinks, setShowSemanticLinks] = useState(false);
@@ -98,52 +99,25 @@ export default function CanvasPage() {
 
     if (isProRequired) {
       return (
-        <div className="flex items-center justify-center h-screen p-4">
-          <Card className="max-w-md border-border/50 shadow-2xl">
-            <CardHeader>
-              <div className="flex items-center gap-2 mb-2">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-xl">Unlock Mind Map</CardTitle>
-              </div>
-              <CardDescription className="text-base">
-                Visualize your knowledge as an interactive mind map. See
-                connections, patterns, and insights emerge from your notes.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">What you'll get:</h4>
-                <ul className="text-sm text-muted-foreground space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-0.5">✦</span>
-                    <span>
-                      Infinite canvas to spatially organize your thoughts
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-0.5">✦</span>
-                    <span>
-                      Visual connections revealing relationships between ideas
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-0.5">✦</span>
-                    <span>Intuitive drag-and-drop with keyboard shortcuts</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-0.5">✦</span>
-                    <span>Semantic links powered by AI understanding</span>
-                  </li>
-                </ul>
-              </div>
-              <Link href="/settings">
-                <Button className="w-full" size="lg">
-                  Upgrade to Pro
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+        <ProFeatureLock
+          variant="detailed"
+          title="Unlock Mind Map"
+          description="Visualize your knowledge as an interactive mind map. See connections, patterns, and insights emerge from your notes."
+          features={[
+            {
+              text: "Infinite canvas to spatially organize your thoughts",
+            },
+            {
+              text: "Visual connections revealing relationships between ideas",
+            },
+            {
+              text: "Intuitive drag-and-drop with keyboard shortcuts",
+            },
+            {
+              text: "Semantic links powered by AI understanding",
+            },
+          ]}
+        />
       );
     }
 

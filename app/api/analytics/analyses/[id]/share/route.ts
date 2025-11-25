@@ -1,6 +1,12 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { authenticateUser, errorResponse, successResponse } from "@/lib/api/utils";
+import {
+  authenticateUser,
+  errorResponse,
+  successResponse,
+  ensureUserUsage,
+  isProPlan,
+} from "@/lib/api/utils";
 import { uuidSchema } from "@/lib/validations";
 import { validateParams } from "@/lib/validation-utils";
 
@@ -21,6 +27,11 @@ export async function POST(
 
     if (!user) {
       return errorResponse("Unauthorized", 401);
+    }
+
+    const usage = await ensureUserUsage(supabase, user.id);
+    if (!isProPlan(usage?.plan)) {
+      return errorResponse("Pro plan required for analytics", 403);
     }
 
     const shareToken = crypto.randomUUID();
@@ -62,6 +73,11 @@ export async function DELETE(
 
     if (!user) {
       return errorResponse("Unauthorized", 401);
+    }
+
+    const usage = await ensureUserUsage(supabase, user.id);
+    if (!isProPlan(usage?.plan)) {
+      return errorResponse("Pro plan required for analytics", 403);
     }
 
     const { error } = await supabase
