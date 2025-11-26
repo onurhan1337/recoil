@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import { generateEmbedding } from "@/lib/embeddings";
 import {
   streamText,
@@ -18,6 +20,7 @@ import {
   getUserPlan,
   isInsufficientCreditsError,
   isUserNotFoundError,
+  withRateLimit,
 } from "@/lib/api/utils";
 import { chatRequestSchema } from "@/lib/validations";
 import { validateRequest } from "@/lib/validation-utils";
@@ -33,6 +36,27 @@ export async function POST(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
+    return withRateLimit(
+      request,
+      "/api/chat",
+      "POST",
+      async () => {
+        return handleChatRequest(request, supabase, user);
+      },
+      supabase,
+      user.id
+    );
+  } catch (error) {
+    return errorResponse("Internal server error", 500);
+  }
+}
+
+async function handleChatRequest(
+  request: NextRequest,
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  user: User
+) {
+  try {
     const body = await request.json();
 
     const normalizedBody = {
@@ -285,7 +309,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error in chat:", error);
+    console.error("Error in chat handler:", error);
     return errorResponse("Internal server error", 500);
   }
 }
