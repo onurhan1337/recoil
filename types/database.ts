@@ -505,6 +505,10 @@ export type Database = {
         Args: { amount: number; user_id: string };
         Returns: number;
       };
+      increment_credits: {
+        Args: { amount: number; user_id: string };
+        Returns: number;
+      };
       match_notes: {
         Args: {
           match_count: number;

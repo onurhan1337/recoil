@@ -45,10 +45,15 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Don't redirect API routes - let them handle auth and return 401/429
+  // This allows rate limiting to work properly
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
+
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/signup")
+    !request.nextUrl.pathname.startsWith("/signup") &&
+    !isApiRoute
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

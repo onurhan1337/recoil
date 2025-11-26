@@ -1,4 +1,5 @@
 import { Polar } from "@polar-sh/sdk";
+import { ResourceNotFound } from "@polar-sh/sdk/models/errors/resourcenotfound";
 
 const polarAccessToken = process.env.POLAR_ACCESS_TOKEN!;
 
@@ -10,6 +11,20 @@ const polar = new Polar({
   accessToken: polarAccessToken,
   server: "sandbox",
 });
+
+/**
+ * Check if an error indicates that a customer was not found
+ * Uses ResourceNotFound instance or statusCode 404 or checks if error is a ResourceNotFound instance
+ */
+export function isCustomerNotFoundError(error: any): boolean {
+  return (
+    error instanceof ResourceNotFound ||
+    error?.statusCode === 404 ||
+    error?.name === "ResourceNotFound" ||
+    error?.constructor?.name === "ResourceNotFound"
+  );
+}
+
 /**
  * Create or get a Polar customer by external ID (Supabase user ID)
  * Note: When using an organization token, organizationId is automatically set
@@ -25,7 +40,7 @@ export async function getOrCreateCustomer(
       });
       return customerState.id;
     } catch (error: any) {
-      if (error.statusCode === 404 || error.message?.includes("not found")) {
+      if (isCustomerNotFoundError(error)) {
         const customer = await polar.customers.create({
           email,
           externalId: userId,

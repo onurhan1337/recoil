@@ -1,10 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
 import { searchSchema } from "@/lib/validations";
 import { streamText } from "ai";
 import { validateRequest } from "@/lib/validation-utils";
-import { isInsufficientCreditsError } from "@/lib/api/utils";
+import {
+  isInsufficientCreditsError,
+  withRateLimit,
+  authenticateUser,
+  errorResponse,
+} from "@/lib/api/utils";
 import { getAIModel } from "@/lib/ai/provider";
 import { config } from "@/lib/config";
 import { AI_PROMPTS } from "@/lib/ai/prompts";
@@ -12,120 +17,119 @@ import { AI_PROMPTS } from "@/lib/ai/prompts";
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const user = await authenticateUser(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      return errorResponse("Unauthorized", 401);
     }
 
-    const body = await request.json();
-    const validation = validateRequest(searchSchema, body);
+    return withRateLimit(
+      request,
+      "/api/notes/search",
+      "POST",
+      async () => {
+        const body = await request.json();
+        const validation = validateRequest(searchSchema, body);
 
-    if (!validation.success) {
-      return validation.response;
-    }
+        if (!validation.success) {
+          return validation.response;
+        }
 
-    const { query } = validation.data;
+        const { query } = validation.data;
 
-    const { data: remainingCredits, error: creditError } = await supabase.rpc(
-      "decrement_credits",
-      {
-        user_id: user.id,
-        amount: 1,
-      }
-    );
+        const { data: remainingCredits, error: creditError } =
+          await supabase.rpc("decrement_credits", {
+            user_id: user.id,
+            amount: 1,
+          });
 
-    if (creditError) {
-      console.error("Failed to decrement credits:", creditError);
+        if (creditError) {
+          console.error("Failed to decrement credits:", creditError);
 
-      if (isInsufficientCreditsError(creditError)) {
-        return NextResponse.json(
-          { error: "Insufficient credits" },
-          { status: 403 }
+          if (isInsufficientCreditsError(creditError)) {
+            return errorResponse("Insufficient credits", 403);
+          }
+
+          if (creditError.message?.includes("not found")) {
+            return errorResponse("User usage record not found", 404);
+          }
+
+          return errorResponse("Failed to process credits", 500);
+        }
+
+        const queryEmbedding = await generateEmbedding(query);
+
+        const { data: results, error: searchError } = await supabase.rpc(
+          "search_notes",
+          {
+            query_embedding: JSON.stringify(queryEmbedding),
+            match_threshold: 0.5,
+            match_count: 10,
+          }
         );
-      }
 
-      if (creditError.message?.includes("not found")) {
-        return NextResponse.json(
-          { error: "User usage record not found" },
-          { status: 404 }
-        );
-      }
+        if (searchError) {
+          const { error: rollbackError } = await supabase.rpc(
+            "increment_credits",
+            {
+              user_id: user.id,
+              amount: 1,
+            }
+          );
 
-      return NextResponse.json(
-        { error: "Failed to process credits" },
-        { status: 500 }
-      );
-    }
+          if (rollbackError) {
+            console.error("Failed to rollback credits:", rollbackError);
+            return errorResponse(
+              `Search failed and credit rollback failed: ${searchError.message}. Rollback error: ${rollbackError.message}`,
+              500
+            );
+          }
 
-    const queryEmbedding = await generateEmbedding(query);
+          return errorResponse(`Search failed: ${searchError.message}`, 500);
+        }
 
-    const { data: results, error: searchError } = await supabase.rpc(
-      "search_notes",
-      {
-        query_embedding: JSON.stringify(queryEmbedding),
-        match_threshold: 0.5,
-        match_count: 10,
-      }
-    );
+        const notesContext = results
+          .map(
+            (note: any, idx: number) =>
+              `${idx + 1}. ${
+                note.content
+              } (similarity: ${note.similarity.toFixed(2)})`
+          )
+          .join("\n\n");
 
-    if (searchError) {
-      console.error("Search error:", searchError);
-      await supabase
-        .from("usage")
-        .update({ credits: remainingCredits + 1 })
-        .eq("user_id", user.id);
-      return NextResponse.json(
-        { error: "Search failed", details: searchError.message },
-        { status: 500 }
-      );
-    }
+        const { model } = getAIModel({
+          model: config.ai.model,
+          provider: config.ai.provider,
+          fallbackEnabled: config.ai.fallbackEnabled,
+          ollamaModel: config.ai.ollama.model,
+        });
 
-    const notesContext = results
-      .map(
-        (note: any, idx: number) =>
-          `${idx + 1}. ${note.content} (similarity: ${note.similarity.toFixed(
-            2
-          )})`
-      )
-      .join("\n\n");
+        const result = streamText({
+          model,
+          messages: [
+            {
+              role: "system",
+              content: AI_PROMPTS.noteSearch.system(),
+            },
+            {
+              role: "user",
+              content: AI_PROMPTS.noteSearch.userMessage(query, notesContext),
+            },
+          ],
+        });
 
-    const { model } = getAIModel({
-      model: config.ai.model,
-      provider: config.ai.provider,
-      fallbackEnabled: config.ai.fallbackEnabled,
-      ollamaModel: config.ai.ollama.model,
-    });
-
-    const result = streamText({
-      model,
-      messages: [
-        {
-          role: "system",
-          content: AI_PROMPTS.noteSearch.system(),
-        },
-        {
-          role: "user",
-          content: AI_PROMPTS.noteSearch.userMessage(query, notesContext),
-        },
-      ],
-    });
-
-    return result.toTextStreamResponse({
-      headers: {
-        "X-Credits-Remaining": String(remainingCredits),
-        "X-Results-Count": String(results.length),
+        return result.toTextStreamResponse({
+          headers: {
+            "X-Credits-Remaining": String(remainingCredits),
+            "X-Results-Count": String(results.length),
+          },
+        });
       },
-    });
+      supabase,
+      user.id
+    );
   } catch (error) {
     console.error("Error searching notes:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return errorResponse("Internal server error", 500);
   }
 }
