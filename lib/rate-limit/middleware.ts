@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { RateLimitContext, UserPlan } from "./types";
+import type { RateLimitContext, RateLimitResult, UserPlan } from "./types";
 import { isProPlan } from "@/lib/api/utils";
 
 const IP_HEADERS = [
@@ -25,11 +25,16 @@ async function fetchUserPlan(
   supabase: SupabaseClient,
   userId: string
 ): Promise<UserPlan> {
-  const { data: usage } = await supabase
+  const { data: usage, error } = await supabase
     .from("usage")
     .select("plan")
     .eq("user_id", userId)
     .single();
+
+  if (error) {
+    console.error("Failed to fetch user plan:", error);
+    return "free";
+  }
 
   return isProPlan(usage?.plan) ? "pro" : "free";
 }
@@ -54,13 +59,6 @@ export async function createRateLimitContext(
     endpoint,
     plan: "free",
   };
-}
-
-interface RateLimitResult {
-  allowed: boolean;
-  limit: number;
-  remaining: number;
-  reset: number;
 }
 
 export function createRateLimitResponse(
