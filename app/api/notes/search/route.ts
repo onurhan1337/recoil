@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/embeddings";
 import { searchSchema } from "@/lib/validations";
@@ -8,6 +8,7 @@ import {
   isInsufficientCreditsError,
   withRateLimit,
   authenticateUser,
+  errorResponse,
 } from "@/lib/api/utils";
 import { getAIModel } from "@/lib/ai/provider";
 import { config } from "@/lib/config";
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     const user = await authenticateUser(supabase);
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401);
     }
 
     return withRateLimit(
@@ -46,23 +47,14 @@ export async function POST(request: NextRequest) {
           console.error("Failed to decrement credits:", creditError);
 
           if (isInsufficientCreditsError(creditError)) {
-            return NextResponse.json(
-              { error: "Insufficient credits" },
-              { status: 403 }
-            );
+            return errorResponse("Insufficient credits", 403);
           }
 
           if (creditError.message?.includes("not found")) {
-            return NextResponse.json(
-              { error: "User usage record not found" },
-              { status: 404 }
-            );
+            return errorResponse("User usage record not found", 404);
           }
 
-          return NextResponse.json(
-            { error: "Failed to process credits" },
-            { status: 500 }
-          );
+          return errorResponse("Failed to process credits", 500);
         }
 
         const queryEmbedding = await generateEmbedding(query);
@@ -77,15 +69,23 @@ export async function POST(request: NextRequest) {
         );
 
         if (searchError) {
-          console.error("Search error:", searchError);
-          await supabase
-            .from("usage")
-            .update({ credits: remainingCredits + 1 })
-            .eq("user_id", user.id);
-          return NextResponse.json(
-            { error: "Search failed", details: searchError.message },
-            { status: 500 }
+          const { error: rollbackError } = await supabase.rpc(
+            "increment_credits",
+            {
+              user_id: user.id,
+              amount: 1,
+            }
           );
+
+          if (rollbackError) {
+            console.error("Failed to rollback credits:", rollbackError);
+            return errorResponse(
+              `Search failed and credit rollback failed: ${searchError.message}. Rollback error: ${rollbackError.message}`,
+              500
+            );
+          }
+
+          return errorResponse(`Search failed: ${searchError.message}`, 500);
         }
 
         const notesContext = results
@@ -130,9 +130,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error searching notes:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return errorResponse("Internal server error", 500);
   }
 }
