@@ -1,7 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { UserPlan } from "./types";
 import { config } from "@/lib/config";
+import {
+  checkRateLimit,
+  getRateLimitConfig,
+  createRateLimitContext,
+  createRateLimitResponse,
+} from "@/lib/rate-limit";
 
 export function errorResponse(message: string, status: number = 500) {
   return NextResponse.json({ error: message }, { status });
@@ -187,4 +193,105 @@ export function isInsufficientCreditsError(creditError: any): boolean {
 
 export function isUserNotFoundError(error: any): boolean {
   return error?.code === "PGRST116" || error?.message?.includes("not found");
+}
+
+function isStreamLocked(body: ReadableStream | null): boolean {
+  if (!body) return false;
+  try {
+    return body.locked === true;
+  } catch {
+    return false;
+  }
+}
+
+function canSafelyUseBody(body: ReadableStream | null): boolean {
+  if (!body) return true;
+  return !isStreamLocked(body);
+}
+
+function createResponseWithRateLimitHeaders(
+  response: NextResponse | Response,
+  result: { limit: number; remaining: number; reset: number }
+): NextResponse | Response {
+  const headers = new Headers(response.headers);
+  headers.set("X-RateLimit-Limit", String(result.limit));
+  headers.set("X-RateLimit-Remaining", String(result.remaining));
+  headers.set("X-RateLimit-Reset", String(result.reset));
+
+  const responseOptions = {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  };
+
+  const body = response.body;
+  if (!canSafelyUseBody(body)) {
+    return response;
+  }
+
+  try {
+    if (response instanceof NextResponse) {
+      return new NextResponse(body, responseOptions);
+    }
+
+    return new Response(body, responseOptions);
+  } catch {
+    return response;
+  }
+}
+
+function cloneResponseSafely(
+  response: NextResponse | Response
+): NextResponse | Response | null {
+  try {
+    if (isStreamLocked(response.body)) {
+      return null;
+    }
+    return response.clone();
+  } catch {
+    return null;
+  }
+}
+
+export async function withRateLimit(
+  request: NextRequest,
+  endpoint: string,
+  method: string,
+  handler: () => Promise<NextResponse | Response>,
+  supabase?: SupabaseClient,
+  userId?: string
+): Promise<NextResponse | Response> {
+  const rateLimitConfig = getRateLimitConfig(endpoint, method);
+
+  if (!rateLimitConfig) {
+    return handler();
+  }
+
+  const context = await createRateLimitContext(
+    request,
+    endpoint,
+    supabase,
+    userId
+  );
+  const result = checkRateLimit(context, rateLimitConfig);
+
+  if (!result.allowed) {
+    return createRateLimitResponse(
+      result,
+      "Too many requests. Please try again later."
+    );
+  }
+
+  const response = await handler();
+  const clonedResponse = cloneResponseSafely(response);
+
+  if (clonedResponse) {
+    return createResponseWithRateLimitHeaders(clonedResponse, result);
+  }
+
+  if (!canSafelyUseBody(response.body)) {
+    return response;
+  }
+
+  return createResponseWithRateLimitHeaders(response, result);
 }
