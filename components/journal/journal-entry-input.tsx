@@ -11,7 +11,7 @@ interface JournalEntryInputProps {
   onEntryCreated?: () => void;
 }
 
-const placeholders = ["Write...", "Think...", "Remember..."];
+const placeholders = ["Write.", "Think.", "Remember."];
 
 export function JournalEntryInput({ onEntryCreated }: JournalEntryInputProps) {
   const [content, setContent] = useState("");
@@ -96,7 +96,7 @@ export function JournalEntryInput({ onEntryCreated }: JournalEntryInputProps) {
         )}
         {isSaved && (
           <div className="absolute bottom-3 right-3 z-10 text-[11px] text-muted-foreground/60 animate-scale-in font-normal">
-            Saved
+            Saved.
           </div>
         )}
       </div>
