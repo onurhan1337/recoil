@@ -65,7 +65,7 @@ function JournalEntryCard({
 
   const handleSave = async () => {
     if (!editContent.trim()) {
-      toast.error("Cannot be empty");
+      toast.error("Empty.");
       return;
     }
 
@@ -75,9 +75,9 @@ function JournalEntryCard({
         content: editContent.trim(),
       });
       setIsEditing(false);
-      toast.success("Saved");
+      toast.success("Saved.");
     } catch (err) {
-      toast.error("Update failed");
+      toast.error("Failed.");
     }
   };
 
@@ -302,9 +302,9 @@ export function DailyJournalDigest({
 
     try {
       await deleteMutation.mutateAsync(entryId);
-      toast.success("Removed");
+      toast.success("Removed.");
     } catch (err) {
-      toast.error("Delete failed");
+      toast.error("Failed.");
     }
   };
 
@@ -383,7 +383,7 @@ export function DailyJournalDigest({
         {entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in">
             <p className="text-sm text-muted-foreground leading-relaxed font-lora">
-              {isCurrentDay ? "A blank page." : "No entries."}
+              {isCurrentDay ? "A blank page." : "Nothing yet."}
             </p>
           </div>
         ) : (

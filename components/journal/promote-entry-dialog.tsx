@@ -51,7 +51,7 @@ export function PromoteEntryDialog({
 
   const handlePromote = async () => {
     if (!content.trim()) {
-      toast.error("Cannot be empty");
+      toast.error("Empty.");
       return;
     }
 
@@ -63,14 +63,14 @@ export function PromoteEntryDialog({
         tags: tags.length > 0 ? tags : undefined,
       });
 
-      toast.success("Converted");
+      toast.success("Done.");
       onOpenChange(false);
       onSuccess?.();
     } catch (err: any) {
       if (err.status === 402) {
-        toast.error(err.message || "Insufficient credits");
+        toast.error(err.message || "Need credits.");
       } else {
-        toast.error("Conversion failed");
+        toast.error("Failed.");
       }
     }
   };
@@ -80,10 +80,9 @@ export function PromoteEntryDialog({
       <DialogContent className="max-w-3xl max-h-[85vh] border border-border/60 bg-background ring-1 ring-border/50 ring-offset-2 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:ring-border/60 dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)] p-0 flex flex-col">
         <div className="px-6 pt-6 pb-4 border-b border-border/30">
           <DialogHeader>
-            <DialogTitle>Make it searchable</DialogTitle>
+            <DialogTitle>Make it searchable.</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground/70 font-lora mt-2 leading-relaxed tracking-wide">
-              Transform this entry into a searchable note. Edit, add a title,
-              and tags. 2 credits.
+              Make it searchable. Edit, add a title, and tags. 2 credits.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -144,7 +143,7 @@ export function PromoteEntryDialog({
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground/70 italic">
-                      Nothing to preview yet. Write some content first.
+                      Nothing to preview.
                     </p>
                   )}
                 </div>
@@ -193,7 +192,7 @@ export function PromoteEntryDialog({
                 Converting
               </>
             ) : (
-              "Convert to Note"
+              "Convert."
             )}
           </Button>
         </DialogFooter>
