@@ -67,7 +67,7 @@ export function createRateLimitResponse(
   result: RateLimitResult,
   message = "Too many requests"
 ): NextResponse {
-  const retryAfter = Math.ceil((result.reset - Date.now()) / 1000);
+  const retryAfter = Math.max(0, Math.ceil((result.reset - Date.now()) / 1000));
   const headers = new Headers({
     "X-RateLimit-Limit": String(result.limit),
     "X-RateLimit-Remaining": String(result.remaining),

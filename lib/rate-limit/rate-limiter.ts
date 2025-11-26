@@ -82,7 +82,7 @@ export function checkRateLimit(
 
   storage.set(key, entry);
 
-  const reset = calculateResetTime(validTimestamps, config.windowMs, now);
+  const reset = calculateResetTime(entry.timestamps, config.windowMs, now);
   const remaining = Math.max(0, limit - currentCount - (allowed ? 1 : 0));
 
   return {

@@ -6,7 +6,7 @@ import {
   successResponse,
   withRateLimit,
 } from "@/lib/api/utils";
-import { polar } from "@/lib/polar/client";
+import { polar, isCustomerNotFoundError } from "@/lib/polar/client";
 
 const baseUrl =
   process.env.NEXT_PUBLIC_APP_URL ||
@@ -44,10 +44,7 @@ export async function POST(request: NextRequest) {
           });
           console.log(`[Checkout] Customer already exists for user ${user.id}`);
         } catch (error: any) {
-          if (
-            error.statusCode === 404 ||
-            error.message?.includes("not found")
-          ) {
+          if (isCustomerNotFoundError(error)) {
             console.log(`[Checkout] Creating new customer for user ${user.id}`);
             await polar.customers.create({
               email: userData.user.email,
