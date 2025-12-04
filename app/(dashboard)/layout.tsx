@@ -29,7 +29,7 @@ import { useUser, useUsage } from "@/lib/api/hooks";
 import { DashboardProvider } from "@/lib/contexts/dashboard-context";
 
 const navigation = [
-  { name: "Home", href: "/", icon: Home },
+  { name: "Home", href: "/dashboard", icon: Home },
   { name: "Notes", href: "/notes", icon: BookOpen },
   { name: "Journal", href: "/journal", icon: BookMarked },
   { name: "Collections", href: "/collections", icon: Library },
@@ -87,8 +87,8 @@ export default function DashboardLayout({
     <>
       <div className="flex h-14 items-center justify-between px-3 border-b">
         <Link
-          href="/"
-          className="flex items-center gap-2 font-semibold text-sm hover:opacity-80 transition-opacity"
+          href="/dashboard"
+          className="flex items-center hover:opacity-80 transition-opacity"
           onClick={() => setIsMobileSidebarOpen(false)}
         >
           <img
@@ -96,7 +96,6 @@ export default function DashboardLayout({
             alt="Recoil"
             className="h-10 w-10 object-cover"
           />
-          <span className="text-xl font-lora">Recoil</span>
         </Link>
         {!hideNotifications && <NotificationsDropdown />}
       </div>
@@ -107,40 +106,7 @@ export default function DashboardLayout({
             setIsNewNoteDialogOpen(true);
             setIsMobileSidebarOpen(false);
           }}
-          style={{
-            background: `linear-gradient(to right, 
-              rgb(40, 20, 25), 
-              rgb(50, 25, 30), 
-              rgb(60, 30, 35), 
-              rgb(70, 35, 40), 
-              rgb(60, 30, 35), 
-              rgb(50, 25, 30), 
-              rgb(40, 20, 25)
-            )`,
-          }}
-          className="metallic-noise-button group w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full text-white border border-[rgba(255,255,255,0.15)] shadow-[0_2px_4px_0_rgba(0,0,0,0.5),0_1px_0_0_rgba(255,255,255,0.1)_inset,0_-1px_0_0_rgba(0,0,0,0.3)_inset,0_0_20px_rgba(150,50,50,0.25)] hover:border-[rgba(255,255,255,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.6),0_1px_0_0_rgba(255,255,255,0.15)_inset,0_-1px_0_0_rgba(0,0,0,0.4)_inset,0_0_30px_rgba(180,60,60,0.35)] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer relative overflow-hidden"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = `linear-gradient(to right, 
-              rgb(45, 25, 30), 
-              rgb(55, 30, 35), 
-              rgb(65, 35, 40), 
-              rgb(75, 40, 45), 
-              rgb(65, 35, 40), 
-              rgb(55, 30, 35), 
-              rgb(45, 25, 30)
-            )`;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = `linear-gradient(to right, 
-              rgb(40, 20, 25), 
-              rgb(50, 25, 30), 
-              rgb(60, 30, 35), 
-              rgb(70, 35, 40), 
-              rgb(60, 30, 35), 
-              rgb(50, 25, 30), 
-              rgb(40, 20, 25)
-            )`;
-          }}
+          className="metallic-noise-button group w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full text-white border border-[rgba(255,255,255,0.15)] shadow-[0_2px_4px_0_rgba(0,0,0,0.5),0_1px_0_0_rgba(255,255,255,0.1)_inset,0_-1px_0_0_rgba(0,0,0,0.3)_inset] hover:border-[rgba(255,255,255,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.6),0_1px_0_0_rgba(255,255,255,0.15)_inset,0_-1px_0_0_rgba(0,0,0,0.4)_inset] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer relative overflow-hidden bg-[#2d4a3e]"
         >
           <Plus className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 relative z-10" />
           <span className="relative z-10">New Note</span>
@@ -253,15 +219,14 @@ export default function DashboardLayout({
               <Menu className="h-5 w-5" />
             </Button>
             <Link
-              href="/"
-              className="flex items-center gap-2 font-semibold text-sm"
+              href="/dashboard"
+              className="flex items-center"
             >
               <img
                 src="/logo.svg"
                 alt="Recoil"
                 className="h-8 w-8 object-cover"
               />
-              <span className="text-lg font-lora">Recoil</span>
             </Link>
             <NotificationsDropdown />
           </div>
